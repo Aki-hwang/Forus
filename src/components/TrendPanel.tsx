@@ -116,19 +116,33 @@ export function TrendPanel({
             <p className="mb-3 text-[13px] font-bold text-foreground">
               {trends.hasViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
             </p>
-            <div className="space-y-2">
-              {trends.topAdvertisers.slice(0, 5).map((c, i) => (
-                <div key={c.clinic + i} className="flex items-center gap-2.5">
-                  <span className="w-4 shrink-0 text-[12px] font-black text-muted">{i + 1}</span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                    {c.clinic.replace(/\s*\(.*\)$/, "")}
-                    <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
-                  </span>
-                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
-                    {c.views != null ? `▶ ${fmt(c.views)}` : `👥 ${fmt(c.followers)}`}
-                  </span>
-                </div>
-              ))}
+            <div className="space-y-1">
+              {trends.topAdvertisers.slice(0, 5).map((c, i) => {
+                const href = c.igUsername
+                  ? `https://www.instagram.com/${c.igUsername}/`
+                  : undefined;
+                const Row = href ? "a" : "div";
+                return (
+                  <Row
+                    key={c.clinic + i}
+                    {...(href
+                      ? { href, target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
+                    className={`flex items-center gap-2.5 rounded-lg px-1.5 py-1 ${
+                      href ? "transition hover:bg-background" : ""
+                    }`}
+                  >
+                    <span className="w-4 shrink-0 text-[12px] font-black text-muted">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+                      {c.clinic.replace(/\s*\(.*\)$/, "")}
+                      <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
+                    </span>
+                    <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+                      {c.views != null ? `▶ ${fmt(c.views)}` : `👥 ${fmt(c.followers)}`}
+                    </span>
+                  </Row>
+                );
+              })}
             </div>
           </div>
 

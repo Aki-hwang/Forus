@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ads as mockAds, Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
-import { FilterBar } from "@/components/FilterBar";
+import { FilterBar, type SortKey } from "@/components/FilterBar";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
@@ -13,6 +13,7 @@ type Source = "mock" | "apify";
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
+  const [sort, setSort] = useState<SortKey>("views");
   const [selected, setSelected] = useState<Ad | null>(null);
 
   // 목업으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체 (실패 시 목업 유지)
@@ -58,20 +59,24 @@ export default function Home() {
     [allAds, lang]
   );
 
-  const filtered = useMemo(
-    () =>
-      base
-        .filter((a) => area === "전체" || a.area === area)
-        .sort((a, b) => {
-          const av = a.views,
-            bv = b.views;
-          if (av != null && bv != null) return bv - av;
-          if (av != null) return -1;
-          if (bv != null) return 1;
-          return b.likes - a.likes;
-        }),
-    [base, area]
-  );
+  const filtered = useMemo(() => {
+    const list = base.filter((a) => area === "전체" || a.area === area);
+    const byViews = (a: Ad, b: Ad) => {
+      const av = a.views,
+        bv = b.views;
+      if (av != null && bv != null) return bv - av;
+      if (av != null) return -1;
+      if (bv != null) return 1;
+      return b.likes - a.likes;
+    };
+    const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
+      views: byViews,
+      followers: (a, b) => b.likes - a.likes,
+      recent: (a, b) => b.date.localeCompare(a.date),
+      activeDays: (a, b) => (b.activeDays ?? 0) - (a.activeDays ?? 0),
+    };
+    return [...list].sort(cmp[sort]);
+  }, [base, area, sort]);
 
   // 트렌드는 현재 언어+지역 필터 기준으로 집계
   const trends = useMemo(
@@ -84,46 +89,8 @@ export default function Home() {
       <Header />
 
       <main className="mx-auto max-w-7xl px-5 py-6">
-        {/* Hero */}
-        <section className="mb-6">
-          <h1 className="text-[26px] font-black leading-tight tracking-tight text-foreground sm:text-[30px]">
-            일본/중국인 관광객 대상 피부과 광고를
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              {" "}
-              한눈에
-            </span>
-          </h1>
-          <span
-            className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
-              source === "apify"
-                ? "bg-primary/10 text-primary-ink"
-                : "bg-border/60 text-muted"
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                source === "apify" ? "bg-primary" : "bg-muted"
-              }`}
-            />
-            {source === "apify"
-              ? "실시간 수집 (Apify · Meta 광고 라이브러리)"
-              : "목업 데이터 (Apify 토큰 미설정)"}
-          </span>
-          {viewState === "loading" ? (
-            <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-1 text-[11px] font-bold text-muted">
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted/40 border-t-muted" />
-              인스타 조회수 불러오는 중…
-            </span>
-          ) : null}
-          {viewState === "done" ? (
-            <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary-ink">
-              ▶ 조회수 반영됨
-            </span>
-          ) : null}
-        </section>
-
-        <div className="space-y-6">
-          {/* 타겟 언어 탭 */}
+        {/* 헤더: 타겟 언어 탭(좌) + 타이틀·상태(우) 한 줄 */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex rounded-xl border border-border bg-surface p-1">
             {([
               ["전체", "전체"],
@@ -144,9 +111,52 @@ export default function Home() {
             ))}
           </div>
 
+          <div className="text-right">
+            <h1 className="text-[17px] font-black leading-tight tracking-tight text-foreground sm:text-[21px]">
+              일본/중국인 관광객 대상 피부과 광고를
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                {" "}
+                한눈에
+              </span>
+            </h1>
+            <div className="mt-1 flex flex-wrap items-center justify-end gap-1.5">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                  source === "apify" ? "bg-primary/10 text-primary-ink" : "bg-border/60 text-muted"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    source === "apify" ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+                {source === "apify" ? "실시간 수집 (Meta 광고 라이브러리)" : "목업 데이터"}
+              </span>
+              {viewState === "loading" ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-0.5 text-[11px] font-bold text-muted">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted/40 border-t-muted" />
+                  조회수 불러오는 중…
+                </span>
+              ) : null}
+              {viewState === "done" ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary-ink">
+                  ▶ 조회수 반영됨
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
           <TrendPanel trends={trends} onSelectAd={setSelected} />
 
-          <FilterBar area={area} onArea={setArea} resultCount={filtered.length} />
+          <FilterBar
+            area={area}
+            onArea={setArea}
+            sort={sort}
+            onSort={setSort}
+            resultCount={filtered.length}
+          />
 
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface py-16 text-center text-muted">
