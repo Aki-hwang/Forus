@@ -144,7 +144,7 @@ export default function Home() {
             ))}
           </div>
 
-          <TrendPanel trends={trends} />
+          <TrendPanel trends={trends} onSelectAd={setSelected} />
 
           <FilterBar area={area} onArea={setArea} resultCount={filtered.length} />
 

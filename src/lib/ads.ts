@@ -347,6 +347,8 @@ export interface TrendSummary {
     views?: number;
     followers: number;
   }[];
+  /** 광고 중인 클리닉(광고주) 수 */
+  advertiserCount: number;
 }
 
 export function summarizeTrends(list: Ad[]): TrendSummary {
@@ -449,6 +451,7 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     avgViews,
     mostViewed,
     topAdvertisers,
+    advertiserCount: advMap.size,
   };
 }
 

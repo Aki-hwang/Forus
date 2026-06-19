@@ -1,17 +1,39 @@
-import { TrendSummary } from "@/lib/ads";
+import { Ad, TrendSummary } from "@/lib/ads";
 
 function fmt(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
+function Stat({
+  label,
+  value,
+  hint,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <>
       <p className="text-[12px] font-medium text-muted">{label}</p>
       <p className="mt-1 text-2xl font-black tracking-tight text-foreground">{value}</p>
-      {hint ? <p className="mt-0.5 text-[11px] text-muted">{hint}</p> : null}
-    </div>
+      {hint ? <p className="mt-0.5 truncate text-[11px] text-muted">{hint}</p> : null}
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+      >
+        {inner}
+        <span className="mt-1 block text-[10px] font-bold text-primary-ink">클릭해서 광고 보기 →</span>
+      </button>
+    );
+  }
+  return <div className="rounded-2xl border border-border bg-surface p-4">{inner}</div>;
 }
 
 function Bar({ label, count, max }: { label: string; count: number; max: number }) {
@@ -30,9 +52,17 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
   );
 }
 
-export function TrendPanel({ trends }: { trends: TrendSummary }) {
+export function TrendPanel({
+  trends,
+  onSelectAd,
+}: {
+  trends: TrendSummary;
+  onSelectAd?: (ad: Ad) => void;
+}) {
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
+  // 최다 조회(없으면 최다 반응) 광고 — 클릭 시 모달
+  const topAd = trends.mostViewed ?? trends.hottest;
 
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -55,29 +85,28 @@ export function TrendPanel({ trends }: { trends: TrendSummary }) {
             label="🔥 최다 조회 광고"
             value={trends.mostViewed?.views != null ? fmt(trends.mostViewed.views) : "-"}
             hint={cleanClinic(trends.mostViewed?.clinic)}
+            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
         ) : trends.live ? (
           <Stat
             label="👥 최다 팔로워"
             value={trends.hottest ? fmt(trends.hottest.likes) : "-"}
             hint={cleanClinic(trends.hottest?.clinic)}
+            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
         ) : (
           <Stat
             label="🔥 최고 반응 광고"
             value={trends.hottest ? `${(trends.hottest.likes / 1000).toFixed(1)}k` : "-"}
             hint={cleanClinic(trends.hottest?.clinic)}
+            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
         )}
-        {trends.live ? (
-          <Stat
-            label="⏳ 최장 집행 광고"
-            value={trends.longestRunning ? `${trends.longestRunning.activeDays ?? 0}일` : "-"}
-            hint={cleanClinic(trends.longestRunning?.clinic)}
-          />
-        ) : (
-          <Stat label="지역" value={`${trends.byArea.filter((a) => a.count).length}곳`} hint="강남·명동·홍대" />
-        )}
+        <Stat
+          label="🏥 광고 중 클리닉"
+          value={`${trends.advertiserCount}곳`}
+          hint="중복 제외 광고주 수"
+        />
       </div>
 
       {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
