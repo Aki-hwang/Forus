@@ -33,6 +33,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           referenceId: ad.id,
+          reference: ad,
           clinicName,
           area: ad.area,
           lang,
