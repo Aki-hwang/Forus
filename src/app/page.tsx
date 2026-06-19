@@ -128,9 +128,9 @@ export default function Home() {
           <div className="inline-flex rounded-xl border border-border bg-surface p-1">
             {([
               ["전체", "전체"],
-              ["KR", "🇰🇷 한국인 타겟"],
-              ["JP", "🇯🇵 일본인 타겟"],
-              ["CN", "🇨🇳 중국인 타겟"],
+              ["KR", "🇰🇷 한국인"],
+              ["JP", "🇯🇵 일본인"],
+              ["CN", "🇨🇳 중국인"],
             ] as [Lang | "전체", string][]).map(([key, label]) => (
               <button
                 key={key}

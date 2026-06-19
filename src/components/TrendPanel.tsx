@@ -70,10 +70,10 @@ export function TrendPanel({
   const topAd = trends.mostViewed ?? trends.hottest;
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
-  const [period, setPeriod] = useState<"7" | "30" | "all">("all");
+  const [period, setPeriod] = useState<number | "all">("all");
   const [now] = useState(() => Date.now());
   const ranked = useMemo(() => {
-    const days = period === "all" ? Infinity : Number(period);
+    const days = period === "all" ? Infinity : period;
     const inRange = ads.filter((a) => {
       if (days === Infinity) return true;
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
@@ -150,22 +150,32 @@ export function TrendPanel({
               <p className="text-[13px] font-bold text-foreground">
                 {rankByViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
               </p>
-              <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
-                {([
-                  ["7", "7일"],
-                  ["30", "30일"],
-                  ["all", "전체"],
-                ] as ["7" | "30" | "all", string][]).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setPeriod(key)}
-                    className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
-                      period === key ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-1">
+                <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
+                  {([7, 30, 90, "all"] as (number | "all")[]).map((p) => (
+                    <button
+                      key={String(p)}
+                      onClick={() => setPeriod(p)}
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
+                        period === p ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {p === "all" ? "전체" : `${p}일`}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="직접"
+                  value={typeof period === "number" && ![7, 30, 90].includes(period) ? period : ""}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    setPeriod(Number.isFinite(v) && v > 0 ? v : "all");
+                  }}
+                  className="w-12 rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:border-primary"
+                />
+                <span className="text-[11px] text-muted">일</span>
               </div>
             </div>
             <div className="space-y-1">

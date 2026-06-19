@@ -14,18 +14,6 @@ export function Header() {
           </div>
         </div>
 
-        <nav className="hidden items-center gap-1 text-[13px] font-medium text-muted sm:flex">
-          <span className="rounded-lg bg-primary/10 px-3 py-1.5 font-bold text-primary-ink">
-            광고 트렌드
-          </span>
-          <span className="cursor-not-allowed rounded-lg px-3 py-1.5 opacity-60">
-            내 광고함
-          </span>
-          <span className="cursor-not-allowed rounded-lg px-3 py-1.5 opacity-60">
-            리포트
-          </span>
-        </nav>
-
         <div className="flex items-center gap-2">
           <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted md:inline">
             한·일·중 타겟
