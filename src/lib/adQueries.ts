@@ -24,17 +24,17 @@ interface LangQueries {
 // 지역(권역)별 검색어 — 권역 내 동/역명을 언어별로 분산 배치해 넓게 커버
 const AREA_QUERIES: Record<Area, LangQueries> = {
   강남: {
-    jp: ["江南 皮膚科", "狎鴎亭 皮膚科", "新沙 美容クリニック"],
-    kr: ["강남 피부과", "역삼 피부과"],
+    jp: ["江南 皮膚科", "狎鴎亭 皮膚科", "新沙 美容クリニック", "清潭 クリニック"],
+    kr: ["강남 피부과", "역삼 피부과", "강남 리프팅"],
     cn: ["江南 皮肤科", "清潭 医美"],
   },
   명동: {
     jp: ["明洞 皮膚科", "明洞 美容皮膚科", "乙支路 皮膚科"],
     kr: ["명동 피부과", "충무로 피부과"],
-    cn: ["明洞 皮肤科", "明洞 医美"],
+    cn: ["明洞 皮肤科", "明洞 医美", "明洞 注射美容"],
   },
   홍대: {
-    jp: ["弘大 皮膚科", "ホンデ 美容クリニック", "合井 皮膚科"],
+    jp: ["弘大 皮膚科", "ホンデ 美容クリニック", "合井 皮膚科", "ホンデ 皮膚科"],
     kr: ["홍대 피부과", "연남 피부과"],
     cn: ["弘大 皮肤科", "弘大 医美"],
   },
@@ -83,8 +83,11 @@ const AREA_TERMS: Record<Area, string[]> = {
 
 const AD_LIBRARY_BASE = "https://www.facebook.com/ads/library/";
 
-/** 검색어로 광고 라이브러리 검색 URL 생성 (KR · 활성 · 노출수 내림차순) */
+/** 검색어로 광고 라이브러리 검색 URL 생성
+ *  start_date[min] — 최근 30일 이내 시작 광고만 서버단에서 사전 필터링.
+ *  30일 초과 광고는 클라이언트 측 MAX_ACTIVE_DAYS 로도 한 번 더 걸러낸다. */
 export function buildAdLibraryUrl(keyword: string): string {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   const params = new URLSearchParams({
     active_status: "active",
     ad_type: "all",
@@ -96,6 +99,7 @@ export function buildAdLibraryUrl(keyword: string): string {
     "sort_data[direction]": "desc",
     "sort_data[mode]": "total_impressions",
   });
+  params.set("start_date[min]", thirtyDaysAgo);
   return `${AD_LIBRARY_BASE}?${params.toString()}`;
 }
 
@@ -118,11 +122,12 @@ function roundRobin<T>(lists: T[][]): T[] {
 
 /**
  * 이번 수집의 전체 검색 쿼리 — 지역(권역)별 KR·JP·CN + 일반(시술) 검색어를 "모두" 훑는다.
- *   지역 3 × (JP 3 + KR 2 + CN 2 = 7) + 일반 (JP 4 + KR 1 + CN 3 = 8) = 29개 검색.
- *   주차 로테이션 없이 매 수집마다 전부 실행(최대 커버리지). 결과는 7일 캐시되어
- *   실제 수집은 주 1회 수준. 수집량/속도는 APIFY_PER_QUERY·APIFY_CONCURRENCY 로 조절.
+ *   강남(JP4+KR3+CN2=9) + 명동(JP3+KR2+CN3=8) + 홍대(JP4+KR2+CN2=8) = 25개 지역
+ *   + 일반(JP4+KR1+CN3=8) = 총 33개 검색. 주차 로테이션 없이 매 수집마다 전부 실행.
+ *   URL에 start_date[min]=(30일전)을 붙여 최근 30일 광고를 서버단에서 사전 필터링.
+ *   결과는 7일 캐시. 수집량/속도는 APIFY_PER_QUERY·APIFY_CONCURRENCY 로 조절.
  *
- *   순서는 (언어 × 권역) 라운드로빈으로 인터리브한다 — 수집 시간 예산(APIFY_COLLECT_MS)에
+ *   순서는 (언어 × 권역) 라운드로빈으로 인터리브한다 — APIFY_COLLECT_MS(기본 210s) 예산에
  *   잘려 일부만 실행되더라도 강남·명동·홍대 3권역과 JP·KR·CN 3언어가 고루 섞이도록.
  */
 export function searchQueries(): SearchQuery[] {
