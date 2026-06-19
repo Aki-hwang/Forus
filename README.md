@@ -4,34 +4,39 @@
 
 일본(향후 중국) 관광객을 타겟하는 **피부과 광고 트렌드 대시보드 + AI 광고 생성기**.
 
-강남·명동·홍대 피부과들이 인스타에 올리는 광고를 한눈에 모아 트렌드를 읽고,
-마음에 드는 광고를 클릭하면 그걸 레퍼런스로 **우리 광고(인스타용)를 자동 생성**합니다.
+강남·명동·홍대 피부과들이 **지금 집행 중인 실제 광고**(Meta 광고 라이브러리)를 시술별로
+모아 트렌드를 읽고, 카드를 누르면 **원본 광고/사이트로 바로 이동**합니다. 각 광고는
+레퍼런스로 삼아 **우리 광고를 자동 생성**할 수도 있습니다.
 
 ## 핵심 기능 (MVP)
 
-- **광고 트렌드 대시보드** — 지역(강남/명동/홍대)·시술별 분포, 인기 키워드, 컬러 무드, 인게이지먼트 지표
-- **광고 갤러리** — 지역/시술 필터로 광고를 인스타 카드 형태로 탐색
-- **클릭 → AI 광고 자동 생성** — 레퍼런스의 시술·카피 톤·컬러 무드를 분석해 우리 병원 버전의 크리에이티브 + 일본어/중국어 캡션·해시태그를 생성, 캡션 복사 / 다른 버전 생성 지원
+- **실시간 광고 수집** — Meta(페이스북) 광고 라이브러리에서 지역별 키워드로 활성 광고를 수집
+- **시술별 그룹 대시보드** — 본문 카피에서 시술/지역/스타일/언어를 자동 분류해 시술별 섹션으로 노출
+- **클릭 → 원본 광고로 이동** — 카드 클릭 시 광고 랜딩(LINE/인스타/홈페이지)으로 바로 연결
+- **클릭 → AI 광고 자동 생성** — 카드의 `✨ 생성` 버튼으로 레퍼런스 기반 우리 병원 버전 크리에이티브 + 일본어/중국어 캡션·해시태그 생성
 
-> 데이터는 **Apify 인스타그램 수집 + 목업 폴백** 구조입니다. `APIFY_TOKEN` 이 설정되면
-> `src/lib/clinics.ts` 에 등록된 클리닉 계정의 최신 게시물을 Apify로 긁어와 캡션에서
-> 시술·스타일·언어를 추론해 광고로 매핑하고, 토큰이 없거나 수집에 실패하면 자동으로
+> 데이터는 **Apify(Meta 광고 라이브러리) 수집 + 목업 폴백** 구조입니다. `APIFY_TOKEN` 이
+> 설정되면 `src/lib/adQueries.ts` 의 지역별 검색어로 활성 광고를 긁어와 본문에서 시술·
+> 스타일·언어를 추론해 매핑하고, 토큰이 없거나 수집에 실패하면 자동으로
 > 목업(`src/lib/ads.ts`)으로 폴백합니다.
+>
+> ⚠️ 광고 라이브러리는 상업광고의 노출수·조회수를 제공하지 않습니다. 조회수/좋아요 등
+> 인게이지먼트는 추후 **2단계: 인스타그램 연동**에서 보강할 예정입니다(현재는 집행 일수·
+> 노출 플랫폼만 표시).
 
 ## 실시간 수집 (Apify)
 
-1. [Apify](https://console.apify.com/account/integrations) 에서 API 토큰 발급
-2. `.env.example` 를 참고해 `.env.local` 에 `APIFY_TOKEN` 설정
-3. 수집 대상은 `src/lib/clinics.ts` 의 `CLINIC_ACCOUNTS` (또는 `APIFY_IG_PROFILES` 환경변수)로 관리
+1. [Apify](https://console.apify.com/settings/integrations) 에서 API 토큰 발급
+2. `.env.example` 를 참고해 `.env.local`(로컬) 또는 Railway Variables 에 `APIFY_TOKEN` 설정
+3. 지역별 검색어는 `src/lib/adQueries.ts` 에서 관리하며, **ISO 주차 기준 주 1회 로테이션**됩니다
 4. 대시보드 상단 배지로 **실시간 수집 / 목업** 상태를 확인할 수 있습니다
 
 | 환경변수 | 설명 | 기본값 |
 | --- | --- | --- |
 | `APIFY_TOKEN` | Apify API 토큰 (없으면 목업 폴백) | — |
-| `APIFY_INSTAGRAM_ACTOR` | 사용할 액터 | `apify/instagram-scraper` |
-| `APIFY_RESULTS_LIMIT` | 계정당 게시물 수 | `6` |
-| `APIFY_TTL_SECONDS` | 수집 결과 캐시 TTL(초) | `3600` |
-| `APIFY_IG_PROFILES` | 수집 대상 핸들 직접 지정(콤마) | `clinics.ts` 기본 목록 |
+| `APIFY_AD_ACTOR` | 사용할 액터 | `curious_coder/facebook-ads-library-scraper` |
+| `APIFY_AD_COUNT` | 전체 목표 수집 건수 (지역당 최소 10) | `30` |
+| `APIFY_TTL_SECONDS` | 수집 결과 캐시 TTL(초) | `604800` (7일) |
 
 ## 기술 스택
 
@@ -47,19 +52,19 @@ src/
     page.tsx               메인 대시보드
     layout.tsx             폰트/메타데이터
     globals.css            디자인 토큰
-    api/ads/route.ts       광고 목록 API (Apify 수집 → 목업 폴백)
+    api/ads/route.ts       광고 목록 API (Apify 광고 라이브러리 수집 → 목업 폴백)
     api/generate/route.ts  광고 생성 API
   components/
     Header.tsx
     TrendPanel.tsx         트렌드 지표 패널
     FilterBar.tsx          지역/시술 필터
-    AdCard.tsx             갤러리 카드
+    AdCard.tsx             갤러리 카드 (클릭 → 원본 광고 / ✨ 생성)
     CreativeCard.tsx       광고 크리에이티브 비주얼 (공용)
     AdDetailModal.tsx      상세 + AI 생성 플로우
   lib/
     ads.ts                 데이터 모델 + 목업 데이터 + 트렌드 집계
-    clinics.ts             Apify 수집 대상 클리닉 계정 설정
-    apify.ts               Apify 인스타 수집 → Ad 매핑 (시술/스타일/언어 추론)
+    adQueries.ts           지역별 광고 라이브러리 검색어 (주 1회 로테이션)
+    apify.ts               광고 라이브러리 수집 → Ad 매핑 (시술/스타일/언어 추론)
     generate.ts            레퍼런스 기반 광고 생성기
 ```
 
@@ -86,9 +91,10 @@ npm start        # PORT 환경변수 사용 (기본 3000)
 
 ## 로드맵
 
-- [x] 실제 광고 수집 — Apify 인스타그램 스크래퍼 (클리닉 계정 프로필)
-- [ ] Meta 광고 라이브러리 API 수집 소스 추가
+- [x] 실제 광고 수집 — Meta 광고 라이브러리 (지역별 키워드, 주 1회 로테이션)
+- [x] 시술별 그룹 노출 + 클릭 시 원본 광고로 이동
+- [ ] **2단계: 인스타그램 연동** — 광고주 IG 계정에서 조회수/좋아요 등 인게이지먼트 보강
+- [ ] 일본어 키워드 비중 강화 / JP·CN 필터 토글
 - [ ] 실제 이미지 생성 API 연동 (`generate.ts` 의 `imagePrompt` 활용)
 - [ ] 광고 저장함 / 캠페인 관리
-- [ ] 중국어 타겟 본격 확장
 - [ ] 인증 / 병원 계정

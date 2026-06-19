@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ads as mockAds, Ad, Area, TreatmentKey, summarizeTrends } from "@/lib/ads";
+import {
+  ads as mockAds,
+  Ad,
+  Area,
+  TreatmentKey,
+  TREATMENT_LABEL,
+  summarizeTrends,
+} from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar } from "@/components/FilterBar";
@@ -52,6 +59,19 @@ export default function Home() {
     [allAds, area]
   );
 
+  // 시술별로 묶어서 섹션으로 노출 (광고 많은 시술이 위로)
+  const groups = useMemo(() => {
+    const map = new Map<TreatmentKey, Ad[]>();
+    for (const a of filtered) {
+      const list = map.get(a.treatment);
+      if (list) list.push(a);
+      else map.set(a.treatment, [a]);
+    }
+    return [...map.entries()]
+      .map(([key, items]) => ({ key, label: TREATMENT_LABEL[key].ko, items }))
+      .sort((a, b) => b.items.length - a.items.length);
+  }, [filtered]);
+
   return (
     <div className="min-h-full">
       <Header />
@@ -67,9 +87,9 @@ export default function Home() {
             </span>
           </h1>
           <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-muted">
-            강남·명동·홍대 피부과들이 지금 돌리는 인스타 광고를 모아 트렌드를 읽고,
-            마음에 드는 광고를 클릭하면{" "}
-            <b className="text-foreground">우리 광고를 자동으로 생성</b>해 드립니다.
+            강남·명동·홍대 피부과들이{" "}
+            <b className="text-foreground">지금 집행 중인 실제 광고</b>를 시술별로 모아
+            트렌드를 읽고, 카드를 누르면 원본 광고로 바로 이동합니다.
           </p>
           <span
             className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
@@ -83,7 +103,9 @@ export default function Home() {
                 source === "apify" ? "bg-primary" : "bg-muted"
               }`}
             />
-            {source === "apify" ? "실시간 수집 (Apify · 인스타그램)" : "목업 데이터 (Apify 토큰 미설정)"}
+            {source === "apify"
+              ? "실시간 수집 (Apify · Meta 광고 라이브러리)"
+              : "목업 데이터 (Apify 토큰 미설정)"}
           </span>
         </section>
 
@@ -103,9 +125,21 @@ export default function Home() {
               조건에 맞는 광고가 없어요. 필터를 바꿔보세요.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {filtered.map((ad) => (
-                <AdCard key={ad.id} ad={ad} onClick={setSelected} />
+            <div className="space-y-8">
+              {groups.map((g) => (
+                <section key={g.key}>
+                  <div className="mb-3 flex items-baseline gap-2">
+                    <h2 className="text-[16px] font-black tracking-tight text-foreground">
+                      {g.label}
+                    </h2>
+                    <span className="text-[13px] font-bold text-muted">{g.items.length}건</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                    {g.items.map((ad) => (
+                      <AdCard key={ad.id} ad={ad} onGenerate={setSelected} />
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           )}

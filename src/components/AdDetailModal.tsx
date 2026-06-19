@@ -97,11 +97,33 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                   </span>
                 ))}
               </div>
-              <div className="flex gap-3 pt-1 text-[12px] font-medium text-muted">
-                <span>♡ {ad.likes.toLocaleString()}</span>
-                <span>🔖 {ad.saves.toLocaleString()}</span>
-                <span>📍 {ad.area}</span>
+              <div className="flex flex-wrap items-center gap-3 pt-1 text-[12px] font-medium text-muted">
+                {ad.live ? (
+                  <>
+                    <span>📍 {ad.area}</span>
+                    <span>📅 {ad.activeDays ?? 0}일 집행</span>
+                    {ad.platforms?.length ? (
+                      <span>{ad.platforms.slice(0, 2).join(" · ")}</span>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <span>♡ {ad.likes.toLocaleString()}</span>
+                    <span>🔖 {ad.saves.toLocaleString()}</span>
+                    <span>📍 {ad.area}</span>
+                  </>
+                )}
               </div>
+              {ad.sourceUrl ? (
+                <a
+                  href={ad.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 pt-1 text-[12px] font-bold text-primary-ink hover:underline"
+                >
+                  ↗ 원본 광고 / 사이트 보기
+                </a>
+              ) : null}
             </div>
           </div>
 

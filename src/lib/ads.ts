@@ -36,6 +36,22 @@ export interface Ad {
   lang: Lang;
   /** 게시 추정일 */
   date: string;
+
+  // ---- 실시간 수집(Meta 광고 라이브러리) 전용 메타 — 목업에는 없음 ----
+  /** 실시간 수집 광고 여부 */
+  live?: boolean;
+  /** 클릭 시 이동할 원본 링크 (랜딩/LINE/인스타 등) */
+  sourceUrl?: string;
+  /** 광고 라이브러리 항목 직링크 */
+  adLibraryUrl?: string;
+  /** 광고 CTA 문구 (예: Book now) */
+  cta?: string;
+  /** 노출 플랫폼 (FACEBOOK / INSTAGRAM / ...) */
+  platforms?: string[];
+  /** 집행 일수 (start ~ end/today) */
+  activeDays?: number;
+  /** 광고주(페이지명) 원본 */
+  advertiser?: string;
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];
