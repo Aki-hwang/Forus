@@ -56,6 +56,8 @@ export interface Ad {
   advertiser?: string;
   /** 광고주 인스타그램 핸들 (@ 제외) */
   igUsername?: string;
+  /** Meta 페이지 카테고리 (예: "Medical & health", "Hospital", "Health/beauty") — 클리닉 판별용 */
+  pageCategory?: string;
   /** 등록된 일본 타겟 클리닉 명단과 일치 */
   featured?: boolean;
   /** 등록 클리닉 특징 메모 */

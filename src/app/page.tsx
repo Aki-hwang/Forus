@@ -79,11 +79,9 @@ export default function Home() {
     return [...list].sort(cmp[sort]);
   }, [base, area, sort]);
 
-  // 트렌드는 현재 언어+지역 필터 기준으로 집계
-  const trends = useMemo(
-    () => summarizeTrends(base.filter((a) => area === "전체" || a.area === area)),
-    [base, area]
-  );
+  // 트렌드(지역별 분포 등)는 지역 필터와 무관하게 전체(언어 기준) 고정 집계.
+  // 아래 지역 탭은 갤러리 그리드에만 적용됨.
+  const trends = useMemo(() => summarizeTrends(base), [base]);
 
   return (
     <div className="min-h-full">

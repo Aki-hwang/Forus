@@ -11,7 +11,7 @@
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { weeklyQueries, areaFromText } from "./adQueries";
-import { findClinicByHandle, isBlockedAdvertiser, isProductAd } from "./clinics";
+import { findClinicByHandle, isExcludedAd } from "./clinics";
 
 // ---------- 시술/스타일 추론 사전 ----------
 
@@ -125,6 +125,7 @@ interface FbSnapshot {
   cta_text?: string | null;
   link_url?: string | null;
   page_like_count?: number | null;
+  page_categories?: string[] | null;
   images?: FbMedia[] | null;
   videos?: FbMedia[] | null;
   cards?: FbMedia[] | null;
@@ -164,6 +165,7 @@ interface FbAd {
       page_info?: {
         ig_username?: string | null;
         ig_followers?: number | null;
+        page_category?: string | null;
       };
     };
   };
@@ -185,13 +187,13 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
   const style = inferStyle(blob);
   const lang = inferLang(blob);
 
-  // 광고주 인스타 핸들 → 등록 클리닉 조회 (지역 정밀 매핑 + 태그)
+  // 광고주 인스타 핸들 + Meta 페이지 카테고리 → 클리닉 판별/정밀 매핑
   const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
   const igUsername = pageInfo?.ig_username?.trim() || undefined;
+  const pageCategory = pageInfo?.page_category?.trim() || s.page_categories?.[0] || undefined;
 
-  // 피부과 아닌 광고주(전자상거래/제품/플랫폼) + 화장품·제품 광고 제외
-  if (isBlockedAdvertiser(igUsername, fb.page_name)) return null;
-  if (isProductAd(`${fb.page_name ?? ""} ${blob}`)) return null;
+  // 클리닉 아닌 광고(제품/인플루언서/대행사/여행 등) 제외 (허용 클리닉/의료 카테고리는 항상 유지)
+  if (isExcludedAd(igUsername, fb.page_name, blob, pageCategory)) return null;
 
   const known = findClinicByHandle(igUsername);
 
@@ -254,6 +256,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
     activeDays: days,
     advertiser: fb.page_name || undefined,
     igUsername,
+    pageCategory,
     featured: Boolean(known),
     note: known?.note,
   };

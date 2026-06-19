@@ -44,6 +44,7 @@ const BLOCKED_HANDLES = new Set<string>([
   "gangnamunni",
   "gangnamunni_official",
   "yeonmovi",
+  "terapia",
 ]);
 const BLOCKED_NAME_PARTS = [
   "beaund",
@@ -53,6 +54,11 @@ const BLOCKED_NAME_PARTS = [
   "gangnamunni",
   "연모비",
   "yeonmovi",
+  "terapia",
+  "테라피아",
+  "melable",
+  "꿀피부",
+  "저장소",
   "쇼핑",
   "스토어",
   "store",
@@ -65,25 +71,83 @@ export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boo
   return BLOCKED_NAME_PARTS.some((p) => h.includes(p) || n.includes(p));
 }
 
-// ---------- 화장품/제품 광고 자동 감지 ----------
-// 클리닉(병원·시술) 신호가 전혀 없고 제품 판매 신호가 있으면 화장품/제품 광고로 보고 제외.
-// 한국어 제품어 기반이라 일본/중국 타겟 클리닉 광고에는 영향이 없음.
+// ---------- 클리닉 판별 / 잡광고 필터 ----------
+// 우선순위: ① 등록·허용 클리닉이면 무조건 유지 → ② 차단목록이면 제외 →
+//   ③ 클리닉 신호 있으면 유지 → ④ 잡광고 신호 있으면 제외 → ⑤ 애매하면 유지(클리닉 손실 방지)
+
+// 브랜드명에 병원/클리닉 단어가 없어도 실제 클리닉인 곳(항상 유지)
+const CLINIC_ALLOWLIST = [
+  "유앤아이", "톡스앤필", "toxnfill", "블리비", "velyb", "쁨", "ppeum",
+  "리엔장", "lienjang", "daybeau", "celliday", "idclinic", "diore",
+  "vellicell", "cellin", "theclim", "slimyoung", "wooa", "mayclinic",
+  "오블리주", "ohvelyjoo", "arskin", "forteclinic", "drdesigner", "doctorpetit",
+];
+
 const CLINIC_SIGNALS = [
   "의원", "클리닉", "피부과", "성형외과", "병원", "의료", "의료진", "원장", "전문의",
-  "시술", "내원", "예약", "상담", "리프팅 시술",
   "clinic", "clinique", "derma",
   "皮膚科", "美容外科", "美容皮膚科", "整形", "クリニック",
   "診所", "醫院", "醫美", "医院", "医美", "诊所",
 ];
-const PRODUCT_SIGNALS = [
-  "크림", "세럼", "앰플", "에센스", "토너", "로션", "마스크팩", "마스크 팩", "패드",
-  "화장품", "스킨케어 세트", "홈케어", "집에서", "구매", "품절", "배송", "재입고",
-  "정기구독", "리필", "세트 구성", "디바이스", "기기", "할인가", "원 구매",
-  "바르", "발라", "착용", "입는",
+
+// 클리닉 신호가 없을 때만 적용 — 화장품/제품·인플루언서·대행사·여행 등 잡광고
+const NON_CLINIC_SIGNALS = [
+  // 제품/화장품
+  "크림", "세럼", "앰플", "에센스", "토너", "로션", "클렌저", "클렌징", "마스크팩",
+  "콜라겐", "영양제", "화장품", "1+1", "증정", "완판", "품절", "재입고", "정기구독",
+  "리필", "진리템", "약국", "무료배송", "홈케어",
+  // 인플루언서/제휴/블로그
+  "꿀팁", "뷰티공간", "뷰티로그", "beautylog", "dailybeauty", "리뷰왕", "리뷰맨",
+  "내돈내산", "공구", "협찬", "정보 공유", "저장소", "연구소", "비결",
+  // 마케팅 대행/미디어
+  "마케팅", "상위노출", "대행", "미디어랩", "광고대행",
+  // 여행/숙소
+  "숙소", "휴가", "여행",
+  // 기기/디바이스
+  "디바이스",
 ];
 
-export function isProductAd(text: string): boolean {
-  const t = (text ?? "").toLowerCase();
-  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return false;
-  return PRODUCT_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+const ALLOW_PARTS = CLINIC_ALLOWLIST.map((s) => s.toLowerCase());
+
+// Meta 페이지 카테고리 기반 판별 (가장 신뢰도 높은 1차 신호)
+// 의료 카테고리 = 확실한 클리닉 / 비클리닉 카테고리 = 확실한 제외
+const MEDICAL_CATEGORIES = [
+  "medical & health", "medical service", "medical company", "hospital", "doctor",
+  "dermatolog", "surgeon", "plastic surgeon", "clinic",
+  "의료", "병원", "의원", "피부과", "성형외과", "医療", "醫療", "皮膚科", "病院",
+];
+const NON_CLINIC_CATEGORIES = [
+  "blogger", "personal blog", "blog", "video creator", "digital creator", "influencer",
+  "marketing agency", "advertising", "media", "product/service", "shopping",
+  "retail", "e-commerce", "cosmetics", "health/beauty store", "travel",
+  "personal goods", "brand", "clothing",
+  "블로그", "쇼핑", "마케팅", "화장품", "여행", "크리에이터",
+];
+
+function categoryMatch(cat: string | undefined, list: string[]): boolean {
+  if (!cat) return false;
+  const c = cat.toLowerCase();
+  return list.some((s) => c.includes(s));
+}
+
+/** 광고를 피드에서 제외할지 (true = 제외). pageCategory(있으면) 우선. */
+export function isExcludedAd(
+  igUsername?: string,
+  name?: string,
+  text?: string,
+  pageCategory?: string
+): boolean {
+  const id = `${igUsername ?? ""} ${name ?? ""}`.toLowerCase();
+  if (ALLOW_PARTS.some((p) => id.includes(p))) return false; // 허용 클리닉 → 유지
+  if (isBlockedAdvertiser(igUsername, name)) return true; // 차단목록 → 제외
+
+  // ① Meta 카테고리 (가장 정확)
+  if (categoryMatch(pageCategory, MEDICAL_CATEGORIES)) return false; // 의료 → 유지
+  if (categoryMatch(pageCategory, NON_CLINIC_CATEGORIES)) return true; // 비클리닉 → 제외
+
+  // ② 텍스트 신호 (카테고리가 없거나 'Health/beauty'처럼 애매할 때)
+  const t = `${name ?? ""} ${text ?? ""}`.toLowerCase();
+  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return false; // 클리닉 신호 → 유지
+  if (NON_CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return true; // 잡광고 → 제외
+  return false; // 애매 → 유지
 }
