@@ -1,91 +1,87 @@
-// Meta(페이스북) 광고 라이브러리 수집용 검색어 설정 (일본인·한국인·중국인 타겟)
+// Meta(페이스북) 광고 라이브러리 수집용 검색어 (일본인·한국인·중국인 타겟)
 //
-// - 지역 키워드: 江南/明洞/弘大(ホンデ) 가 들어가 지역이 확실 → 매주 지역당 로테이션
-// - 일반/시술 키워드: 지역이 없는 검색어 → 매주 GENERAL_PER_WEEK(_CN) 개씩 로테이션
-//   (주 1회 검색어 변경). 이 광고들의 지역은 본문에서 추론, 없으면 강남 기본.
-// - 언어는 광고 본문에서 추론(apify.ts inferLang)하므로, 검색어 언어 = 결과 언어가
-//   항상 일치하진 않는다. 검색어는 "그 언어권 광고가 걸릴 확률"을 높이는 용도.
+// 강남·명동·홍대를 "권역"으로 넓게 잡는다:
+//   강남 = 강남·신사·압구정·역삼·청담·논현
+//   명동 = 명동·을지로·충무로·회현·남대문·중구
+//   홍대 = 홍대·합정·상수·연남·연희·망원
+// 권역 내 주요 동/역명을 KR·JP·CN 검색어로 분산 배치해, 한 번의 수집에서 아래
+// 검색어를 "모두" 훑는다(주차 로테이션 없음 — 최대 커버리지). 결과는 7일 캐시.
 //
-// 출처: 운영 Notion "인스타그램 검색 키워드".
+// 지역 판별은 검색 URL/본문에서 AREA_TERMS(권역 표기, JP한자·CN간체 포함)로 추론한다.
+// 언어는 본문에서 추론(apify.ts inferLang)하므로 검색어 언어 = 결과 언어가 항상
+// 일치하진 않는다. 검색어는 "그 언어권 광고가 걸릴 확률"을 높이는 용도.
+//
+// 출처: 운영 Notion "인스타그램 검색 키워드" + 권역 확장.
 
 import { Area } from "./ads";
 
-// 지역별 일본어(JP) 검색어 — 강남은 압구정·청담·신사(강남 권역) 포함
-const AREA_QUERIES_JP: Record<Area, string[]> = {
-  강남: ["江南 皮膚科", "江南 美容クリニック", "江南 日本語 クリニック", "韓国プチ整形 江南", "狎鴎亭 皮膚科", "清潭 皮膚科", "新沙 美容クリニック"],
-  명동: ["明洞 皮膚科", "明洞 美容クリニック 日本人", "明洞 スキンケア クリニック", "明洞 美容クリニック"],
-  홍대: ["弘大 皮膚科", "ホンデ 皮膚科 日本語", "ホンデ 韓国美容", "ホンデ 美容クリニック"],
+interface LangQueries {
+  jp: string[];
+  kr: string[];
+  cn: string[];
+}
+
+// 지역(권역)별 검색어 — 권역 내 동/역명을 언어별로 분산 배치해 넓게 커버
+const AREA_QUERIES: Record<Area, LangQueries> = {
+  강남: {
+    jp: ["江南 皮膚科", "狎鴎亭 皮膚科", "新沙 美容クリニック"],
+    kr: ["강남 피부과", "역삼 피부과"],
+    cn: ["江南 皮肤科", "清潭 医美"],
+  },
+  명동: {
+    jp: ["明洞 皮膚科", "明洞 美容皮膚科", "乙支路 皮膚科"],
+    kr: ["명동 피부과", "충무로 피부과"],
+    cn: ["明洞 皮肤科", "明洞 医美"],
+  },
+  홍대: {
+    jp: ["弘大 皮膚科", "ホンデ 美容クリニック", "合井 皮膚科"],
+    kr: ["홍대 피부과", "연남 피부과"],
+    cn: ["弘大 皮肤科", "弘大 医美"],
+  },
 };
 
-// 지역별 한국어(KR) 검색어 — 한국 타겟 탭이 지역별로 채워지도록 매주 검색
-const AREA_QUERIES_KR: Record<Area, string[]> = {
-  강남: ["강남 피부과", "압구정 피부과", "청담 피부과", "신사 피부과", "강남 피부과 이벤트"],
-  명동: ["명동 피부과", "명동 피부과 이벤트", "명동 피부과 외국인"],
-  홍대: ["홍대 피부과", "홍대 피부과 이벤트", "홍대 피부과 리프팅"],
+// 지역 없는 일반(시술) 검색어 — 본문에서 지역 추론, 없으면 강남 기본
+const GENERAL_QUERIES: LangQueries = {
+  jp: [
+    "韓国 美容皮膚科 日本語",
+    "韓国 水光注射 日本人",
+    "韓国 リフティング 糸リフト",
+    "韓国 ボトックス おすすめ",
+  ],
+  kr: ["서울 피부과 이벤트"],
+  cn: ["韩国 皮肤管理 中文", "韩国 医美 中文", "韩国 水光针"],
 };
 
-// 지역별 중국어(CN) 검색어 — 중국인 타겟 탭이 채워지도록 매주 1개 로테이션
-const AREA_QUERIES_CN: Record<Area, string[]> = {
-  강남: ["江南 整形医院", "狎鸥亭 皮肤科", "清潭洞 医美", "江南 皮肤管理 中文"],
-  명동: ["明洞 皮肤科 中文", "明洞 医美", "明洞 皮肤管理 中文"],
-  홍대: ["弘大 皮肤科 中文", "弘大 医美", "弘大 皮肤管理 中文"],
-};
-
-// 지역 없는 일반(일본어) 검색어 — 매주 GENERAL_PER_WEEK 개 로테이션
-const GENERAL_QUERIES: string[] = [
-  "韓国リジュラン サーモン注射",
-  "韓国スキンブースター 日本人",
-  "韓国ボトックス おすすめ",
-  "韓国フィラー クリニック",
-  "韓国スレッドリフト 糸リフト",
-  "韓国リフティング ウルセラ",
-  "韓国美容注射 リフトアップ",
-  "韓国レーザー 美肌",
-  "韓国クリニック 日本語対応",
-  "韓国皮膚科 日本人向け",
-  "韓国水光注射 日本人",
-  "韓国シミ取り レーザー",
-  "韓国毛穴治療 クリニック",
-  "韓国ハイフ リフトアップ",
-  "韓国美容皮膚科 日本語",
-  "韓国美容 日本人向け",
-  "ソウル 美容 日本語対応",
-  "韓国美容旅行 クリニック",
-];
-
-// 지역 없는 일반(중국어) 검색어 — 매주 GENERAL_PER_WEEK_CN 개 로테이션
-const GENERAL_QUERIES_CN: string[] = [
-  "韩国水光针",
-  "韩国肉毒 瘦脸针",
-  "韩国玻尿酸 填充",
-  "韩国线雕 提升",
-  "韩国皮肤管理 中文",
-  "韩国医美 中文",
-  "韩国整形医院 中文对应",
-  "韩国皮肤科 中文",
-];
-
-const GENERAL_PER_WEEK = 2;
-const GENERAL_PER_WEEK_CN = 1;
-
-/** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) — JP 한자/CN 간체 표기 모두 포함 */
+/** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) — 권역 동/역명, JP한자·CN간체 포함 */
 const AREA_TERMS: Record<Area, string[]> = {
-  // 강남 권역: 압구정·청담·신사 포함 (狎鴎亭=JP, 狎鸥亭=CN 간체)
-  강남: ["江南", "カンナム", "강남", "gangnam", "狎鴎亭", "狎鸥亭", "압구정", "アックジョン", "清潭", "청담", "チョンダム", "新沙", "신사", "シンサ"],
-  명동: ["明洞", "ミョンドン", "명동", "myeongdong", "myeong-dong"],
-  홍대: ["弘大", "ホンデ", "홍대", "hongdae", "hong-dae"],
+  // 강남 권역: 신사·압구정·역삼·청담·논현 포함 (狎鴎亭=JP, 狎鸥亭=CN 간체)
+  강남: [
+    "江南", "カンナム", "강남", "gangnam",
+    "狎鴎亭", "狎鸥亭", "압구정", "アックジョン",
+    "清潭", "청담", "チョンダム",
+    "新沙", "신사", "シンサ",
+    "역삼", "駅三", "驛三", "yeoksam",
+    "논현", "論峴", "선릉", "도산",
+  ],
+  // 명동 권역: 을지로·충무로·회현·남대문·중구 포함
+  명동: [
+    "明洞", "ミョンドン", "명동", "myeongdong", "myeong-dong",
+    "乙支路", "을지로", "euljiro",
+    "忠武路", "충무로", "chungmuro",
+    "회현", "會賢", "남대문", "南大門",
+    "중구", "中区", "中區",
+  ],
+  // 홍대 권역: 합정·상수·연남·연희·망원 포함
+  홍대: [
+    "弘大", "ホンデ", "홍대", "hongdae", "hong-dae",
+    "合井", "합정", "hapjeong",
+    "上水", "상수", "sangsu",
+    "延南", "연남", "yeonnam",
+    "延禧", "연희", "망원", "望遠", "mangwon",
+  ],
 };
 
 const AD_LIBRARY_BASE = "https://www.facebook.com/ads/library/";
-
-/** ISO 8601 주차 (월요일 시작) */
-function isoWeek(d: Date): number {
-  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = t.getUTCDay() || 7;
-  t.setUTCDate(t.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  return Math.ceil(((t.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
 
 /** 검색어로 광고 라이브러리 검색 URL 생성 (KR · 활성 · 노출수 내림차순) */
 export function buildAdLibraryUrl(keyword: string): string {
@@ -110,39 +106,59 @@ export interface SearchQuery {
   url: string;
 }
 
-/**
- * 이번 주 검색 쿼리 (주차 기준 로테이션):
- *   지역(3) × [ JP 2 + KR 1 + CN 1 ] + 일반 JP 2 + 일반 CN 1  ≈ 주당 15개 검색.
- *   Notion "인스타그램 검색 키워드"(시술별·지역별)를 풀에 모두 포함해 매주 로테이션.
- *   결과는 7일 캐시(APIFY_TTL_SECONDS)되어 주 1회만 실제 수집.
- *   수집량을 더 키우려면 검색당 상한 APIFY_PER_QUERY(기본 60) 를 올린다.
- */
-export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
-  const w = isoWeek(now);
-
-  // 각 지역마다 매주 JP 2 + KR 1 + CN 1 (언어별 풀에서 주차 로테이션)
-  const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES_JP) as Area[]).flatMap((area) => {
-    const jp = AREA_QUERIES_JP[area];
-    const kr = AREA_QUERIES_KR[area];
-    const cn = AREA_QUERIES_CN[area];
-    const picks = [jp[w % jp.length], jp[(w + 1) % jp.length], kr[w % kr.length], cn[w % cn.length]];
-    return Array.from(new Set(picks)).map((keyword) => ({ area, keyword, url: buildAdLibraryUrl(keyword) }));
-  });
-
-  const generalQs: SearchQuery[] = [];
-  for (let i = 0; i < GENERAL_PER_WEEK; i++) {
-    const keyword = GENERAL_QUERIES[(w * GENERAL_PER_WEEK + i) % GENERAL_QUERIES.length];
-    generalQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
+/** 여러 리스트를 라운드로빈으로 평탄화 ([a0,b0,c0,a1,b1,...]) */
+function roundRobin<T>(lists: T[][]): T[] {
+  const out: T[] = [];
+  const maxLen = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const l of lists) if (l[i] !== undefined) out.push(l[i]);
   }
-  for (let i = 0; i < GENERAL_PER_WEEK_CN; i++) {
-    const keyword = GENERAL_QUERIES_CN[(w * GENERAL_PER_WEEK_CN + i) % GENERAL_QUERIES_CN.length];
-    generalQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
-  }
-
-  return [...areaQs, ...generalQs];
+  return out;
 }
 
-/** 검색 URL/본문 텍스트에서 지역 판별 */
+/**
+ * 이번 수집의 전체 검색 쿼리 — 지역(권역)별 KR·JP·CN + 일반(시술) 검색어를 "모두" 훑는다.
+ *   지역 3 × (JP 3 + KR 2 + CN 2 = 7) + 일반 (JP 4 + KR 1 + CN 3 = 8) = 29개 검색.
+ *   주차 로테이션 없이 매 수집마다 전부 실행(최대 커버리지). 결과는 7일 캐시되어
+ *   실제 수집은 주 1회 수준. 수집량/속도는 APIFY_PER_QUERY·APIFY_CONCURRENCY 로 조절.
+ *
+ *   순서는 (언어 × 권역) 라운드로빈으로 인터리브한다 — 수집 시간 예산(APIFY_COLLECT_MS)에
+ *   잘려 일부만 실행되더라도 강남·명동·홍대 3권역과 JP·KR·CN 3언어가 고루 섞이도록.
+ */
+export function searchQueries(): SearchQuery[] {
+  const areas = Object.keys(AREA_QUERIES) as Area[];
+  const langs: (keyof LangQueries)[] = ["jp", "kr", "cn"];
+
+  // (언어, 권역) 스트림들을 라운드로빈 → 앞쪽부터 전 권역·언어를 고루 커버
+  const streams: { area: Area; words: string[] }[] = [];
+  for (const lang of langs) {
+    for (const area of areas) streams.push({ area, words: AREA_QUERIES[area][lang] });
+  }
+  const areaQs: SearchQuery[] = [];
+  const maxLen = Math.max(0, ...streams.map((s) => s.words.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const s of streams) {
+      const keyword = s.words[i];
+      if (keyword) areaQs.push({ area: s.area, keyword, url: buildAdLibraryUrl(keyword) });
+    }
+  }
+
+  const generalQs: SearchQuery[] = roundRobin([
+    GENERAL_QUERIES.jp,
+    GENERAL_QUERIES.kr,
+    GENERAL_QUERIES.cn,
+  ]).map((keyword) => ({ keyword, url: buildAdLibraryUrl(keyword) }));
+
+  // 검색어 중복 제거
+  const seen = new Set<string>();
+  return [...areaQs, ...generalQs].filter((q) => {
+    if (seen.has(q.keyword)) return false;
+    seen.add(q.keyword);
+    return true;
+  });
+}
+
+/** 검색 URL/본문 텍스트에서 지역(권역) 판별 */
 export function areaFromText(text: string): Area | null {
   if (!text) return null;
   const lower = text.toLowerCase();

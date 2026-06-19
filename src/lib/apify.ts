@@ -6,11 +6,14 @@
 // 환경변수:
 //   APIFY_TOKEN        (필수) 없으면 수집을 건너뛰고 null 반환 → 목업 폴백.
 //   APIFY_AD_ACTOR     (선택) 기본 "curious_coder/facebook-ads-library-scraper"
-//   APIFY_AD_COUNT     (선택) 최대 수집(과금) 건수, 기본 30 (최소 10)
+//   APIFY_PER_QUERY    (선택) 검색당 최대 수집(과금) 건수, 기본 60 (최소 10)
+//   APIFY_CONCURRENCY  (선택) 검색 동시 실행 수, 기본 6
+//   APIFY_COLLECT_MS   (선택) 수집 시간 예산(ms), 기본 210000 (라우트 300s 보호)
 //   APIFY_TTL_SECONDS  (선택) 결과 캐시 TTL(초), 기본 604800 (7일)
+//   MAX_ACTIVE_DAYS    (선택) 집행 일수 상한, 기본 30 (초과 광고 제외)
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
-import { weeklyQueries, areaFromText } from "./adQueries";
+import { searchQueries, areaFromText, SearchQuery } from "./adQueries";
 import { findClinicByHandle, isExcludedAd, isMedicalCategory } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 
@@ -280,14 +283,19 @@ function actorEndpoint(): string {
   return `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items`;
 }
 
-/**
- * Meta 광고 라이브러리에서 지역별 활성 광고를 수집해 Ad[] 로 반환.
- * 토큰이 없거나 수집에 실패하면 null 을 반환 → 호출부에서 목업으로 폴백.
- */
-/** 단일 검색 URL에 대해 액터 1회 실행 (실패 시 빈 배열) */
-async function runActorForUrl(token: string, url: string, count: number): Promise<FbAd[]> {
+/** 단일 검색 URL에 대해 액터 1회 실행 (실패/시간초과 시 빈 배열).
+ *  deadline(절대 ms)을 주면 런 상한을 min(150s, 남은 예산)으로 묶어 수집 전체가
+ *  라우트 시간제한을 넘지 않게 한다. 남은 예산이 없으면 호출을 건너뛴다. */
+async function runActorForUrl(
+  token: string,
+  url: string,
+  count: number,
+  deadline?: number
+): Promise<FbAd[]> {
+  const ms = deadline ? Math.min(150_000, deadline - Date.now()) : 150_000;
+  if (ms <= 0) return []; // 예산 소진 → 건너뜀
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 240_000);
+  const timeout = setTimeout(() => controller.abort(), ms);
   try {
     const res = await fetch(`${actorEndpoint()}?token=${encodeURIComponent(token)}`, {
       method: "POST",
@@ -309,11 +317,44 @@ async function runActorForUrl(token: string, url: string, count: number): Promis
     const items = await res.json();
     return Array.isArray(items) ? (items as FbAd[]) : [];
   } catch (err) {
-    console.error("[apify] fetch error:", err);
+    console.error("[apify] run error:", err);
     return [];
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/**
+ * 검색 쿼리들을 동시성 풀 + 시간 예산으로 수집해 Ad[] 로 매핑.
+ * - 동시성(APIFY_CONCURRENCY, 기본 6): Apify 동시 실행 한도를 넘지 않게 풀로 제어.
+ * - 시간 예산(APIFY_COLLECT_MS, 기본 210s): 라우트 maxDuration(300s) 안에서 의료검증까지
+ *   끝낼 수 있게, 예산을 넘기면 남은 쿼리는 건너뛰고 모은 만큼 반환(부분이라도 폭넓게).
+ */
+async function collectAds(
+  token: string,
+  queries: SearchQuery[],
+  perQuery: number
+): Promise<Ad[]> {
+  const concurrency = Math.max(1, Number(process.env.APIFY_CONCURRENCY) || 6);
+  const budgetMs = Math.max(60_000, Number(process.env.APIFY_COLLECT_MS) || 210_000);
+  const deadline = Date.now() + budgetMs;
+  const out: Ad[] = [];
+  let next = 0;
+
+  async function worker() {
+    while (next < queries.length && Date.now() < deadline) {
+      const q = queries[next++];
+      const items = await runActorForUrl(token, q.url, perQuery, deadline);
+      for (const fb of items) {
+        const ad = mapFbAdToAd(fb, q.area);
+        if (ad) out.push(ad);
+      }
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, queries.length) }, worker);
+  await Promise.all(workers);
+  return out;
 }
 
 export async function fetchAdsViaApify(): Promise<Ad[] | null> {
@@ -325,23 +366,17 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
     return cache.ads;
   }
 
-  const queries = weeklyQueries();
-  // 검색당 최대 수집 건수 (액터 최소 10). 낮으면 광고가 적게 보임 ↔ 높이면 Apify 비용↑.
-  // 기본 50건 × (지역3+일반2)검색 ≈ 최대 250건/주.
+  const queries = searchQueries();
+  // 검색당 최대 수집 건수 (액터 최소 10). 낮으면 광고가 적게 보임 ↔ 높이면 Apify 비용·시간↑.
   const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 60);
 
   try {
-    const results = await Promise.all(
-      queries.map((q) => runActorForUrl(token, q.url, perQuery))
-    );
+    const collected = await collectAds(token, queries, perQuery);
 
-    // 같은 광고주가 같은 지역·시술로 가격표 등 변형 크리에이티브를 여러 개 도배하는
-    // 경우가 많아, 광고주+지역+시술 기준으로 1건만 남긴다(최신 우선). 먼저 최신순으로
-    // 정렬한 뒤 중복을 제거해 대표로 가장 최근 광고가 남도록 한다.
+    // 중복 제거(칼같이): 같은 광고주가 같은 지역·시술로 변형 크리에이티브를 여러 개
+    // 도배하므로, 광고주+지역+시술 기준 1건만 남긴다. 최신순 정렬 후 첫 1건(최신)을 대표로.
     const seen = new Set<string>();
-    const ads = results
-      .flatMap((items, idx) => items.map((fb) => mapFbAdToAd(fb, queries[idx].area)))
-      .filter((ad): ad is Ad => ad !== null)
+    const ads = collected
       .sort((a, b) => b.date.localeCompare(a.date))
       .filter((ad) => {
         const key = `${ad.igUsername ?? ad.clinic}|${ad.area}|${ad.treatment}`;
@@ -359,7 +394,7 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
     cache = { at: Date.now(), ads: gated };
     return gated;
   } catch (err) {
-    console.error("[apify] fetch error:", err);
+    console.error("[apify] collect error:", err);
     return cache?.ads ?? null;
   }
 }
@@ -371,7 +406,9 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
  */
 async function applyMedicalGate(ads: Ad[]): Promise<Ad[]> {
   if (!hasClinicVerifyKeys()) return ads;
-  const names = Array.from(new Set(ads.map((a) => a.clinic)));
+  // 등록 클리닉·Meta 의료 카테고리는 검증 없이 통과 → 애매한 광고주만 지도 검증(속도↑·호출↓)
+  const ambiguous = ads.filter((a) => !a.featured && !isMedicalCategory(a.pageCategory));
+  const names = Array.from(new Set(ambiguous.map((a) => a.clinic)));
   const verdicts = await verifyAdvertisers(names);
   const kept = ads.filter((a) => {
     if (a.featured) return true; // 등록 클리닉(allowlist)
