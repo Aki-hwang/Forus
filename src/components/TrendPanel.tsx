@@ -43,7 +43,7 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
   const pct = max ? Math.round((count / max) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-20 shrink-0 text-[12px] font-medium text-foreground">{label}</span>
+      <span className="w-12 shrink-0 text-[12px] font-medium text-foreground">{label}</span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-background">
         <div
           className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
@@ -70,14 +70,12 @@ export function TrendPanel({
   const topAd = trends.mostViewed ?? trends.hottest;
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
-  const [period, setPeriod] = useState<number | "all">("all");
+  const [period, setPeriod] = useState<number>(30);
   const [now] = useState(() => Date.now());
   const ranked = useMemo(() => {
-    const days = period === "all" ? Infinity : period;
     const inRange = ads.filter((a) => {
-      if (days === Infinity) return true;
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
-      return !Number.isNaN(t) && now - t <= days * 86_400_000;
+      return !Number.isNaN(t) && now - t <= period * 86_400_000;
     });
     const m = new Map<
       string,
@@ -144,23 +142,23 @@ export function TrendPanel({
 
       {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
       <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
+          <div className="sm:col-span-3">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="text-[13px] font-bold text-foreground">
+              <p className="shrink-0 whitespace-nowrap text-[13px] font-bold text-foreground">
                 {rankByViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
               </p>
               <div className="flex items-center gap-1">
                 <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
-                  {([7, 30, 90, "all"] as (number | "all")[]).map((p) => (
+                  {[7, 30].map((p) => (
                     <button
-                      key={String(p)}
+                      key={p}
                       onClick={() => setPeriod(p)}
                       className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
                         period === p ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
                       }`}
                     >
-                      {p === "all" ? "전체" : `${p}일`}
+                      {`${p}일`}
                     </button>
                   ))}
                 </div>
@@ -168,10 +166,10 @@ export function TrendPanel({
                   type="number"
                   min={1}
                   placeholder="직접"
-                  value={typeof period === "number" && ![7, 30, 90].includes(period) ? period : ""}
+                  value={![7, 30].includes(period) ? period : ""}
                   onChange={(e) => {
                     const v = parseInt(e.target.value, 10);
-                    setPeriod(Number.isFinite(v) && v > 0 ? v : "all");
+                    setPeriod(Number.isFinite(v) && v > 0 ? v : 30);
                   }}
                   className="w-12 rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:border-primary"
                 />
@@ -219,7 +217,7 @@ export function TrendPanel({
             </div>
           </div>
 
-          <div>
+          <div className="sm:col-span-2">
             <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
             <div className="space-y-2.5">
               {trends.byArea.map((a) => (
