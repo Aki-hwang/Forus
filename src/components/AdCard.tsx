@@ -14,50 +14,29 @@ export function AdCard({
   ad: Ad;
   onGenerate: (ad: Ad) => void;
 }) {
-  const href = ad.sourceUrl;
   const isLive = ad.live === true;
-  const isInstagram = (href ?? "").includes("instagram.com");
-
-  const creative = (
-    <CreativeCard
-      palette={ad.palette}
-      headline={ad.headline}
-      sub={ad.sub}
-      clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
-      treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
-      lang={ad.lang}
-      imageUrl={ad.imageUrl}
-    />
-  );
-
-  const overlay = (
-    <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 transition group-hover:opacity-100">
-      <span className="mb-4 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-foreground shadow-lg">
-        {href
-          ? isInstagram
-            ? "↗ 인스타그램 보기"
-            : "↗ 원본 광고 보기"
-          : "✨ 이 광고로 우리 광고 만들기"}
-      </span>
-    </div>
-  );
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
       <div className="relative">
-        {href ? (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="block">
-            {creative}
-            {overlay}
-          </a>
-        ) : (
-          <button onClick={() => onGenerate(ad)} className="block w-full text-left">
-            {creative}
-            {overlay}
-          </button>
-        )}
+        {/* 카드 클릭 → 상세·생성 모달 (원본 링크는 모달 안에서) */}
+        <button onClick={() => onGenerate(ad)} className="block w-full text-left">
+          <CreativeCard
+            palette={ad.palette}
+            headline={ad.headline}
+            sub={ad.sub}
+            clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
+            treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
+            lang={ad.lang}
+            imageUrl={ad.imageUrl}
+          />
+          <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 transition group-hover:opacity-100">
+            <span className="mb-4 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-foreground shadow-lg">
+              ✨ 상세 보기 · 우리 광고 만들기
+            </span>
+          </div>
+        </button>
 
-        {/* 우리 광고 생성 (원본 이동과 별개로 항상 제공) */}
         <button
           onClick={(e) => {
             e.stopPropagation();
