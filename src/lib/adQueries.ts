@@ -84,16 +84,19 @@ export interface SearchQuery {
 export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
   const w = isoWeek(now);
 
-  // 각 지역마다 매주 JP 1개 + KR 1개 검색 → 지역×언어 커버리지 보장
+  // 각 지역마다 매주 JP 1개 + KR 2개(기본 "X 피부과" 고정 + 추가 로테이션) 검색
   const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES_JP) as Area[]).flatMap((area) => {
     const jp = AREA_QUERIES_JP[area];
     const kr = AREA_QUERIES_KR[area];
     const jpKw = jp[w % jp.length];
-    const krKw = kr[w % kr.length];
-    return [
+    const krBase = kr[0]; // "강남/명동/홍대 피부과" 항상 실행
+    const krExtra = kr.length > 1 ? kr[1 + (w % (kr.length - 1))] : null; // 압구정/청담/이벤트 로테이션
+    const qs: SearchQuery[] = [
       { area, keyword: jpKw, url: buildAdLibraryUrl(jpKw) },
-      { area, keyword: krKw, url: buildAdLibraryUrl(krKw) },
+      { area, keyword: krBase, url: buildAdLibraryUrl(krBase) },
     ];
+    if (krExtra) qs.push({ area, keyword: krExtra, url: buildAdLibraryUrl(krExtra) });
+    return qs;
   });
 
   const generalQs: SearchQuery[] = [];

@@ -315,7 +315,7 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
   const queries = weeklyQueries();
   // 검색당 최대 수집 건수 (액터 최소 10). 낮으면 광고가 적게 보임 ↔ 높이면 Apify 비용↑.
   // 기본 50건 × (지역3+일반2)검색 ≈ 최대 250건/주.
-  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 50);
+  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 60);
 
   try {
     const results = await Promise.all(
