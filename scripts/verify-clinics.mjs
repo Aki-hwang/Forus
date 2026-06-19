@@ -1,23 +1,56 @@
 // 광고주 이름 → 카카오 + 네이버 지도 로컬 검색 → "진료과목 피부과(병원/의원)" 판별
-// (둘 중 한 곳이라도 피부과로 확인되면 인정 — 카카오 미등록 의원 보완)
+// 결과를 src/lib/clinics.ts 의 CLINIC_ALLOWLIST 에 자동 병합
 //
-// 실행 (egress로 dapi.kakao.com / openapi.naver.com 가능한 곳 + 키 필요):
+// 실행:
 //   KAKAO_REST_KEY=xxx \
 //   NAVER_CLIENT_ID=yyy NAVER_CLIENT_SECRET=zzz \
 //   node scripts/verify-clinics.mjs
-// (둘 중 가진 키만 넣어도 동작 — 한 소스만 조회)
-//
-// 출력: 광고주별 판별 결과 + allowlist 후보(피부과로 확인된 이름) JSON.
-// 지도는 한국 장소 기준이라 영문 IG 핸들(예: Idclinicjp)은 미발견될 수 있음(정상).
+
+import { readFileSync, writeFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __dir = dirname(fileURLToPath(import.meta.url));
+const CLINICS_PATH = resolve(__dir, "../src/lib/clinics.ts");
 
 const KAKAO_KEY = process.env.KAKAO_REST_KEY;
 const NAVER_ID = process.env.NAVER_CLIENT_ID;
 const NAVER_SECRET = process.env.NAVER_CLIENT_SECRET;
+
 if (!KAKAO_KEY && !(NAVER_ID && NAVER_SECRET)) {
   console.error("KAKAO_REST_KEY 또는 NAVER_CLIENT_ID+NAVER_CLIENT_SECRET 중 하나는 필요합니다.");
   process.exit(1);
 }
 console.error(`소스: ${[KAKAO_KEY && "카카오", NAVER_ID && NAVER_SECRET && "네이버"].filter(Boolean).join(" + ")}`);
+
+// ── egress 사전 확인 ──────────────────────────────────────────────────────────
+async function checkEgress() {
+  const tests = [];
+  if (KAKAO_KEY) tests.push(
+    fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=test&size=1`,
+      { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` }, signal: AbortSignal.timeout(8000) })
+      .then(r => ({ host: "dapi.kakao.com", ok: r.status !== 403, status: r.status }))
+      .catch(() => ({ host: "dapi.kakao.com", ok: false, status: 0 }))
+  );
+  if (NAVER_ID && NAVER_SECRET) tests.push(
+    fetch(`https://openapi.naver.com/v1/search/local.json?query=test&display=1`,
+      { headers: { "X-Naver-Client-Id": NAVER_ID, "X-Naver-Client-Secret": NAVER_SECRET }, signal: AbortSignal.timeout(8000) })
+      .then(r => ({ host: "openapi.naver.com", ok: r.status !== 403, status: r.status }))
+      .catch(() => ({ host: "openapi.naver.com", ok: false, status: 0 }))
+  );
+  return Promise.all(tests);
+}
+
+const egressResults = await checkEgress();
+const blocked = egressResults.filter(r => !r.ok);
+if (blocked.length === egressResults.length) {
+  console.error("\n❌ 모든 API 호스트가 egress 차단 상태입니다:");
+  blocked.forEach(r => console.error(`   ${r.host} → HTTP ${r.status} (Host not in allowlist)`));
+  console.error("\nclinics.ts를 수정하지 않고 종료합니다.");
+  console.error("새 세션을 시작하거나, 환경설정 > 네트워크에 도메인을 추가해 주세요.");
+  process.exit(1);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // 수집된 광고주 이름(중복 제거). 갱신 시 이 배열만 교체하면 됨.
 const ADVERTISERS = [
@@ -39,26 +72,28 @@ const ADVERTISERS = [
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const stripTag = (s) => (s || "").replace(/<[^>]+>/g, "");
 
-// 카카오: [{name, category}]
 async function searchKakao(query, retry = 0) {
   if (!KAKAO_KEY) return [];
   const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=5`;
-  const res = await fetch(url, { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` } });
-  if (res.status === 429 && retry < 3) { await sleep(1000 * (retry + 1)); return searchKakao(query, retry + 1); }
-  if (!res.ok) return [];
-  const j = await res.json();
-  return (j.documents || []).map((d) => ({ name: d.place_name, category: d.category_name || "" }));
+  try {
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` }, signal: AbortSignal.timeout(8000) });
+    if (res.status === 429 && retry < 3) { await sleep(1000 * (retry + 1)); return searchKakao(query, retry + 1); }
+    if (!res.ok) return [];
+    const j = await res.json();
+    return (j.documents || []).map((d) => ({ name: d.place_name, category: d.category_name || "" }));
+  } catch { return []; }
 }
 
-// 네이버: [{name, category}]
 async function searchNaver(query, retry = 0) {
   if (!(NAVER_ID && NAVER_SECRET)) return [];
   const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=5`;
-  const res = await fetch(url, { headers: { "X-Naver-Client-Id": NAVER_ID, "X-Naver-Client-Secret": NAVER_SECRET } });
-  if (res.status === 429 && retry < 3) { await sleep(1000 * (retry + 1)); return searchNaver(query, retry + 1); }
-  if (!res.ok) return [];
-  const j = await res.json();
-  return (j.items || []).map((it) => ({ name: stripTag(it.title), category: it.category || "" }));
+  try {
+    const res = await fetch(url, { headers: { "X-Naver-Client-Id": NAVER_ID, "X-Naver-Client-Secret": NAVER_SECRET }, signal: AbortSignal.timeout(8000) });
+    if (res.status === 429 && retry < 3) { await sleep(1000 * (retry + 1)); return searchNaver(query, retry + 1); }
+    if (!res.ok) return [];
+    const j = await res.json();
+    return (j.items || []).map((it) => ({ name: stripTag(it.title), category: it.category || "" }));
+  } catch { return []; }
 }
 
 const isDerma = (c) => /피부과/.test(c) && /(병원|의원)/.test(c);
@@ -78,10 +113,10 @@ const rows = [];
 for (const name of ADVERTISERS) {
   const q = name.replace(/\s*\(.*\)$/, "").trim();
   const [k, n] = await Promise.all([searchKakao(q), searchNaver(q)]);
-  const r = classify([...k, ...n]); // 두 소스 합쳐서 판별 (한 곳이라도 피부과면 인정)
+  const r = classify([...k, ...n]);
   rows.push([name, r.verdict, r.place ? `${r.place.name} · ${r.place.category}` : ""]);
   if (r.verdict === "피부과") verified.push(name);
-  await sleep(120); // rate limit 예의
+  await sleep(120);
 }
 
 console.log("\n=== 판별 결과 ===");
@@ -89,5 +124,42 @@ for (const [name, verdict, info] of rows) {
   console.log(`[${verdict}] ${name}${info ? "  → " + info : ""}`);
 }
 console.log(`\n총 ${ADVERTISERS.length}곳 중 피부과(병원/의원) 확인: ${verified.length}곳`);
-console.log("\n=== allowlist 후보 (clinics.ts 에 반영) ===");
-console.log(JSON.stringify(verified, null, 2));
+
+if (verified.length === 0) {
+  console.error("\n⚠️  피부과 확인 0건 — API 응답 이상으로 판단, clinics.ts 수정하지 않습니다.");
+  process.exit(1);
+}
+
+// ── clinics.ts CLINIC_ALLOWLIST 자동 병합 ────────────────────────────────────
+const src = readFileSync(CLINICS_PATH, "utf8");
+
+// 기존 allowlist 파싱
+const existingMatch = src.match(/const CLINIC_ALLOWLIST\s*=\s*\[([\s\S]*?)\];/);
+if (!existingMatch) {
+  console.error("clinics.ts 에서 CLINIC_ALLOWLIST 를 찾지 못했습니다.");
+  process.exit(1);
+}
+const existingRaw = existingMatch[1]
+  .split(",")
+  .map(s => s.replace(/\/\/.*$/m, "").trim().replace(/^"|"$/g, "").replace(/^'|'$/g, ""))
+  .filter(Boolean);
+
+// 검증된 이름에서 allowlist 키워드 추출 (이름을 소문자로 단순화해서 추가)
+const newKeywords = verified.map(name =>
+  name.replace(/\s*\(.*\)$/, "").trim().toLowerCase()
+).filter(k => k.length > 1 && !existingRaw.some(e => e.toLowerCase() === k));
+
+const merged = [...new Set([...existingRaw, ...newKeywords])].sort();
+
+const newListStr = merged.map(k => `  "${k}"`).join(",\n");
+const newSrc = src.replace(
+  /const CLINIC_ALLOWLIST\s*=\s*\[([\s\S]*?)\];/,
+  `const CLINIC_ALLOWLIST = [\n${newListStr},\n];`
+);
+
+writeFileSync(CLINICS_PATH, newSrc, "utf8");
+console.log(`\n✅ clinics.ts CLINIC_ALLOWLIST 업데이트 완료`);
+console.log(`   기존 ${existingRaw.length}개 → 병합 후 ${merged.length}개 (신규 ${newKeywords.length}개 추가)`);
+if (newKeywords.length > 0) {
+  console.log("   신규 추가:", newKeywords);
+}
