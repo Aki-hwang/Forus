@@ -11,7 +11,7 @@
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { weeklyQueries, areaFromText } from "./adQueries";
-import { findClinicByHandle } from "./clinics";
+import { findClinicByHandle, isBlockedAdvertiser } from "./clinics";
 
 // ---------- 시술/스타일 추론 사전 ----------
 
@@ -188,6 +188,10 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
   // 광고주 인스타 핸들 → 등록 클리닉 조회 (지역 정밀 매핑 + 태그)
   const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
   const igUsername = pageInfo?.ig_username?.trim() || undefined;
+
+  // 피부과 아닌 광고주(전자상거래/제품/플랫폼 등) 제외
+  if (isBlockedAdvertiser(igUsername, fb.page_name)) return null;
+
   const known = findClinicByHandle(igUsername);
 
   // 지역: 등록 클리닉이 단일 지역이면 그걸로, 아니면 URL/본문 추론, 최후엔 강남

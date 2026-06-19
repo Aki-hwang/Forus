@@ -35,3 +35,29 @@ export function findClinicByHandle(handle?: string): KnownClinic | undefined {
   if (!handle) return undefined;
   return BY_HANDLE.get(handle.replace(/^@/, "").trim().toLowerCase());
 }
+
+// ---------- 광고주 차단 목록 (피부과 아닌 전자상거래/제품 광고 제외) ----------
+// 새로 거슬리는 광고가 보이면 핸들이나 이름 키워드를 여기 추가하면 즉시 제외됩니다.
+const BLOCKED_HANDLES = new Set<string>([
+  "ecombzzelectronicos",
+  "beaund_official",
+  "gangnamunni",
+  "gangnamunni_official",
+]);
+const BLOCKED_NAME_PARTS = [
+  "beaund",
+  "ecombz",
+  "electr",
+  "강남언니",
+  "gangnamunni",
+  "쇼핑",
+  "스토어",
+  "store",
+];
+
+export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boolean {
+  const h = igUsername?.replace(/^@/, "").trim().toLowerCase() ?? "";
+  const n = (pageName ?? "").toLowerCase();
+  if (h && BLOCKED_HANDLES.has(h)) return true;
+  return BLOCKED_NAME_PARTS.some((p) => h.includes(p) || n.includes(p));
+}

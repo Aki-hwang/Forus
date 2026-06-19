@@ -8,23 +8,21 @@
 
 import { Area } from "./ads";
 
-// 강남은 압구정·청담·신사(지리적으로 강남 권역)까지 포함해 커버리지를 넓힘
-const AREA_QUERIES: Record<Area, string[]> = {
-  강남: [
-    "江南 美容クリニック",
-    "狎鴎亭 美容クリニック",
-    "清潭 皮膚科 日本語",
-    "新沙 美容クリニック",
-    "江南 日本語 クリニック",
-    "韓国プチ整形 江南",
-  ],
+// 지역별 일본어(JP) 검색어 — 강남은 압구정·청담·신사(강남 권역) 포함
+const AREA_QUERIES_JP: Record<Area, string[]> = {
+  강남: ["江南 美容クリニック", "狎鴎亭 美容クリニック", "清潭 皮膚科 日本語", "新沙 美容クリニック"],
   명동: ["明洞 美容クリニック 日本人", "明洞 スキンケア クリニック"],
   홍대: ["ホンデ 皮膚科 日本語", "ホンデ 韓国美容"],
 };
 
-// 지역별 매주 검색 개수 (강남은 시장이 가장 커 2개)
-const AREA_PICKS: Record<Area, number> = { 강남: 2, 명동: 1, 홍대: 1 };
+// 지역별 한국어(KR) 검색어 — 한국 타겟 탭이 지역별로 채워지도록 매주 검색
+const AREA_QUERIES_KR: Record<Area, string[]> = {
+  강남: ["강남 피부과", "압구정 피부과", "청담 피부과"],
+  명동: ["명동 피부과", "명동 피부과 이벤트"],
+  홍대: ["홍대 피부과", "홍대 피부과 이벤트"],
+};
 
+// 지역 없는 일반(일본어) 검색어 — 매주 일부 로테이션
 const GENERAL_QUERIES: string[] = [
   "韓国リジュラン サーモン注射",
   "韓国スキンブースター 日本人",
@@ -36,26 +34,9 @@ const GENERAL_QUERIES: string[] = [
   "韓国レーザー 美肌",
   "韓国クリニック 日本語対応",
   "韓国皮膚科 日本人向け",
-  "韓国美容 日本人向け",
-  "ソウル 美容 日本語対応",
-  "韓国美容旅行 クリニック",
 ];
 
-/** 한국(국내) 타겟 한국어 검색 키워드 — 한국 타겟 탭용 */
-const KR_QUERIES: string[] = [
-  "강남 피부과 이벤트",
-  "압구정 피부과",
-  "명동 피부과",
-  "홍대 피부과",
-  "물광주사 이벤트",
-  "리프팅 이벤트",
-  "보톡스 이벤트",
-  "피부과 시술 이벤트",
-];
-
-/** 매주 사용할 일반 키워드 개수 (지역 + 일반 + 한국어 = 주당 검색 수) */
 const GENERAL_PER_WEEK = 2;
-const KR_PER_WEEK = 2;
 
 /** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) */
 const AREA_TERMS: Record<Area, string[]> = {
@@ -103,13 +84,16 @@ export interface SearchQuery {
 export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
   const w = isoWeek(now);
 
-  const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES) as Area[]).flatMap((area) => {
-    const list = AREA_QUERIES[area];
-    const picks = AREA_PICKS[area] ?? 1;
-    return Array.from({ length: picks }, (_, j) => {
-      const keyword = list[(w * picks + j) % list.length];
-      return { area, keyword, url: buildAdLibraryUrl(keyword) };
-    });
+  // 각 지역마다 매주 JP 1개 + KR 1개 검색 → 지역×언어 커버리지 보장
+  const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES_JP) as Area[]).flatMap((area) => {
+    const jp = AREA_QUERIES_JP[area];
+    const kr = AREA_QUERIES_KR[area];
+    const jpKw = jp[w % jp.length];
+    const krKw = kr[w % kr.length];
+    return [
+      { area, keyword: jpKw, url: buildAdLibraryUrl(jpKw) },
+      { area, keyword: krKw, url: buildAdLibraryUrl(krKw) },
+    ];
   });
 
   const generalQs: SearchQuery[] = [];
@@ -118,13 +102,7 @@ export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
     generalQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
   }
 
-  const krQs: SearchQuery[] = [];
-  for (let i = 0; i < KR_PER_WEEK; i++) {
-    const keyword = KR_QUERIES[(w * KR_PER_WEEK + i) % KR_QUERIES.length];
-    krQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
-  }
-
-  return [...areaQs, ...generalQs, ...krQs];
+  return [...areaQs, ...generalQs];
 }
 
 /** 검색 URL/본문 텍스트에서 지역 판별 */
