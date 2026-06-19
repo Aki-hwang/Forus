@@ -17,9 +17,13 @@
 - **소셜 로그인 / 회원가입** — Google 계정으로 로그인(첫 로그인 시 자동 회원가입). Auth.js v5 기반, JWT 쿠키 세션(별도 DB 불필요)
 
 > 데이터는 **Apify(Meta 광고 라이브러리) 수집 + 목업 폴백** 구조입니다. `APIFY_TOKEN` 이
-> 설정되면 `src/lib/adQueries.ts` 의 지역별 검색어로 활성 광고를 긁어와 본문에서 시술·
-> 스타일·언어를 추론해 매핑하고, 토큰이 없거나 수집에 실패하면 자동으로
-> 목업(`src/lib/ads.ts`)으로 폴백합니다.
+> 설정되면 `src/lib/adQueries.ts` 의 지역별 검색어(일본어·한국어·중국어)로 활성 광고를
+> 긁어와 본문에서 시술·스타일·언어를 추론해 매핑하고, 토큰이 없거나 수집에 실패하면
+> 자동으로 목업(`src/lib/ads.ts`)으로 폴백합니다.
+>
+> 🏥 `KAKAO_REST_KEY` 또는 `NAVER_CLIENT_ID`+`NAVER_CLIENT_SECRET` 가 설정되면, 네이버·
+> 카카오 지역검색으로 광고주가 실제 **병원/의원**인지 검증해 화장품·제품 등 비의료
+> 광고를 제외합니다 (무료 API라 Apify 비용과 무관). 키가 없으면 휴리스틱 필터로 폴백.
 >
 > ⚠️ 광고 라이브러리는 상업광고의 노출수·조회수를 제공하지 않습니다. 조회수/좋아요 등
 > 인게이지먼트는 추후 **2단계: 인스타그램 연동**에서 보강할 예정입니다(현재는 집행 일수·
@@ -36,8 +40,10 @@
 | --- | --- | --- |
 | `APIFY_TOKEN` | Apify API 토큰 (없으면 목업 폴백) | — |
 | `APIFY_AD_ACTOR` | 사용할 액터 | `curious_coder/facebook-ads-library-scraper` |
-| `APIFY_AD_COUNT` | 전체 목표 수집 건수 (지역당 최소 10) | `30` |
+| `APIFY_PER_QUERY` | 검색당 최대 수집(과금) 건수 (최소 10) | `60` |
 | `APIFY_TTL_SECONDS` | 수집 결과 캐시 TTL(초) | `604800` (7일) |
+| `KAKAO_REST_KEY` | 카카오 로컬 검색 키 (의료기관 검증·무료) | — |
+| `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | 네이버 지역검색 키 (의료기관 검증·무료) | — |
 
 ## 기술 스택
 
@@ -56,21 +62,22 @@ src/
     globals.css            디자인 토큰
     login/page.tsx         로그인 / 회원가입 페이지
     api/ads/route.ts       광고 목록 API (Apify 광고 라이브러리 수집 → 목업 폴백)
-    api/generate/route.ts  광고 생성 API
+    api/ads/views/route.ts 광고주 IG 조회수 보강 API
     api/auth/[...nextauth]/route.ts  Auth.js 인증 엔드포인트
   components/
     Header.tsx             로그인 상태 / 유저 메뉴
     Providers.tsx          SessionProvider 래퍼
     TrendPanel.tsx         트렌드 지표 패널
-    FilterBar.tsx          지역/시술 필터
-    AdCard.tsx             갤러리 카드 (클릭 → 원본 광고 / ✨ 생성)
+    FilterBar.tsx          지역/정렬 필터
+    AdCard.tsx             갤러리 카드 (클릭 → 상세 모달)
     CreativeCard.tsx       광고 크리에이티브 비주얼 (공용)
-    AdDetailModal.tsx      상세 + AI 생성 플로우
+    AdDetailModal.tsx      광고 상세 모달
   lib/
     ads.ts                 데이터 모델 + 목업 데이터 + 트렌드 집계
-    adQueries.ts           지역별 광고 라이브러리 검색어 (주 1회 로테이션)
-    apify.ts               광고 라이브러리 수집 → Ad 매핑 (시술/스타일/언어 추론)
-    generate.ts            레퍼런스 기반 광고 생성기
+    adQueries.ts           지역별 광고 라이브러리 검색어 (JP·KR·CN, 주 1회 로테이션)
+    apify.ts               광고 라이브러리 수집 → Ad 매핑 + 의료기관 게이트
+    clinics.ts             등록 클리닉 allowlist + 잡광고/화장품 필터
+    clinicVerify.ts        네이버·카카오 지역검색으로 병원/의원 검증
 ```
 
 ## 로컬 실행

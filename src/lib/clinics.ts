@@ -96,6 +96,8 @@ const NON_CLINIC_SIGNALS = [
   "크림", "세럼", "앰플", "에센스", "토너", "로션", "클렌저", "클렌징", "마스크팩",
   "콜라겐", "영양제", "화장품", "1+1", "증정", "완판", "품절", "재입고", "정기구독",
   "리필", "진리템", "약국", "무료배송", "홈케어",
+  "쿠션", "파운데이션", "틴트", "립밤", "향수", "샴푸", "바디로션", "선크림", "선블럭",
+  "팩트", "코스메틱", "cosmetic", "스킨케어세트", "기초세트", "본품", "구성", "용량",
   // 인플루언서/제휴/블로그
   "꿀팁", "뷰티공간", "뷰티로그", "beautylog", "dailybeauty", "리뷰왕", "리뷰맨",
   "내돈내산", "공구", "협찬", "정보 공유", "저장소", "연구소", "비결",
@@ -121,6 +123,8 @@ const NON_CLINIC_CATEGORIES = [
   "marketing agency", "advertising", "media", "product/service", "shopping",
   "retail", "e-commerce", "cosmetics", "health/beauty store", "travel",
   "personal goods", "brand", "clothing",
+  "beauty, cosmetic & personal care", "beauty supply store", "cosmetics store",
+  "makeup artist", "perfume",
   "블로그", "쇼핑", "마케팅", "화장품", "여행", "크리에이터",
 ];
 
@@ -128,6 +132,11 @@ function categoryMatch(cat: string | undefined, list: string[]): boolean {
   if (!cat) return false;
   const c = cat.toLowerCase();
   return list.some((s) => c.includes(s));
+}
+
+/** Meta 페이지 카테고리가 의료(병원/피부과/성형외과 등)인지 — 의료기관 검증의 양성 신호 */
+export function isMedicalCategory(pageCategory?: string): boolean {
+  return categoryMatch(pageCategory, MEDICAL_CATEGORIES);
 }
 
 /** 광고를 피드에서 제외할지 (true = 제외). pageCategory(있으면) 우선. */

@@ -11,7 +11,8 @@
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { weeklyQueries, areaFromText } from "./adQueries";
-import { findClinicByHandle, isExcludedAd } from "./clinics";
+import { findClinicByHandle, isExcludedAd, isMedicalCategory } from "./clinics";
+import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 
 // ---------- 시술/스타일 추론 사전 ----------
 
@@ -342,12 +343,33 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
 
     if (ads.length === 0) return cache?.ads ?? null;
 
-    cache = { at: Date.now(), ads };
-    return ads;
+    // 네이버·카카오 지역검색(무료)으로 광고주가 실제 병원/의원인지 검증해
+    // 비의료(화장품·제품 등) 광고를 제외한다. Apify 추가 호출 없음.
+    const gated = await applyMedicalGate(ads);
+
+    cache = { at: Date.now(), ads: gated };
+    return gated;
   } catch (err) {
     console.error("[apify] fetch error:", err);
     return cache?.ads ?? null;
   }
+}
+
+/**
+ * 광고주가 실제 의료기관인지 네이버·카카오 지역검색으로 검증해 비의료 광고 제외.
+ * 통과 조건(OR): 등록 클리닉(allowlist) | Meta 의료 카테고리 | 지도에서 병원/의원 확인.
+ * 검증 키가 없거나(휴리스틱 폴백) 결과가 비정상으로 전부 걸러지면 원본 유지.
+ */
+async function applyMedicalGate(ads: Ad[]): Promise<Ad[]> {
+  if (!hasClinicVerifyKeys()) return ads;
+  const names = Array.from(new Set(ads.map((a) => a.clinic)));
+  const verdicts = await verifyAdvertisers(names);
+  const kept = ads.filter((a) => {
+    if (a.featured) return true; // 등록 클리닉(allowlist)
+    if (isMedicalCategory(a.pageCategory)) return true; // Meta 의료 카테고리
+    return Boolean(verdicts.get(a.clinic)?.medical); // 지도에서 병원/의원 확인
+  });
+  return kept.length > 0 ? kept : ads;
 }
 
 // ---------- 2단계: 인스타그램 조회수 보강 ----------
