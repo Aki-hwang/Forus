@@ -14,6 +14,7 @@
 - **시술별 그룹 대시보드** — 본문 카피에서 시술/지역/스타일/언어를 자동 분류해 시술별 섹션으로 노출
 - **클릭 → 원본 광고로 이동** — 카드 클릭 시 광고 랜딩(LINE/인스타/홈페이지)으로 바로 연결
 - **클릭 → AI 광고 자동 생성** — 카드의 `✨ 생성` 버튼으로 레퍼런스 기반 우리 병원 버전 크리에이티브 + 일본어/중국어 캡션·해시태그 생성
+- **소셜 로그인 / 회원가입** — Google·Naver 계정으로 로그인(첫 로그인 시 자동 회원가입). Auth.js v5 기반, JWT 쿠키 세션(별도 DB 불필요)
 
 > 데이터는 **Apify(Meta 광고 라이브러리) 수집 + 목업 폴백** 구조입니다. `APIFY_TOKEN` 이
 > 설정되면 `src/lib/adQueries.ts` 의 지역별 검색어로 활성 광고를 긁어와 본문에서 시술·
@@ -48,14 +49,18 @@
 
 ```
 src/
+  auth.ts                  Auth.js v5 설정 (Google·Naver, JWT 세션)
   app/
     page.tsx               메인 대시보드
-    layout.tsx             폰트/메타데이터
+    layout.tsx             폰트/메타데이터 + SessionProvider
     globals.css            디자인 토큰
+    login/page.tsx         로그인 / 회원가입 페이지
     api/ads/route.ts       광고 목록 API (Apify 광고 라이브러리 수집 → 목업 폴백)
     api/generate/route.ts  광고 생성 API
+    api/auth/[...nextauth]/route.ts  Auth.js 인증 엔드포인트
   components/
-    Header.tsx
+    Header.tsx             로그인 상태 / 유저 메뉴
+    Providers.tsx          SessionProvider 래퍼
     TrendPanel.tsx         트렌드 지표 패널
     FilterBar.tsx          지역/시술 필터
     AdCard.tsx             갤러리 카드 (클릭 → 원본 광고 / ✨ 생성)
@@ -82,6 +87,23 @@ npm run build
 npm start        # PORT 환경변수 사용 (기본 3000)
 ```
 
+## 인증 (로그인 / 회원가입)
+
+Google·Naver 소셜 로그인을 사용합니다. 코드는 준비되어 있고 **환경변수만 채우면** 동작합니다.
+
+1. `cp .env.example .env.local`
+2. 비밀키 생성: `npx auth secret` (또는 `openssl rand -base64 32`) → `AUTH_SECRET`
+3. **Google**: [Cloud Console → 사용자 인증 정보](https://console.cloud.google.com/apis/credentials)에서 OAuth 클라이언트(웹) 생성
+   - 승인된 리디렉션 URI: `{사이트}/api/auth/callback/google` (개발: `http://localhost:3000/...`)
+   - 발급값 → `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+4. **Naver**: [Naver Developers](https://developers.naver.com/apps/#/register)에서 앱 등록(네이버 로그인)
+   - Callback URL: `{사이트}/api/auth/callback/naver`
+   - 발급값 → `AUTH_NAVER_ID`, `AUTH_NAVER_SECRET`
+5. 배포 시 위 값들을 **Railway Variables** 에 등록하고, `AUTH_URL` 을 운영 도메인으로 지정
+
+> 관련 코드: `src/auth.ts`(설정), `src/app/api/auth/[...nextauth]/route.ts`(엔드포인트), `src/app/login/page.tsx`(로그인 페이지). Railway 등 Vercel 외 호스팅 대응으로 `trustHost: true` 설정됨.
+> **Naver 참고:** `expires_in` 비표준 응답으로 `OperationProcessingError` 가 나면 `src/auth.ts` 주석의 `token.conform` 보정 코드를 적용하세요.
+
 ## 배포 (Railway)
 
 1. Railway에서 New Project → Deploy from GitHub repo → 이 저장소 선택
@@ -97,4 +119,5 @@ npm start        # PORT 환경변수 사용 (기본 3000)
 - [ ] 일본어 키워드 비중 강화 / JP·CN 필터 토글
 - [ ] 실제 이미지 생성 API 연동 (`generate.ts` 의 `imagePrompt` 활용)
 - [ ] 광고 저장함 / 캠페인 관리
-- [ ] 인증 / 병원 계정
+- [x] 인증 (Google·Naver 소셜 로그인 / 회원가입)
+- [ ] 병원 계정 · 사용자별 데이터(DB) 연동
