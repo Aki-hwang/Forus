@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ads as mockAds, Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
+import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
+import { sampleAds } from "@/lib/sampleAds";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey } from "@/components/FilterBar";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
-type Source = "mock" | "apify";
+type Source = "sample" | "apify";
 
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
@@ -16,9 +17,9 @@ export default function Home() {
   const [sort, setSort] = useState<SortKey>("views");
   const [selected, setSelected] = useState<Ad | null>(null);
 
-  // 목업으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체 (실패 시 목업 유지)
-  const [allAds, setAllAds] = useState<Ad[]>(mockAds);
-  const [source, setSource] = useState<Source>("mock");
+  // 수집 스냅샷(샘플)으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체
+  const [allAds, setAllAds] = useState<Ad[]>(sampleAds);
+  const [source, setSource] = useState<Source>("sample");
   // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
 
@@ -30,7 +31,7 @@ export default function Home() {
       .then((data: { source?: Source; ads?: Ad[] }) => {
         if (!alive || !data?.ads?.length) return;
         setAllAds(data.ads);
-        setSource(data.source ?? "mock");
+        setSource(data.source ?? "sample");
 
         // 2단계: 조회수 보강 (느림 → 끝나면 재정렬)
         if (data.source === "apify") {
@@ -110,7 +111,7 @@ export default function Home() {
                     source === "apify" ? "bg-primary" : "bg-muted"
                   }`}
                 />
-                {source === "apify" ? "실시간 수집 (Meta 광고 라이브러리)" : "목업 데이터"}
+                {source === "apify" ? "실시간 수집 (Meta 광고 라이브러리)" : "수집 데이터 (개발용 · Apify 미연결)"}
               </span>
               {viewState === "loading" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-0.5 text-[11px] font-bold text-muted">
@@ -175,7 +176,7 @@ export default function Home() {
 
       <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
         DermaRadar · 피부과 광고 트렌드 · MVP ·{" "}
-        {source === "apify" ? "실시간 수집" : "목업 데이터"}
+        {source === "apify" ? "실시간 수집" : "수집 데이터(개발용)"}
       </footer>
 
       {selected ? (

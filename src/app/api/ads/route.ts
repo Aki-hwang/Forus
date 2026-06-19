@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ads as mockAds } from "@/lib/ads";
+import { sampleAds } from "@/lib/sampleAds";
 import { fetchAdsViaApify } from "@/lib/apify";
 
 // 매 요청마다 수집 시도 (모듈 내부 TTL 캐시로 주 1회 수준으로 호출 제어)
@@ -14,5 +14,6 @@ export async function GET() {
     return NextResponse.json({ source: "apify", count: live.length, ads: live });
   }
 
-  return NextResponse.json({ source: "mock", count: mockAds.length, ads: mockAds });
+  // Apify 미연결/한도 초과 시: 수집해둔 실제 데이터 스냅샷으로 폴백 (개발/미리보기용, 비용 0)
+  return NextResponse.json({ source: "sample", count: sampleAds.length, ads: sampleAds });
 }
