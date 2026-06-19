@@ -4,13 +4,13 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-base font-black text-white shadow-sm">
-            F
+            D
           </div>
           <div className="leading-tight">
             <p className="text-[15px] font-black tracking-tight text-foreground">
-              Forus
+              DermaRadar
             </p>
-            <p className="text-[11px] text-muted">피부과 광고 트렌드 · AI 광고 생성</p>
+            <p className="text-[11px] text-muted">피부과 광고 트렌드 레이더</p>
           </div>
         </div>
 

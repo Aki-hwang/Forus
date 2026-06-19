@@ -307,10 +307,9 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
   }
 
   const queries = weeklyQueries();
-  // 액터가 limitPerSource 를 무시하고 첫 검색에서 count 를 소진하므로 검색어별로 분리 호출한다.
-  // APIFY_AD_COUNT 는 전체 목표치, 검색당 최소 10건(액터 최소 과금 단위).
-  const total = Math.max(10, Number(process.env.APIFY_AD_COUNT) || 30);
-  const perQuery = Math.max(10, Math.ceil(total / queries.length));
+  // 검색당 최대 수집 건수 (액터 최소 10). 낮으면 광고가 적게 보임 ↔ 높이면 Apify 비용↑.
+  // 기본 50건 × (지역3+일반2)검색 ≈ 최대 250건/주.
+  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 50);
 
   try {
     const results = await Promise.all(

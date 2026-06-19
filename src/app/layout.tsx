@@ -17,9 +17,9 @@ const notoJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Forus — 피부과 광고 트렌드 & AI 광고 생성",
+  title: "DermaRadar — 피부과 광고 트렌드 레이더",
   description:
-    "강남·명동·홍대 피부과의 일본/중국 타겟 인스타 광고를 한눈에 보고, 클릭 한 번으로 우리 광고를 자동 생성하세요.",
+    "강남·명동·홍대 피부과의 일본/중국인 관광객 대상 광고를 조회수순으로 한눈에. 카드를 누르면 원본 인스타그램으로 이동합니다.",
 };
 
 export default function RootLayout({
