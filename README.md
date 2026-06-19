@@ -33,14 +33,14 @@
 
 1. [Apify](https://console.apify.com/settings/integrations) 에서 API 토큰 발급
 2. `.env.example` 를 참고해 `.env.local`(로컬) 또는 Railway Variables 에 `APIFY_TOKEN` 설정
-3. 지역별 검색어는 `src/lib/adQueries.ts` 에서 관리하며, 강남·명동·홍대를 **권역으로 넓게**(강남=강남/신사/압구정/역삼/청담, 명동=명동/을지로/충무로/중구, 홍대=홍대/합정/상수/연남/망원) 잡아 **KR·JP·CN 검색어 29개를 매 수집마다 전부 훑습니다**(주차 로테이션 없음, 결과 7일 캐시)
+3. 지역별 검색어는 `src/lib/adQueries.ts` 에서 관리하며, 강남·명동·홍대를 **권역으로 넓게**(강남=강남/신사/압구정/역삼/청담, 명동=명동/을지로/충무로/중구, 홍대=홍대/합정/상수/연남/망원) 잡아 **KR·JP·CN 검색어 33개를 매 수집마다 전부 훑습니다**(주차 로테이션 없음, 결과 7일 캐시). 각 URL에 `start_date[min]=(30일전)` 을 붙여 최근 광고를 우선 수집합니다
 4. 대시보드 상단 배지로 **실시간 수집 / 목업** 상태를 확인할 수 있습니다
 
 | 환경변수 | 설명 | 기본값 |
 | --- | --- | --- |
 | `APIFY_TOKEN` | Apify API 토큰 (없으면 목업 폴백) | — |
 | `APIFY_AD_ACTOR` | 사용할 액터 | `curious_coder/facebook-ads-library-scraper` |
-| `APIFY_PER_QUERY` | 검색당 최대 수집(과금) 건수 (최소 10) | `60` |
+| `APIFY_PER_QUERY` | 검색당 최대 수집(과금) 건수 (최소 10) | `80` |
 | `APIFY_CONCURRENCY` | 검색 동시 실행 수 (Apify 동시 한도 보호) | `6` |
 | `APIFY_COLLECT_MS` | 수집 시간 예산(ms, 라우트 300s 보호) | `210000` |
 | `APIFY_TTL_SECONDS` | 수집 결과 캐시 TTL(초) | `604800` (7일) |
