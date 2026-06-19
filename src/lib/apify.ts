@@ -10,7 +10,8 @@
 //   APIFY_TTL_SECONDS  (선택) 결과 캐시 TTL(초), 기본 604800 (7일)
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
-import { weeklyAreaQueries, areaFromText } from "./adQueries";
+import { weeklyQueries, areaFromText } from "./adQueries";
+import { findClinicByHandle } from "./clinics";
 
 // ---------- 시술/스타일 추론 사전 ----------
 
@@ -171,7 +172,7 @@ function bodyText(s?: FbSnapshot): string {
   return typeof s.body === "string" ? s.body : s.body.text ?? "";
 }
 
-function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
+function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
   const s = fb.snapshot ?? {};
   const body = bodyText(s).trim();
   const title = (s.title ?? "").trim();
@@ -181,7 +182,19 @@ function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
   const treatment = inferTreatment(blob);
   const style = inferStyle(blob);
   const lang = inferLang(blob);
-  const area = areaFromText(fb.url ?? "") ?? areaFromText(blob) ?? fallbackArea;
+
+  // 광고주 인스타 핸들 → 등록 클리닉 조회 (지역 정밀 매핑 + 태그)
+  const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
+  const igUsername = pageInfo?.ig_username?.trim() || undefined;
+  const known = findClinicByHandle(igUsername);
+
+  // 지역: 등록 클리닉이 단일 지역이면 그걸로, 아니면 URL/본문 추론, 최후엔 강남
+  const area: Area =
+    (known && known.areas.length === 1 ? known.areas[0] : undefined) ??
+    areaFromText(fb.url ?? "") ??
+    areaFromText(blob) ??
+    fallbackArea ??
+    "강남";
   const treatmentLabel = lang === "JP" ? TREATMENT_LABEL[treatment].jp : TREATMENT_LABEL[treatment].ko;
 
   // FB의 title 은 CTA/페이지명/링크인 경우가 많아 본문 카피를 헤드라인으로 우선한다.
@@ -195,10 +208,6 @@ function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
 
   const days = activeDays(fb.start_date_formatted, fb.end_date_formatted);
   const id = fb.ad_archive_id || Math.random().toString(36).slice(2, 10);
-
-  // 광고주 인스타그램 핸들/팔로워 (있으면 클릭 시 인스타 프로필로 연결)
-  const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
-  const igUsername = pageInfo?.ig_username?.trim() || undefined;
   const igFollowers = Math.max(0, pageInfo?.ig_followers ?? 0);
 
   // 클릭 목적지: 인스타 프로필 우선 → 인스타 링크 → 기타 랜딩(LINE 등) → 라이브러리
@@ -238,6 +247,8 @@ function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
     activeDays: days,
     advertiser: fb.page_name || undefined,
     igUsername,
+    featured: Boolean(known),
+    note: known?.note,
   };
 }
 
@@ -295,15 +306,15 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
     return cache.ads;
   }
 
-  const queries = weeklyAreaQueries();
-  // 액터가 limitPerSource 를 무시하고 첫 검색에서 count 를 소진하므로 지역별로 분리 호출한다.
-  // APIFY_AD_COUNT 는 전체 목표치, 지역당 최소 10건(액터 최소 과금 단위).
+  const queries = weeklyQueries();
+  // 액터가 limitPerSource 를 무시하고 첫 검색에서 count 를 소진하므로 검색어별로 분리 호출한다.
+  // APIFY_AD_COUNT 는 전체 목표치, 검색당 최소 10건(액터 최소 과금 단위).
   const total = Math.max(10, Number(process.env.APIFY_AD_COUNT) || 30);
-  const perArea = Math.max(10, Math.ceil(total / queries.length));
+  const perQuery = Math.max(10, Math.ceil(total / queries.length));
 
   try {
     const results = await Promise.all(
-      queries.map((q) => runActorForUrl(token, q.url, perArea))
+      queries.map((q) => runActorForUrl(token, q.url, perQuery))
     );
 
     const ads = results

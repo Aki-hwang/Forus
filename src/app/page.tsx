@@ -59,7 +59,8 @@ export default function Home() {
     [allAds, area]
   );
 
-  // 시술별로 묶어서 섹션으로 노출 (광고 많은 시술이 위로)
+  // 시술별로 묶어서 섹션으로 노출 (광고 많은 시술이 위로),
+  // 각 시술 안에서는 인기 높은 순(=팔로워, 추후 조회수)으로 카드 정렬
   const groups = useMemo(() => {
     const map = new Map<TreatmentKey, Ad[]>();
     for (const a of filtered) {
@@ -68,7 +69,11 @@ export default function Home() {
       else map.set(a.treatment, [a]);
     }
     return [...map.entries()]
-      .map(([key, items]) => ({ key, label: TREATMENT_LABEL[key].ko, items }))
+      .map(([key, items]) => ({
+        key,
+        label: TREATMENT_LABEL[key].ko,
+        items: [...items].sort((a, b) => b.likes - a.likes),
+      }))
       .sort((a, b) => b.items.length - a.items.length);
   }, [filtered]);
 
@@ -80,17 +85,12 @@ export default function Home() {
         {/* Hero */}
         <section className="mb-6">
           <h1 className="text-[26px] font-black leading-tight tracking-tight text-foreground sm:text-[30px]">
-            일본·중국 타겟 피부과 광고를
+            일본/중국인 관광객 대상 피부과 광고를
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {" "}
               한눈에
             </span>
           </h1>
-          <p className="mt-1.5 max-w-2xl text-[14px] leading-relaxed text-muted">
-            강남·명동·홍대 피부과들이{" "}
-            <b className="text-foreground">지금 집행 중인 실제 광고</b>를 시술별로 모아
-            트렌드를 읽고, 카드를 누르면 원본 광고로 바로 이동합니다.
-          </p>
           <span
             className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
               source === "apify"

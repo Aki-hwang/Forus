@@ -56,6 +56,10 @@ export interface Ad {
   advertiser?: string;
   /** 광고주 인스타그램 핸들 (@ 제외) */
   igUsername?: string;
+  /** 등록된 일본 타겟 클리닉 명단과 일치 */
+  featured?: boolean;
+  /** 등록 클리닉 특징 메모 */
+  note?: string;
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];

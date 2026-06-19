@@ -72,9 +72,19 @@ export function AdCard({
 
       <div className="space-y-2 p-3">
         <div className="flex items-center justify-between">
-          <span className="rounded-md bg-background px-2 py-0.5 text-[11px] font-bold text-muted">
-            📍 {ad.area}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-md bg-background px-2 py-0.5 text-[11px] font-bold text-muted">
+              📍 {ad.area}
+            </span>
+            {ad.featured ? (
+              <span
+                title={ad.note}
+                className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary-ink"
+              >
+                ⭐ 등록
+              </span>
+            ) : null}
+          </div>
           <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-muted">
             {isLive ? (
               <>
