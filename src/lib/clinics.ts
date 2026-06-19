@@ -43,6 +43,7 @@ const BLOCKED_HANDLES = new Set<string>([
   "beaund_official",
   "gangnamunni",
   "gangnamunni_official",
+  "yeonmovi",
 ]);
 const BLOCKED_NAME_PARTS = [
   "beaund",
@@ -50,6 +51,8 @@ const BLOCKED_NAME_PARTS = [
   "electr",
   "강남언니",
   "gangnamunni",
+  "연모비",
+  "yeonmovi",
   "쇼핑",
   "스토어",
   "store",
