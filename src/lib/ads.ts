@@ -60,6 +60,10 @@ export interface Ad {
   featured?: boolean;
   /** 등록 클리닉 특징 메모 */
   note?: string;
+  /** 2단계: 광고주 IG 최근 릴스 대표 조회수 (videoPlayCount 중앙값) */
+  views?: number;
+  /** 2단계: 광고주 IG 최근 게시물 대표 좋아요 (중앙값) */
+  igLikes?: number;
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];
@@ -329,6 +333,12 @@ export interface TrendSummary {
   avgFollowers: number;
   /** 가장 오래 집행 중인 광고 */
   longestRunning: Ad | null;
+  /** 2단계 조회수 반영 여부 */
+  hasViews: boolean;
+  /** 평균 조회수 (조회수 있는 광고 기준) */
+  avgViews: number;
+  /** 최다 조회 광고 */
+  mostViewed: Ad | null;
 }
 
 export function summarizeTrends(list: Ad[]): TrendSummary {
@@ -380,6 +390,16 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     ? [...liveAds].sort((a, b) => (b.activeDays ?? 0) - (a.activeDays ?? 0))[0]
     : null;
 
+  // 2단계: 조회수 지표
+  const viewAds = list.filter((a) => typeof a.views === "number");
+  const hasViews = viewAds.length > 0;
+  const avgViews = hasViews
+    ? Math.round(viewAds.reduce((s, a) => s + (a.views ?? 0), 0) / viewAds.length)
+    : 0;
+  const mostViewed = hasViews
+    ? [...viewAds].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0]
+    : null;
+
   return {
     total: list.length,
     byArea,
@@ -392,6 +412,9 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     live,
     avgFollowers,
     longestRunning,
+    hasViews,
+    avgViews,
+    mostViewed,
   };
 }
 

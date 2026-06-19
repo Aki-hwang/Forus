@@ -39,12 +39,10 @@ export function TrendPanel({ trends }: { trends: TrendSummary }) {
       {/* 좌측: 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3 lg:col-span-5">
         <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-        {trends.live ? (
-          <Stat
-            label="평균 팔로워"
-            value={fmt(trends.avgFollowers)}
-            hint="광고주 IG 팔로워"
-          />
+        {trends.hasViews ? (
+          <Stat label="▶ 평균 조회수" value={fmt(trends.avgViews)} hint="IG 릴스 조회수 중앙값" />
+        ) : trends.live ? (
+          <Stat label="평균 팔로워" value={fmt(trends.avgFollowers)} hint="광고주 IG 팔로워" />
         ) : (
           <Stat
             label="평균 인게이지먼트"
@@ -52,7 +50,13 @@ export function TrendPanel({ trends }: { trends: TrendSummary }) {
             hint="좋아요+저장 평균"
           />
         )}
-        {trends.live ? (
+        {trends.hasViews ? (
+          <Stat
+            label="🔥 최다 조회 광고"
+            value={trends.mostViewed?.views != null ? fmt(trends.mostViewed.views) : "-"}
+            hint={cleanClinic(trends.mostViewed?.clinic)}
+          />
+        ) : trends.live ? (
           <Stat
             label="👥 최다 팔로워"
             value={trends.hottest ? fmt(trends.hottest.likes) : "-"}

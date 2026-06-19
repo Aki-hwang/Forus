@@ -17,15 +17,31 @@ export default function Home() {
   // 목업으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체 (실패 시 목업 유지)
   const [allAds, setAllAds] = useState<Ad[]>(mockAds);
   const [source, setSource] = useState<Source>("mock");
+  // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
+  const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
 
   useEffect(() => {
     let alive = true;
+    // 1단계: 빠르게 광고 목록 (팔로워순)
     fetch("/api/ads")
       .then((r) => r.json())
       .then((data: { source?: Source; ads?: Ad[] }) => {
         if (!alive || !data?.ads?.length) return;
         setAllAds(data.ads);
         setSource(data.source ?? "mock");
+
+        // 2단계: 조회수 보강 (느림 → 끝나면 재정렬)
+        if (data.source === "apify") {
+          setViewState("loading");
+          fetch("/api/ads/views")
+            .then((r) => r.json())
+            .then((v: { ads?: Ad[] }) => {
+              if (!alive || !v?.ads?.length) return;
+              setAllAds(v.ads);
+              setViewState("done");
+            })
+            .catch(() => alive && setViewState("idle"));
+        }
       })
       .catch(() => {
         /* 네트워크 실패 시 목업 유지 */
@@ -35,12 +51,19 @@ export default function Home() {
     };
   }, []);
 
-  // 지역 필터 + 인기(조회수→현재는 팔로워 프록시) 높은 순으로 정렬
+  // 지역 필터 + 조회수 우선 정렬 (조회수 있는 광고가 앞, 그 외 팔로워순)
   const filtered = useMemo(
     () =>
       allAds
         .filter((a) => area === "전체" || a.area === area)
-        .sort((a, b) => b.likes - a.likes),
+        .sort((a, b) => {
+          const av = a.views,
+            bv = b.views;
+          if (av != null && bv != null) return bv - av;
+          if (av != null) return -1;
+          if (bv != null) return 1;
+          return b.likes - a.likes;
+        }),
     [allAds, area]
   );
 
@@ -80,6 +103,17 @@ export default function Home() {
               ? "실시간 수집 (Apify · Meta 광고 라이브러리)"
               : "목업 데이터 (Apify 토큰 미설정)"}
           </span>
+          {viewState === "loading" ? (
+            <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-1 text-[11px] font-bold text-muted">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted/40 border-t-muted" />
+              인스타 조회수 불러오는 중…
+            </span>
+          ) : null}
+          {viewState === "done" ? (
+            <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary-ink">
+              ▶ 조회수 반영됨
+            </span>
+          ) : null}
         </section>
 
         <div className="space-y-6">

@@ -102,6 +102,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                 {ad.live ? (
                   <>
                     <span>📍 {ad.area}</span>
+                    {ad.views != null ? <span>▶ {ad.views.toLocaleString()} 조회</span> : null}
                     <span>📅 {ad.activeDays ?? 0}일 집행</span>
                     {ad.platforms?.length ? (
                       <span>{ad.platforms.slice(0, 2).join(" · ")}</span>

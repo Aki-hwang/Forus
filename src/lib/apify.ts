@@ -332,3 +332,114 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
     return cache?.ads ?? null;
   }
 }
+
+// ---------- 2단계: 인스타그램 조회수 보강 ----------
+
+function median(nums: number[]): number | undefined {
+  const arr = nums.filter((n) => typeof n === "number" && n > 0).sort((a, b) => a - b);
+  if (arr.length === 0) return undefined;
+  const mid = Math.floor(arr.length / 2);
+  return arr.length % 2 ? arr[mid] : Math.round((arr[mid - 1] + arr[mid]) / 2);
+}
+
+interface IgPost {
+  ownerUsername?: string;
+  type?: string;
+  likesCount?: number;
+  videoPlayCount?: number;
+  videoViewCount?: number;
+}
+
+export interface HandleStats {
+  views?: number;
+  igLikes?: number;
+}
+
+let viewsCache: { at: number; map: Record<string, HandleStats> } | null = null;
+
+/**
+ * 광고주 IG 핸들들의 최근 게시물에서 조회수(릴스 재생수)/좋아요 대표값(중앙값)을 수집.
+ * 토큰 없거나 실패 시 빈 객체. TTL 캐시.
+ */
+export async function fetchViewsForHandles(
+  handles: string[]
+): Promise<Record<string, HandleStats>> {
+  const token = process.env.APIFY_TOKEN?.trim();
+  if (!token) return {};
+
+  const uniq = Array.from(new Set(handles.filter(Boolean).map((h) => h.toLowerCase())));
+  if (uniq.length === 0) return {};
+
+  const ttlMs = (Number(process.env.APIFY_TTL_SECONDS) || 604_800) * 1000;
+  if (viewsCache && Date.now() - viewsCache.at < ttlMs) {
+    // 캐시에 모든 핸들이 있으면 재사용
+    if (uniq.every((h) => h in viewsCache!.map)) return viewsCache.map;
+  }
+
+  const cap = Math.max(1, Number(process.env.APIFY_IG_PROFILES_CAP) || 40);
+  const postsPer = Math.max(3, Number(process.env.APIFY_IG_POSTS) || 8);
+  const targets = uniq.slice(0, cap);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 280_000);
+  try {
+    const actor = "apify~instagram-scraper";
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/${actor}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          directUrls: targets.map((h) => `https://www.instagram.com/${h}/`),
+          resultsType: "posts",
+          resultsLimit: postsPer,
+          addParentData: false,
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      }
+    );
+    if (!res.ok) {
+      console.error(`[apify/views] failed: ${res.status}`);
+      return viewsCache?.map ?? {};
+    }
+    const posts = (await res.json()) as IgPost[];
+    if (!Array.isArray(posts)) return viewsCache?.map ?? {};
+
+    // 핸들별로 그룹핑 (본인 게시물만)
+    const grouped = new Map<string, IgPost[]>();
+    for (const p of posts) {
+      const owner = p.ownerUsername?.toLowerCase();
+      if (!owner || !targets.includes(owner)) continue;
+      (grouped.get(owner) ?? grouped.set(owner, []).get(owner)!).push(p);
+    }
+
+    const map: Record<string, HandleStats> = { ...(viewsCache?.map ?? {}) };
+    for (const h of targets) {
+      const ps = grouped.get(h) ?? [];
+      const plays = ps.map((p) => p.videoPlayCount ?? p.videoViewCount ?? 0);
+      const likes = ps.map((p) => p.likesCount ?? 0);
+      map[h] = { views: median(plays), igLikes: median(likes) };
+    }
+
+    viewsCache = { at: Date.now(), map };
+    return map;
+  } catch (err) {
+    console.error("[apify/views] error:", err);
+    return viewsCache?.map ?? {};
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** 광고 목록에 IG 조회수/좋아요를 병합 */
+export async function enrichAdsWithViews(ads: Ad[]): Promise<Ad[]> {
+  const handles = ads.map((a) => a.igUsername).filter((h): h is string => Boolean(h));
+  if (handles.length === 0) return ads;
+  const stats = await fetchViewsForHandles(handles);
+  return ads.map((a) => {
+    const s = a.igUsername ? stats[a.igUsername.toLowerCase()] : undefined;
+    if (!s) return a;
+    return { ...a, views: s.views, igLikes: s.igLikes };
+  });
+}

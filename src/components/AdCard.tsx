@@ -88,7 +88,11 @@ export function AdCard({
           <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-muted">
             {isLive ? (
               <>
-                {ad.likes > 0 ? <span title="인스타 팔로워">👥 {fmt(ad.likes)}</span> : null}
+                {ad.views != null ? (
+                  <span title="인스타 릴스 조회수(중앙값)">▶ {fmt(ad.views)}</span>
+                ) : ad.likes > 0 ? (
+                  <span title="인스타 팔로워">👥 {fmt(ad.likes)}</span>
+                ) : null}
                 <span title="집행 일수">📅 {ad.activeDays ?? 0}일</span>
               </>
             ) : (
