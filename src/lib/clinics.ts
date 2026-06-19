@@ -45,6 +45,8 @@ const BLOCKED_HANDLES = new Set<string>([
   "gangnamunni_official",
   "yeonmovi",
   "terapia",
+  "sisterann_official",
+  "sisterann",
 ]);
 const BLOCKED_NAME_PARTS = [
   "beaund",
@@ -62,6 +64,8 @@ const BLOCKED_NAME_PARTS = [
   "쇼핑",
   "스토어",
   "store",
+  "sisterann",
+  "시스터앤",
 ];
 
 export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boolean {

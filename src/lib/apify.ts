@@ -111,6 +111,12 @@ function activeDays(start?: string, end?: string): number {
   return Math.max(0, Math.round((e - s) / 86_400_000));
 }
 
+// 집행 일수 상한: 이 일수를 초과해 오래 돌고 있는 광고는 제외(최신 트렌드만 노출).
+// 시작일 미상(days=0)은 유지. 환경변수 MAX_ACTIVE_DAYS 로 조정 가능(기본 30).
+function maxActiveDays(): number {
+  return Math.max(1, Number(process.env.MAX_ACTIVE_DAYS) || 30);
+}
+
 // ---------- 광고 라이브러리 항목 → Ad ----------
 
 interface FbMedia {
@@ -217,6 +223,8 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
   const sub = (sb && !looksBad(sb) ? sb : treatmentLabel).slice(0, 26);
 
   const days = activeDays(fb.start_date_formatted, fb.end_date_formatted);
+  // 집행 일수가 상한(기본 30일)을 넘는 오래된 광고는 제외 (시작일 미상 days=0 은 유지)
+  if (days > maxActiveDays()) return null;
   const id = fb.ad_archive_id || Math.random().toString(36).slice(2, 10);
   const igFollowers = Math.max(0, pageInfo?.ig_followers ?? 0);
 
@@ -327,19 +335,20 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
       queries.map((q) => runActorForUrl(token, q.url, perQuery))
     );
 
-    // 같은 광고주가 동일 크리에이티브를 여러 ad_archive_id 로 돌리거나
-    // 여러 검색에 걸릴 수 있어, 광고주+본문 내용 기준으로 중복 제거한다.
+    // 같은 광고주가 같은 지역·시술로 가격표 등 변형 크리에이티브를 여러 개 도배하는
+    // 경우가 많아, 광고주+지역+시술 기준으로 1건만 남긴다(최신 우선). 먼저 최신순으로
+    // 정렬한 뒤 중복을 제거해 대표로 가장 최근 광고가 남도록 한다.
     const seen = new Set<string>();
     const ads = results
       .flatMap((items, idx) => items.map((fb) => mapFbAdToAd(fb, queries[idx].area)))
       .filter((ad): ad is Ad => ad !== null)
+      .sort((a, b) => b.date.localeCompare(a.date))
       .filter((ad) => {
-        const key = `${ad.igUsername ?? ad.clinic}|${ad.caption.replace(/\s+/g, "").slice(0, 80)}`;
+        const key = `${ad.igUsername ?? ad.clinic}|${ad.area}|${ad.treatment}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      })
-      .sort((a, b) => b.date.localeCompare(a.date));
+      });
 
     if (ads.length === 0) return cache?.ads ?? null;
 
