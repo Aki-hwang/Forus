@@ -83,9 +83,18 @@ export default function Home() {
   // 아래 지역 탭은 갤러리 그리드에만 적용됨.
   const trends = useMemo(() => summarizeTrends(base), [base]);
 
+  // 로고 클릭 시 첫 화면 상태로 복귀 (맨 위 스크롤 + 필터/선택 초기화)
+  const resetView = () => {
+    setArea("전체");
+    setLang("전체");
+    setSort("views");
+    setSelected(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-full">
-      <Header />
+      <Header onReset={resetView} />
 
       <main className="mx-auto max-w-7xl px-5 py-6">
         {/* 헤더: 타이틀·상태(좌) + 타겟 언어 탭(우) 한 줄 */}

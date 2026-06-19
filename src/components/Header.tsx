@@ -1,16 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 
-export function Header() {
+export function Header({ onReset }: { onReset?: () => void }) {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link
+          href="/"
+          // 이미 홈이면 라우팅 대신 맨 위로 스크롤 + 필터/선택 초기화
+          onClick={(e) => {
+            if (onReset && pathname === "/") {
+              e.preventDefault();
+              onReset();
+            }
+          }}
+          className="flex items-center gap-2.5"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-base font-black text-white shadow-sm">
             D
           </div>
