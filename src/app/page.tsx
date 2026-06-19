@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ads as mockAds, Ad, Area, summarizeTrends } from "@/lib/ads";
+import { ads as mockAds, Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar } from "@/components/FilterBar";
@@ -12,6 +12,7 @@ type Source = "mock" | "apify";
 
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
+  const [lang, setLang] = useState<Lang | "전체">("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
 
   // 목업으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체 (실패 시 목업 유지)
@@ -51,10 +52,15 @@ export default function Home() {
     };
   }, []);
 
-  // 지역 필터 + 조회수 우선 정렬 (조회수 있는 광고가 앞, 그 외 팔로워순)
+  // 타겟 언어(JP/CN) → 지역 필터 → 조회수 우선 정렬
+  const base = useMemo(
+    () => allAds.filter((a) => lang === "전체" || a.lang === lang),
+    [allAds, lang]
+  );
+
   const filtered = useMemo(
     () =>
-      allAds
+      base
         .filter((a) => area === "전체" || a.area === area)
         .sort((a, b) => {
           const av = a.views,
@@ -64,13 +70,13 @@ export default function Home() {
           if (bv != null) return 1;
           return b.likes - a.likes;
         }),
-    [allAds, area]
+    [base, area]
   );
 
-  // 트렌드는 현재 지역 필터 기준으로 집계
+  // 트렌드는 현재 언어+지역 필터 기준으로 집계
   const trends = useMemo(
-    () => summarizeTrends(allAds.filter((a) => area === "전체" || a.area === area)),
-    [allAds, area]
+    () => summarizeTrends(base.filter((a) => area === "전체" || a.area === area)),
+    [base, area]
   );
 
   return (
@@ -117,6 +123,27 @@ export default function Home() {
         </section>
 
         <div className="space-y-6">
+          {/* 타겟 언어 탭 */}
+          <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+            {([
+              ["전체", "전체"],
+              ["JP", "🇯🇵 일본 타겟"],
+              ["CN", "🇨🇳 중국 타겟"],
+            ] as [Lang | "전체", string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setLang(key)}
+                className={`rounded-lg px-4 py-2 text-[13.5px] font-bold transition ${
+                  lang === key
+                    ? "bg-gradient-to-r from-primary to-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <TrendPanel trends={trends} />
 
           <FilterBar area={area} onArea={setArea} resultCount={filtered.length} />

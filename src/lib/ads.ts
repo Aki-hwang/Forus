@@ -339,6 +339,14 @@ export interface TrendSummary {
   avgViews: number;
   /** 최다 조회 광고 */
   mostViewed: Ad | null;
+  /** 광고주(클리닉) 랭킹 — 조회수(없으면 팔로워) 기준 상위 */
+  topAdvertisers: {
+    clinic: string;
+    area: Area;
+    igUsername?: string;
+    views?: number;
+    followers: number;
+  }[];
 }
 
 export function summarizeTrends(list: Ad[]): TrendSummary {
@@ -400,6 +408,31 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     ? [...viewAds].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0]
     : null;
 
+  // 광고주(클리닉) 단위 집계 → 조회수(없으면 팔로워) 기준 랭킹
+  const advMap = new Map<
+    string,
+    { clinic: string; area: Area; igUsername?: string; views?: number; followers: number }
+  >();
+  for (const a of list) {
+    const key = a.igUsername ?? a.clinic;
+    const cur = advMap.get(key);
+    if (!cur) {
+      advMap.set(key, {
+        clinic: a.clinic,
+        area: a.area,
+        igUsername: a.igUsername,
+        views: a.views,
+        followers: a.likes,
+      });
+    } else {
+      if ((a.views ?? -1) > (cur.views ?? -1)) cur.views = a.views;
+      cur.followers = Math.max(cur.followers, a.likes);
+    }
+  }
+  const topAdvertisers = [...advMap.values()]
+    .sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || y.followers - x.followers)
+    .slice(0, 6);
+
   return {
     total: list.length,
     byArea,
@@ -415,6 +448,7 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     hasViews,
     avgViews,
     mostViewed,
+    topAdvertisers,
   };
 }
 

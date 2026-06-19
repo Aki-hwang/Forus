@@ -80,46 +80,34 @@ export function TrendPanel({ trends }: { trends: TrendSummary }) {
         )}
       </div>
 
-      {/* 우측: 지역별 분포 + 태그 트렌드 */}
+      {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
       <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
-            <div className="space-y-2.5">
-              {trends.byArea.map((a) => (
-                <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+            <p className="mb-3 text-[13px] font-bold text-foreground">
+              {trends.hasViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
+            </p>
+            <div className="space-y-2">
+              {trends.topAdvertisers.slice(0, 5).map((c, i) => (
+                <div key={c.clinic + i} className="flex items-center gap-2.5">
+                  <span className="w-4 shrink-0 text-[12px] font-black text-muted">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+                    {c.clinic.replace(/\s*\(.*\)$/, "")}
+                    <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
+                  </span>
+                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+                    {c.views != null ? `▶ ${fmt(c.views)}` : `👥 ${fmt(c.followers)}`}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="mb-3 text-[13px] font-bold text-foreground">지금 뜨는 키워드</p>
-            <div className="flex flex-wrap gap-2">
-              {trends.topTags.map((t, i) => (
-                <span
-                  key={t.tag}
-                  className="rounded-full border border-border px-2.5 py-1 text-[12px] font-medium"
-                  style={{
-                    background: i < 3 ? "rgba(14,165,164,0.10)" : "var(--background)",
-                    color: i < 3 ? "var(--primary-ink)" : "var(--muted)",
-                    fontWeight: i < 3 ? 700 : 500,
-                  }}
-                >
-                  #{t.tag}
-                  <span className="ml-1 opacity-60">{t.count}</span>
-                </span>
-              ))}
-            </div>
-
-            <p className="mb-2 mt-4 text-[13px] font-bold text-foreground">인기 컬러 무드</p>
-            <div className="flex gap-1.5">
-              {trends.topPalettes.map((p, i) => (
-                <div
-                  key={i}
-                  className="h-7 flex-1 rounded-md"
-                  style={{ backgroundImage: `linear-gradient(135deg, ${p[0]}, ${p[1]})` }}
-                  title={`${p[0]} → ${p[1]}`}
-                />
+            <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
+            <div className="space-y-2.5">
+              {trends.byArea.map((a) => (
+                <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
               ))}
             </div>
           </div>

@@ -316,11 +316,18 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
       queries.map((q) => runActorForUrl(token, q.url, perQuery))
     );
 
+    // 같은 광고주가 동일 크리에이티브를 여러 ad_archive_id 로 돌리거나
+    // 여러 검색에 걸릴 수 있어, 광고주+본문 내용 기준으로 중복 제거한다.
+    const seen = new Set<string>();
     const ads = results
       .flatMap((items, idx) => items.map((fb) => mapFbAdToAd(fb, queries[idx].area)))
       .filter((ad): ad is Ad => ad !== null)
-      // 같은 광고가 여러 검색에 걸릴 수 있어 id 기준 중복 제거
-      .filter((ad, i, arr) => arr.findIndex((x) => x.id === ad.id) === i)
+      .filter((ad) => {
+        const key = `${ad.igUsername ?? ad.clinic}|${ad.caption.replace(/\s+/g, "").slice(0, 80)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .sort((a, b) => b.date.localeCompare(a.date));
 
     if (ads.length === 0) return cache?.ads ?? null;
