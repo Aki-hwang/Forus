@@ -8,11 +8,22 @@
 
 import { Area } from "./ads";
 
+// 강남은 압구정·청담·신사(지리적으로 강남 권역)까지 포함해 커버리지를 넓힘
 const AREA_QUERIES: Record<Area, string[]> = {
-  강남: ["江南 美容クリニック", "江南 日本語 クリニック", "韓国プチ整形 江南"],
+  강남: [
+    "江南 美容クリニック",
+    "狎鴎亭 美容クリニック",
+    "清潭 皮膚科 日本語",
+    "新沙 美容クリニック",
+    "江南 日本語 クリニック",
+    "韓国プチ整形 江南",
+  ],
   명동: ["明洞 美容クリニック 日本人", "明洞 スキンケア クリニック"],
   홍대: ["ホンデ 皮膚科 日本語", "ホンデ 韓国美容"],
 };
+
+// 지역별 매주 검색 개수 (강남은 시장이 가장 커 2개)
+const AREA_PICKS: Record<Area, number> = { 강남: 2, 명동: 1, 홍대: 1 };
 
 const GENERAL_QUERIES: string[] = [
   "韓国リジュラン サーモン注射",
@@ -35,7 +46,8 @@ const GENERAL_PER_WEEK = 2;
 
 /** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) */
 const AREA_TERMS: Record<Area, string[]> = {
-  강남: ["江南", "カンナム", "강남", "gangnam"],
+  // 강남 권역: 압구정·청담·신사 포함
+  강남: ["江南", "カンナム", "강남", "gangnam", "狎鴎亭", "압구정", "アックジョン", "清潭", "청담", "チョンダム", "新沙", "신사", "シンサ"],
   명동: ["明洞", "ミョンドン", "명동", "myeongdong", "myeong-dong"],
   홍대: ["弘大", "ホンデ", "홍대", "hongdae", "hong-dae"],
 };
@@ -78,10 +90,13 @@ export interface SearchQuery {
 export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
   const w = isoWeek(now);
 
-  const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES) as Area[]).map((area) => {
+  const areaQs: SearchQuery[] = (Object.keys(AREA_QUERIES) as Area[]).flatMap((area) => {
     const list = AREA_QUERIES[area];
-    const keyword = list[w % list.length];
-    return { area, keyword, url: buildAdLibraryUrl(keyword) };
+    const picks = AREA_PICKS[area] ?? 1;
+    return Array.from({ length: picks }, (_, j) => {
+      const keyword = list[(w * picks + j) % list.length];
+      return { area, keyword, url: buildAdLibraryUrl(keyword) };
+    });
   });
 
   const generalQs: SearchQuery[] = [];

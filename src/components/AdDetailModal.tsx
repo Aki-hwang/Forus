@@ -6,7 +6,7 @@ import { GeneratedCreative } from "@/lib/generate";
 import { CreativeCard } from "./CreativeCard";
 
 export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
-  const [clinicName, setClinicName] = useState("Forus Clinic");
+  const [clinicName, setClinicName] = useState("우리 클리닉");
   const [lang, setLang] = useState<Lang>(ad.lang);
   const [seed, setSeed] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -232,7 +232,7 @@ function Controls({
         <input
           value={clinicName}
           onChange={(e) => setClinicName(e.target.value)}
-          placeholder="예: Forus 피부과"
+          placeholder="예: 우리 피부과"
           className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-[14px] outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
       </div>

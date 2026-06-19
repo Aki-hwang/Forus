@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   const creative = generateCreative(reference, {
     referenceId,
-    clinicName: clinicName?.trim() || "Forus Clinic",
+    clinicName: clinicName?.trim() || "우리 클리닉",
     area,
     lang,
     seed,

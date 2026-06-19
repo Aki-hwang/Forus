@@ -121,17 +121,10 @@ export function TrendPanel({
                 const href = c.igUsername
                   ? `https://www.instagram.com/${c.igUsername}/`
                   : undefined;
-                const Row = href ? "a" : "div";
-                return (
-                  <Row
-                    key={c.clinic + i}
-                    {...(href
-                      ? { href, target: "_blank", rel: "noopener noreferrer" }
-                      : {})}
-                    className={`flex items-center gap-2.5 rounded-lg px-1.5 py-1 ${
-                      href ? "transition hover:bg-background" : ""
-                    }`}
-                  >
+                const rowClass =
+                  "flex items-center gap-2.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
+                const inner = (
+                  <>
                     <span className="w-4 shrink-0 text-[12px] font-black text-muted">{i + 1}</span>
                     <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
                       {c.clinic.replace(/\s*\(.*\)$/, "")}
@@ -140,7 +133,22 @@ export function TrendPanel({
                     <span className="shrink-0 text-[12px] font-bold text-primary-ink">
                       {c.views != null ? `▶ ${fmt(c.views)}` : `👥 ${fmt(c.followers)}`}
                     </span>
-                  </Row>
+                  </>
+                );
+                return href ? (
+                  <a
+                    key={c.clinic + i}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={rowClass}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div key={c.clinic + i} className={rowClass}>
+                    {inner}
+                  </div>
                 );
               })}
             </div>

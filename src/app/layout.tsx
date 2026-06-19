@@ -16,10 +16,25 @@ const notoJP = Noto_Sans_JP({
   display: "swap",
 });
 
+const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
+const SITE_DESC =
+  "강남·명동·홍대 피부과의 일본/중국인 관광객 대상 광고를 조회수순으로 한눈에. 카드를 누르면 원본 인스타그램으로 이동합니다.";
+
 export const metadata: Metadata = {
-  title: "DermaRadar — 피부과 광고 트렌드 레이더",
-  description:
-    "강남·명동·홍대 피부과의 일본/중국인 관광객 대상 광고를 조회수순으로 한눈에. 카드를 누르면 원본 인스타그램으로 이동합니다.",
+  title: SITE_TITLE,
+  description: SITE_DESC,
+  applicationName: "DermaRadar",
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    siteName: "DermaRadar",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+  },
 };
 
 export default function RootLayout({
