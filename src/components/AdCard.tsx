@@ -9,18 +9,17 @@ function fmt(n: number): string {
 
 export function AdCard({
   ad,
-  onGenerate,
+  onSelect,
 }: {
   ad: Ad;
-  onGenerate: (ad: Ad) => void;
+  onSelect: (ad: Ad) => void;
 }) {
   const isLive = ad.live === true;
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
       <div className="relative">
-        {/* 카드 클릭 → 상세·생성 모달 (원본 링크는 모달 안에서) */}
-        <button onClick={() => onGenerate(ad)} className="block w-full text-left">
+        <button onClick={() => onSelect(ad)} className="block w-full text-left">
           <CreativeCard
             palette={ad.palette}
             headline={ad.headline}
@@ -32,20 +31,9 @@ export function AdCard({
           />
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 transition group-hover:opacity-100">
             <span className="mb-4 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-foreground shadow-lg">
-              ✨ 상세 보기 · 우리 광고 만들기
+              상세 보기
             </span>
           </div>
-        </button>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onGenerate(ad);
-          }}
-          title="이 광고로 우리 광고 만들기"
-          className="absolute right-2 top-2 z-10 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-foreground shadow-sm backdrop-blur transition hover:bg-white"
-        >
-          ✨ 생성
         </button>
       </div>
 
