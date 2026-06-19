@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
-type Provider = "google" | "naver";
+type Provider = "google";
 
 const ERROR_MESSAGES: Record<string, string> = {
   OAuthAccountNotLinked:
@@ -68,7 +68,7 @@ function LoginCard() {
             </div>
           ) : null}
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6">
             {/* Google */}
             <button
               onClick={() => handleSignIn("google")}
@@ -81,20 +81,6 @@ function LoginCard() {
                 <GoogleIcon />
               )}
               Google로 계속하기
-            </button>
-
-            {/* Naver */}
-            <button
-              onClick={() => handleSignIn("naver")}
-              disabled={loading !== null}
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#03C75A] py-3 text-[14px] font-bold text-white shadow-sm transition hover:brightness-95 disabled:opacity-60"
-            >
-              {loading === "naver" ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-              ) : (
-                <NaverIcon />
-              )}
-              네이버로 계속하기
             </button>
           </div>
         </>
@@ -141,17 +127,6 @@ function GoogleIcon() {
       <path
         fill="#EA4335"
         d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"
-      />
-    </svg>
-  );
-}
-
-function NaverIcon() {
-  return (
-    <svg className="h-[15px] w-[15px]" viewBox="0 0 20 20" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M13.56 10.7 6.16 0H0v20h6.44V9.3l7.4 10.7H20V0h-6.44z"
       />
     </svg>
   );

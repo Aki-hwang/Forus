@@ -108,7 +108,7 @@ function UserMenu({ name, image }: { name: string; image: string | null }) {
 function Avatar({ name, image }: { name: string; image: string | null }) {
   if (image) {
     return (
-      // 외부 프로필 이미지(Google/Naver). next/image 도메인 설정 없이 일반 <img> 사용.
+      // 외부 프로필 이미지(Google). next/image 도메인 설정 없이 일반 <img> 사용.
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={image}
