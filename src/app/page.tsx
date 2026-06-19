@@ -89,29 +89,9 @@ export default function Home() {
       <Header />
 
       <main className="mx-auto max-w-7xl px-5 py-6">
-        {/* 헤더: 타겟 언어 탭(좌) + 타이틀·상태(우) 한 줄 */}
+        {/* 헤더: 타이틀·상태(좌) + 타겟 언어 탭(우) 한 줄 */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-xl border border-border bg-surface p-1">
-            {([
-              ["전체", "전체"],
-              ["JP", "🇯🇵 일본 타겟"],
-              ["CN", "🇨🇳 중국 타겟"],
-            ] as [Lang | "전체", string][]).map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() => setLang(key)}
-                className={`rounded-lg px-4 py-2 text-[13.5px] font-bold transition ${
-                  lang === key
-                    ? "bg-gradient-to-r from-primary to-accent text-white shadow-sm"
-                    : "text-muted hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="text-right">
+          <div className="text-left">
             <h1 className="text-[17px] font-black leading-tight tracking-tight text-foreground sm:text-[21px]">
               일본/중국인 관광객 대상 피부과 광고를
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -119,7 +99,7 @@ export default function Home() {
                 한눈에
               </span>
             </h1>
-            <div className="mt-1 flex flex-wrap items-center justify-end gap-1.5">
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
                   source === "apify" ? "bg-primary/10 text-primary-ink" : "bg-border/60 text-muted"
@@ -144,6 +124,26 @@ export default function Home() {
                 </span>
               ) : null}
             </div>
+          </div>
+
+          <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+            {([
+              ["전체", "전체"],
+              ["JP", "🇯🇵 일본 타겟"],
+              ["CN", "🇨🇳 중국 타겟"],
+            ] as [Lang | "전체", string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setLang(key)}
+                className={`rounded-lg px-4 py-2 text-[13.5px] font-bold transition ${
+                  lang === key
+                    ? "bg-gradient-to-r from-primary to-accent text-white shadow-sm"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
