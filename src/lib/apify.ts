@@ -74,6 +74,8 @@ function inferStyle(text: string): StyleKey {
 function inferLang(text: string): Lang {
   // 가나(히라가나/가타카나)가 있으면 일본어 타겟
   if (/[぀-ヿ]/.test(text)) return "JP";
+  // 한글이 있으면 한국(국내) 타겟
+  if (/[가-힣]/.test(text)) return "KR";
   // 중국어 간체/번체에서 주로 쓰는 글자가 보이면 중국어 타겟
   if (/[优優惠脸臉韩韓针針這产產價約們]/.test(text)) return "CN";
   return "JP";

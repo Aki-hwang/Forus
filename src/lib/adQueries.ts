@@ -41,8 +41,21 @@ const GENERAL_QUERIES: string[] = [
   "韓国美容旅行 クリニック",
 ];
 
-/** 매주 사용할 일반 키워드 개수 (지역 3개 + 일반 N개 = 주당 검색 수) */
+/** 한국(국내) 타겟 한국어 검색 키워드 — 한국 타겟 탭용 */
+const KR_QUERIES: string[] = [
+  "강남 피부과 이벤트",
+  "압구정 피부과",
+  "명동 피부과",
+  "홍대 피부과",
+  "물광주사 이벤트",
+  "리프팅 이벤트",
+  "보톡스 이벤트",
+  "피부과 시술 이벤트",
+];
+
+/** 매주 사용할 일반 키워드 개수 (지역 + 일반 + 한국어 = 주당 검색 수) */
 const GENERAL_PER_WEEK = 2;
+const KR_PER_WEEK = 2;
 
 /** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) */
 const AREA_TERMS: Record<Area, string[]> = {
@@ -105,7 +118,13 @@ export function weeklyQueries(now: Date = new Date()): SearchQuery[] {
     generalQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
   }
 
-  return [...areaQs, ...generalQs];
+  const krQs: SearchQuery[] = [];
+  for (let i = 0; i < KR_PER_WEEK; i++) {
+    const keyword = KR_QUERIES[(w * KR_PER_WEEK + i) % KR_QUERIES.length];
+    krQs.push({ keyword, url: buildAdLibraryUrl(keyword) });
+  }
+
+  return [...areaQs, ...generalQs, ...krQs];
 }
 
 /** 검색 URL/본문 텍스트에서 지역 판별 */

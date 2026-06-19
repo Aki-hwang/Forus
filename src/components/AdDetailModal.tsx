@@ -7,7 +7,8 @@ import { CreativeCard } from "./CreativeCard";
 
 export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
   const [clinicName, setClinicName] = useState("우리 클리닉");
-  const [lang, setLang] = useState<Lang>(ad.lang);
+  // 생성 카피는 일본어/중국어만 지원 (KR 광고도 레퍼런스로 JP/CN 우리광고 생성)
+  const [lang, setLang] = useState<Lang>(ad.lang === "CN" ? "CN" : "JP");
   const [seed, setSeed] = useState(0);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GeneratedCreative | null>(null);

@@ -28,7 +28,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted md:inline">
-            🇯🇵 일본 타겟
+            한·일·중 타겟
           </span>
           <button className="rounded-lg bg-foreground px-3.5 py-2 text-[13px] font-bold text-white transition hover:opacity-90">
             로그인

@@ -38,7 +38,8 @@ interface CopyBank {
 }
 
 // 시술별 · 언어별 카피 뱅크
-const BANK: Record<TreatmentKey, Record<Lang, CopyBank>> = {
+// 카피 뱅크는 일본어/중국어만 보유 (KR 등은 generateCreative 에서 JP 로 폴백)
+const BANK: Record<TreatmentKey, Record<"JP" | "CN", CopyBank>> = {
   물광주사: {
     JP: {
       headlines: ["うるツヤ素肌、\n韓国でチャージ", "ツヤ肌の正解、\n水光注射", "素肌から発光、\n水分たっぷり"],
@@ -175,7 +176,8 @@ export function generateCreative(
   req: GenerateRequest
 ): GeneratedCreative {
   const seed = req.seed ?? 0;
-  const lang = req.lang;
+  // 카피 뱅크는 JP/CN 만 보유 — 그 외(KR 등)는 JP 로 폴백
+  const lang: Lang = req.lang === "CN" ? "CN" : "JP";
   const bank = BANK[reference.treatment][lang];
   const tl = TREATMENT_LABEL[reference.treatment];
 

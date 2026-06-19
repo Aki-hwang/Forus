@@ -8,7 +8,6 @@ const SORTS: [SortKey, string][] = [
   ["views", "조회수순"],
   ["followers", "팔로워순"],
   ["recent", "최신순"],
-  ["activeDays", "집행기간순"],
 ];
 
 export function FilterBar({

@@ -2,7 +2,7 @@
 // 추후 실제 수집(Meta Ad Library / 크롤러)으로 교체할 때 이 모듈만 바꾸면 됩니다.
 
 export type Area = "강남" | "명동" | "홍대";
-export type Lang = "JP" | "CN";
+export type Lang = "JP" | "CN" | "KR";
 
 export type TreatmentKey =
   | "물광주사"
