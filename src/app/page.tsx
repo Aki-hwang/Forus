@@ -148,7 +148,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-6">
-          <TrendPanel trends={trends} onSelectAd={setSelected} />
+          <TrendPanel trends={trends} ads={base} onSelectAd={setSelected} />
 
           <FilterBar
             area={area}

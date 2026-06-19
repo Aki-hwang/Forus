@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Ad, TrendSummary } from "@/lib/ads";
 
 function fmt(n: number): string {
@@ -54,15 +57,45 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
 
 export function TrendPanel({
   trends,
+  ads,
   onSelectAd,
 }: {
   trends: TrendSummary;
+  ads: Ad[];
   onSelectAd?: (ad: Ad) => void;
 }) {
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 최다 조회(없으면 최다 반응) 광고 — 클릭 시 모달
   const topAd = trends.mostViewed ?? trends.hottest;
+
+  // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
+  const [period, setPeriod] = useState<"7" | "30" | "all">("all");
+  const [now] = useState(() => Date.now());
+  const ranked = useMemo(() => {
+    const days = period === "all" ? Infinity : Number(period);
+    const inRange = ads.filter((a) => {
+      if (days === Infinity) return true;
+      const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
+      return !Number.isNaN(t) && now - t <= days * 86_400_000;
+    });
+    const m = new Map<
+      string,
+      { clinic: string; area: string; igUsername?: string; views?: number; followers: number }
+    >();
+    for (const a of inRange) {
+      const key = a.igUsername ?? a.clinic;
+      const cur = m.get(key);
+      if (!cur) {
+        m.set(key, { clinic: a.clinic, area: a.area, igUsername: a.igUsername, views: a.views, followers: a.likes });
+      } else {
+        if ((a.views ?? -1) > (cur.views ?? -1)) cur.views = a.views;
+        cur.followers = Math.max(cur.followers, a.likes);
+      }
+    }
+    return [...m.values()].sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || y.followers - x.followers);
+  }, [ads, period, now]);
+  const rankByViews = ranked.some((c) => c.views != null);
 
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -113,11 +146,33 @@ export function TrendPanel({
       <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <p className="mb-3 text-[13px] font-bold text-foreground">
-              {trends.hasViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
-            </p>
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <p className="text-[13px] font-bold text-foreground">
+                {rankByViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
+              </p>
+              <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
+                {([
+                  ["7", "7일"],
+                  ["30", "30일"],
+                  ["all", "전체"],
+                ] as ["7" | "30" | "all", string][]).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setPeriod(key)}
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
+                      period === key ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="space-y-1">
-              {trends.topAdvertisers.slice(0, 5).map((c, i) => {
+              {ranked.length === 0 ? (
+                <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
+              ) : null}
+              {ranked.slice(0, 5).map((c, i) => {
                 const href = c.igUsername
                   ? `https://www.instagram.com/${c.igUsername}/`
                   : undefined;
