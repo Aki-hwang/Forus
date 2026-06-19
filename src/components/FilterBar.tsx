@@ -51,7 +51,7 @@ export function FilterBar({
             <button
               key={key}
               onClick={() => onSort(key)}
-              className={`rounded-lg px-2.5 py-1.5 text-[12.5px] font-bold transition ${
+              className={`rounded-lg px-2.5 py-1.5 text-[13px] font-bold transition ${
                 sort === key
                   ? "bg-primary/10 text-primary-ink"
                   : "text-muted hover:text-foreground"

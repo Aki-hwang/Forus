@@ -165,7 +165,7 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {filtered.map((ad) => (
-                <AdCard key={ad.id} ad={ad} onGenerate={setSelected} />
+                <AdCard key={ad.id} ad={ad} onSelect={setSelected} />
               ))}
             </div>
           )}
