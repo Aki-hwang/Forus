@@ -64,3 +64,26 @@ export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boo
   if (h && BLOCKED_HANDLES.has(h)) return true;
   return BLOCKED_NAME_PARTS.some((p) => h.includes(p) || n.includes(p));
 }
+
+// ---------- 화장품/제품 광고 자동 감지 ----------
+// 클리닉(병원·시술) 신호가 전혀 없고 제품 판매 신호가 있으면 화장품/제품 광고로 보고 제외.
+// 한국어 제품어 기반이라 일본/중국 타겟 클리닉 광고에는 영향이 없음.
+const CLINIC_SIGNALS = [
+  "의원", "클리닉", "피부과", "성형외과", "병원", "의료", "의료진", "원장", "전문의",
+  "시술", "내원", "예약", "상담", "리프팅 시술",
+  "clinic", "clinique", "derma",
+  "皮膚科", "美容外科", "美容皮膚科", "整形", "クリニック",
+  "診所", "醫院", "醫美", "医院", "医美", "诊所",
+];
+const PRODUCT_SIGNALS = [
+  "크림", "세럼", "앰플", "에센스", "토너", "로션", "마스크팩", "마스크 팩", "패드",
+  "화장품", "스킨케어 세트", "홈케어", "집에서", "구매", "품절", "배송", "재입고",
+  "정기구독", "리필", "세트 구성", "디바이스", "기기", "할인가", "원 구매",
+  "바르", "발라", "착용", "입는",
+];
+
+export function isProductAd(text: string): boolean {
+  const t = (text ?? "").toLowerCase();
+  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return false;
+  return PRODUCT_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+}
