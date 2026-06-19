@@ -16,6 +16,7 @@ export function AdCard({
 }) {
   const href = ad.sourceUrl;
   const isLive = ad.live === true;
+  const isInstagram = (href ?? "").includes("instagram.com");
 
   const creative = (
     <CreativeCard
@@ -25,13 +26,18 @@ export function AdCard({
       clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
       treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
       lang={ad.lang}
+      imageUrl={ad.imageUrl}
     />
   );
 
   const overlay = (
     <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 transition group-hover:opacity-100">
       <span className="mb-4 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-foreground shadow-lg">
-        {href ? "↗ 원본 광고 보기" : "✨ 이 광고로 우리 광고 만들기"}
+        {href
+          ? isInstagram
+            ? "↗ 인스타그램 보기"
+            : "↗ 원본 광고 보기"
+          : "✨ 이 광고로 우리 광고 만들기"}
       </span>
     </div>
   );
@@ -72,7 +78,7 @@ export function AdCard({
           <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-muted">
             {isLive ? (
               <>
-                {ad.platforms?.includes("INSTAGRAM") ? <span title="인스타 노출">IG</span> : null}
+                {ad.likes > 0 ? <span title="인스타 팔로워">👥 {fmt(ad.likes)}</span> : null}
                 <span title="집행 일수">📅 {ad.activeDays ?? 0}일</span>
               </>
             ) : (

@@ -40,6 +40,8 @@ export interface Ad {
   // ---- 실시간 수집(Meta 광고 라이브러리) 전용 메타 — 목업에는 없음 ----
   /** 실시간 수집 광고 여부 */
   live?: boolean;
+  /** 실제 광고 크리에이티브 썸네일 (이미지/영상 프리뷰) */
+  imageUrl?: string;
   /** 클릭 시 이동할 원본 링크 (랜딩/LINE/인스타 등) */
   sourceUrl?: string;
   /** 광고 라이브러리 항목 직링크 */
@@ -52,6 +54,8 @@ export interface Ad {
   activeDays?: number;
   /** 광고주(페이지명) 원본 */
   advertiser?: string;
+  /** 광고주 인스타그램 핸들 (@ 제외) */
+  igUsername?: string;
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];
@@ -315,6 +319,12 @@ export interface TrendSummary {
   topPalettes: [string, string][];
   avgEngagement: number;
   hottest: Ad | null;
+  /** 실시간(광고 라이브러리) 데이터 여부 — 지표 라벨 분기용 */
+  live: boolean;
+  /** 평균 인스타 팔로워 (라이브 광고주 기준) */
+  avgFollowers: number;
+  /** 가장 오래 집행 중인 광고 */
+  longestRunning: Ad | null;
 }
 
 export function summarizeTrends(list: Ad[]): TrendSummary {
@@ -355,6 +365,17 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     ? Math.round(list.reduce((s, a) => s + a.likes + a.saves, 0) / list.length)
     : 0;
 
+  // 광고 라이브러리(라이브) 데이터는 좋아요·저장·조회수가 없으므로
+  // 광고주 IG 팔로워 / 집행일수 기준 지표를 따로 계산한다.
+  const liveAds = list.filter((a) => a.live);
+  const live = liveAds.length > 0;
+  const avgFollowers = live
+    ? Math.round(liveAds.reduce((s, a) => s + a.likes, 0) / liveAds.length)
+    : 0;
+  const longestRunning = live
+    ? [...liveAds].sort((a, b) => (b.activeDays ?? 0) - (a.activeDays ?? 0))[0]
+    : null;
+
   return {
     total: list.length,
     byArea,
@@ -364,6 +385,9 @@ export function summarizeTrends(list: Ad[]): TrendSummary {
     topPalettes,
     avgEngagement,
     hottest: sorted[0] ?? null,
+    live,
+    avgFollowers,
+    longestRunning,
   };
 }
 

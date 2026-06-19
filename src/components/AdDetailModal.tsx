@@ -86,6 +86,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
               clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
               treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
               lang={ad.lang}
+              imageUrl={ad.imageUrl}
             />
             <div className="mt-4 space-y-2 text-[13px]">
               <p className="font-bold text-foreground">{ad.clinic}</p>
@@ -121,7 +122,9 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 pt-1 text-[12px] font-bold text-primary-ink hover:underline"
                 >
-                  ↗ 원본 광고 / 사이트 보기
+                  {ad.sourceUrl.includes("instagram.com")
+                    ? `↗ 인스타그램${ad.igUsername ? ` (@${ad.igUsername})` : ""} 보기`
+                    : "↗ 원본 광고 / 사이트 보기"}
                 </a>
               ) : null}
             </div>

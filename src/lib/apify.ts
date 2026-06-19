@@ -109,6 +109,12 @@ function activeDays(start?: string, end?: string): number {
 
 // ---------- 광고 라이브러리 항목 → Ad ----------
 
+interface FbMedia {
+  original_image_url?: string | null;
+  resized_image_url?: string | null;
+  video_preview_image_url?: string | null;
+}
+
 interface FbSnapshot {
   body?: { text?: string } | string | null;
   title?: string | null;
@@ -116,6 +122,29 @@ interface FbSnapshot {
   cta_text?: string | null;
   link_url?: string | null;
   page_like_count?: number | null;
+  images?: FbMedia[] | null;
+  videos?: FbMedia[] | null;
+  cards?: FbMedia[] | null;
+}
+
+/** 광고 크리에이티브 대표 썸네일 추출 (이미지 → 영상 프리뷰 → 캐러셀 순) */
+function pickImage(s: FbSnapshot): string | undefined {
+  const img = s.images?.[0];
+  if (img?.resized_image_url || img?.original_image_url) {
+    return img.resized_image_url || img.original_image_url || undefined;
+  }
+  const vid = s.videos?.[0];
+  if (vid?.video_preview_image_url) return vid.video_preview_image_url;
+  const card = s.cards?.[0];
+  if (card) {
+    return (
+      card.resized_image_url ||
+      card.original_image_url ||
+      card.video_preview_image_url ||
+      undefined
+    );
+  }
+  return undefined;
 }
 
 interface FbAd {
@@ -127,6 +156,14 @@ interface FbAd {
   ad_library_url?: string;
   url?: string;
   snapshot?: FbSnapshot;
+  advertiser?: {
+    ad_library_page_info?: {
+      page_info?: {
+        ig_username?: string | null;
+        ig_followers?: number | null;
+      };
+    };
+  };
 }
 
 function bodyText(s?: FbSnapshot): string {
@@ -159,6 +196,21 @@ function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
   const days = activeDays(fb.start_date_formatted, fb.end_date_formatted);
   const id = fb.ad_archive_id || Math.random().toString(36).slice(2, 10);
 
+  // 광고주 인스타그램 핸들/팔로워 (있으면 클릭 시 인스타 프로필로 연결)
+  const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
+  const igUsername = pageInfo?.ig_username?.trim() || undefined;
+  const igFollowers = Math.max(0, pageInfo?.ig_followers ?? 0);
+
+  // 클릭 목적지: 인스타 프로필 우선 → 인스타 링크 → 기타 랜딩(LINE 등) → 라이브러리
+  const igUrl = igUsername ? `https://www.instagram.com/${igUsername}/` : undefined;
+  const linkIsInstagram = (s.link_url ?? "").includes("instagram.com");
+  const sourceUrl =
+    igUrl ||
+    (linkIsInstagram ? s.link_url! : undefined) ||
+    s.link_url ||
+    fb.ad_library_url ||
+    undefined;
+
   return {
     id: `fb-${id}`,
     clinic: fb.page_name?.trim() || "광고주 미상",
@@ -171,18 +223,21 @@ function mapFbAdToAd(fb: FbAd, fallbackArea: Area): Ad | null {
     tags: TAGS_BY_TREATMENT[treatment],
     style,
     palette: PALETTE_BY_TREATMENT[treatment],
-    likes: Math.max(0, s.page_like_count ?? 0),
+    // 팔로워 수를 인기 지표로 사용 (없으면 페이지 좋아요)
+    likes: igFollowers || Math.max(0, s.page_like_count ?? 0),
     saves: days,
     lang,
     date: fb.start_date_formatted?.slice(0, 10) || new Date().toISOString().slice(0, 10),
 
     live: true,
-    sourceUrl: s.link_url || fb.ad_library_url || undefined,
+    imageUrl: pickImage(s),
+    sourceUrl,
     adLibraryUrl: fb.ad_library_url || undefined,
     cta: s.cta_text || undefined,
     platforms: fb.publisher_platform || undefined,
     activeDays: days,
     advertiser: fb.page_name || undefined,
+    igUsername,
   };
 }
 

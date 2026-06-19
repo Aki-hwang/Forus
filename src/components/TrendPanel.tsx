@@ -34,21 +34,37 @@ export function TrendPanel({ trends }: { trends: TrendSummary }) {
       {/* 좌측: 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3 lg:col-span-5">
         <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-        <Stat
-          label="평균 인게이지먼트"
-          value={trends.avgEngagement.toLocaleString()}
-          hint="좋아요+저장 평균"
-        />
+        {trends.live ? (
+          <Stat
+            label="평균 팔로워"
+            value={trends.avgFollowers.toLocaleString()}
+            hint="광고주 IG 팔로워"
+          />
+        ) : (
+          <Stat
+            label="평균 인게이지먼트"
+            value={trends.avgEngagement.toLocaleString()}
+            hint="좋아요+저장 평균"
+          />
+        )}
         <Stat
           label="가장 핫한 시술"
           value={trends.byTreatment[0]?.label ?? "-"}
-          hint={`${trends.byTreatment[0]?.count ?? 0}건 노출`}
+          hint={`${trends.byTreatment[0]?.count ?? 0}건 집행`}
         />
-        <Stat
-          label="🔥 최고 반응 광고"
-          value={trends.hottest ? `${(trends.hottest.likes / 1000).toFixed(1)}k` : "-"}
-          hint={trends.hottest?.clinic.replace(/\s*\(.*\)$/, "") ?? ""}
-        />
+        {trends.live ? (
+          <Stat
+            label="⏳ 최장 집행 광고"
+            value={trends.longestRunning ? `${trends.longestRunning.activeDays ?? 0}일` : "-"}
+            hint={trends.longestRunning?.clinic.replace(/\s*\(.*\)$/, "") ?? ""}
+          />
+        ) : (
+          <Stat
+            label="🔥 최고 반응 광고"
+            value={trends.hottest ? `${(trends.hottest.likes / 1000).toFixed(1)}k` : "-"}
+            hint={trends.hottest?.clinic.replace(/\s*\(.*\)$/, "") ?? ""}
+          />
+        )}
       </div>
 
       {/* 우측: 시술별 분포 + 태그 트렌드 */}
