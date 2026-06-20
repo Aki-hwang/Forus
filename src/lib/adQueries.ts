@@ -120,6 +120,8 @@ export interface SearchQuery {
   area?: Area;
   /** 광고 송출 국가 (KR/JP/TW) — 액터 입력에도 전달 */
   country: string;
+  /** 검색어 언어 — 결과 본문이 한자만이라 모호할 때 언어 추론 힌트로 사용 */
+  lang: keyof LangQueries;
   keyword: string;
   url: string;
 }
@@ -141,17 +143,18 @@ export function searchQueries(): SearchQuery[] {
   const langs: (keyof LangQueries)[] = ["jp", "kr", "cn"];
 
   // (언어 × 송출국가 × 권역) + (언어 × 송출국가 × 일반) 스트림. 라운드로빈으로 앞쪽부터 골고루.
-  const streams: { area?: Area; country: string; words: string[] }[] = [];
+  type Stream = { area?: Area; country: string; lang: keyof LangQueries; words: string[] };
+  const streams: Stream[] = [];
   for (const lang of langs) {
     for (const country of LANG_COUNTRIES[lang]) {
       for (const area of areas) {
-        streams.push({ area, country, words: AREA_QUERIES[area][lang] });
+        streams.push({ area, country, lang, words: AREA_QUERIES[area][lang] });
       }
     }
   }
   for (const lang of langs) {
     for (const country of LANG_COUNTRIES[lang]) {
-      streams.push({ country, words: GENERAL_QUERIES[lang] });
+      streams.push({ country, lang, words: GENERAL_QUERIES[lang] });
     }
   }
 
@@ -166,7 +169,13 @@ export function searchQueries(): SearchQuery[] {
       const dedup = `${keyword}|${s.country}`;
       if (seen.has(dedup)) continue;
       seen.add(dedup);
-      out.push({ area: s.area, country: s.country, keyword, url: buildAdLibraryUrl(keyword, s.country) });
+      out.push({
+        area: s.area,
+        country: s.country,
+        lang: s.lang,
+        keyword,
+        url: buildAdLibraryUrl(keyword, s.country),
+      });
     }
   }
   return out;

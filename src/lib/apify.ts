@@ -75,14 +75,21 @@ function inferStyle(text: string): StyleKey {
   return "감성";
 }
 
-function inferLang(text: string): Lang {
-  // 가나(히라가나/가타카나)가 있으면 일본어 타겟
+// 언어 추론 — "있는지"가 아니라 "어느 문자가 더 많은지"(우세 문자)로 판별한다.
+//   중국어 광고에 한글 해시태그(#강남 #부산)가 몇 개 섞였다고 한국어로 분류되면 안 된다.
+//   hint = 검색어 언어(jp/kr/cn) — 한자만 있는 모호한 경우의 최종 타이브레이커.
+// 우선순위: 가나(일본어 고유) > 한글vs한자 우세 비교 > 한자만이면 hint.
+function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
+  // 가나(히라가나·가타카나)는 일본어에만 있음 → 1자라도 있으면 일본어
   if (/[぀-ヿ]/.test(text)) return "JP";
-  // 한글이 있으면 한국(국내) 타겟
-  if (/[가-힣]/.test(text)) return "KR";
-  // 중국어 간체/번체에서 주로 쓰는 글자가 보이면 중국어 타겟
-  if (/[优優惠脸臉韩韓针針這产產價約們]/.test(text)) return "CN";
-  return "JP";
+  const hangul = (text.match(/[가-힣]/g) || []).length;
+  const han = (text.match(/[㐀-鿿]/g) || []).length; // 한자(중국어·번체 포함)
+  // 한자가 한글보다 많으면 한자권 광고 — 일본어권 검색이면 JP, 아니면 CN
+  // (한글 해시태그 몇 개 섞인 중국어 광고가 KR로 새는 것을 방지)
+  if (han > hangul) return hint === "jp" ? "JP" : "CN";
+  if (hangul > 0) return "KR"; // 한글 우세 → 한국어
+  // 문자 정보가 거의 없으면 검색어 언어로 결정 (cn→CN, 그 외 JP)
+  return hint === "cn" ? "CN" : "JP";
 }
 
 function extractHashtags(text: string, treatment: TreatmentKey): string[] {
@@ -186,7 +193,7 @@ function bodyText(s?: FbSnapshot): string {
   return typeof s.body === "string" ? s.body : s.body.text ?? "";
 }
 
-function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
+function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn"): Ad | null {
   const s = fb.snapshot ?? {};
   const body = bodyText(s).trim();
   const title = (s.title ?? "").trim();
@@ -195,7 +202,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area): Ad | null {
   const blob = `${title}\n${body}`;
   const treatment = inferTreatment(blob);
   const style = inferStyle(blob);
-  const lang = inferLang(blob);
+  const lang = inferLang(blob, langHint);
 
   // 광고주 인스타 핸들 + Meta 페이지 카테고리 → 클리닉 판별/정밀 매핑
   const pageInfo = fb.advertiser?.ad_library_page_info?.page_info;
@@ -347,7 +354,7 @@ async function collectAds(
       const q = queries[next++];
       const items = await runActorForUrl(token, q.url, perQuery, q.country, deadline);
       for (const fb of items) {
-        const ad = mapFbAdToAd(fb, q.area);
+        const ad = mapFbAdToAd(fb, q.area, q.lang);
         if (ad) out.push(ad);
       }
     }
@@ -375,18 +382,24 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
   try {
     const collected = await collectAds(token, queries, perQuery);
 
-    // 중복 제거(칼같이): 같은 광고주가 같은 지역·시술·언어로 변형 크리에이티브를 여러 개
-    // 도배하므로, 광고주+지역+시술+언어 기준 1건만 남긴다. 최신순 정렬 후 첫 1건(최신)을 대표로.
-    // ※ 언어(lang)를 키에 포함하는 게 핵심: 한국 클리닉은 국내 KR 광고를 훨씬 많이 올려서,
-    //   언어를 빼면 (clinic+area+treatment) 대표가 거의 KR로 잡혀 일본인(JP) 광고가 통째로
-    //   묻힌다. 언어를 넣으면 같은 클리닉의 JP·KR·CN 광고가 각각 1건씩 살아남는다.
-    const seen = new Set<string>();
+    // 중복 제거(칼같이) — 두 기준 중 하나라도 걸리면 제외:
+    //  ① 크리에이티브 동일: 같은 광고주가 "똑같은 카피" 광고를 여러 건(=같은 이미지 도배)
+    //     → 광고주+카피(공백 제거 앞 80자) 기준 1건. 지역/시술/언어 추론이 흔들려도 확실히 묶임.
+    //  ② 슬롯 동일: 같은 광고주+지역+시술+언어의 변형(가격표 등 미세차이) → 1건.
+    // 언어(lang)를 ②에 포함하는 게 핵심: 한국 클리닉은 국내 KR 광고가 훨씬 많아, 언어를 빼면
+    //   대표가 거의 KR로 잡혀 일본인(JP) 광고가 묻힌다. 언어를 넣으면 JP·KR·CN이 각 1건씩 생존.
+    const seenCreative = new Set<string>();
+    const seenSlot = new Set<string>();
+    const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
     const ads = collected
       .sort((a, b) => b.date.localeCompare(a.date))
       .filter((ad) => {
-        const key = `${ad.igUsername ?? ad.clinic}|${ad.area}|${ad.treatment}|${ad.lang}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
+        const adv = norm(ad.igUsername ?? ad.clinic ?? "");
+        const creativeKey = `${adv}|${norm(ad.caption || ad.headline || "").slice(0, 80)}`;
+        const slotKey = `${adv}|${ad.area}|${ad.treatment}|${ad.lang}`;
+        if (seenCreative.has(creativeKey) || seenSlot.has(slotKey)) return false;
+        seenCreative.add(creativeKey);
+        seenSlot.add(slotKey);
         return true;
       });
 
