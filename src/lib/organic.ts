@@ -224,13 +224,13 @@ async function applyOrganicGate(ads: Ad[]): Promise<Ad[]> {
   return kept;
 }
 
-export async function fetchOrganicViaApify(): Promise<Ad[] | null> {
+export async function fetchOrganicViaApify(force = false): Promise<Ad[] | null> {
   const token = process.env.APIFY_TOKEN?.trim();
   if (!token) return null;
   if (process.env.ORGANIC_ENABLED === "0") return null;
 
   const ttlMs = num(process.env.ORGANIC_TTL_SECONDS, 604_800) * 1000;
-  if (cache && Date.now() - cache.at < ttlMs) return cache.ads;
+  if (!force && cache && Date.now() - cache.at < ttlMs) return cache.ads;
 
   const profileCap = num(process.env.ORGANIC_PROFILE_CAP, 80);
   const postsPerProfile = num(process.env.ORGANIC_POSTS_PER_PROFILE, 6, 3);

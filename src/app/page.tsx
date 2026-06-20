@@ -135,7 +135,7 @@ export default function Home() {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="text-left">
             <h1 className="text-[17px] font-black leading-tight tracking-tight text-foreground sm:text-[21px]">
-              일본/중국인 관광객 대상 피부과 광고를
+              강남·명동·홍대 피부과 마케팅 트렌드를
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 {" "}
                 한눈에
@@ -153,10 +153,10 @@ export default function Home() {
                   <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-primary" : "bg-muted"}`} />
                 )}
                 {live
-                  ? "실시간 수집 (Meta 광고 라이브러리)"
+                  ? "수집 데이터 (광고 + 오가닉)"
                   : isCollecting
-                  ? "실시간 수집 중… (최대 2~4분, 새로고침 불필요)"
-                  : "수집 데이터 (개발용 · Apify 미연결)"}
+                  ? "데이터 불러오는 중…"
+                  : "샘플 데이터 (아직 수집 전)"}
               </span>
               {viewState === "loading" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-0.5 text-[11px] font-bold text-muted">
@@ -222,8 +222,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
-        DermaRadar · 피부과 광고 트렌드 · MVP ·{" "}
-        {live ? "실시간 수집" : isCollecting ? "실시간 수집 중…" : "수집 데이터(개발용)"}
+        DermaRadar · 피부과 광고 트렌드 · Doctorstock Developed by 황철진
       </footer>
 
       {selected ? (

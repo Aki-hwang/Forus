@@ -375,12 +375,12 @@ async function collectAds(
   return out;
 }
 
-export async function fetchAdsViaApify(): Promise<Ad[] | null> {
+export async function fetchAdsViaApify(force = false): Promise<Ad[] | null> {
   const token = process.env.APIFY_TOKEN?.trim();
   if (!token) return null;
 
   const ttlMs = (Number(process.env.APIFY_TTL_SECONDS) || 604_800) * 1000;
-  if (cache && Date.now() - cache.at < ttlMs) {
+  if (!force && cache && Date.now() - cache.at < ttlMs) {
     return cache.ads;
   }
 
