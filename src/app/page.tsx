@@ -22,6 +22,8 @@ export default function Home() {
   const [source, setSource] = useState<Source>("sample");
   // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
+  // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
+  const [collecting, setCollecting] = useState(true);
 
   useEffect(() => {
     let alive = true;
@@ -29,7 +31,9 @@ export default function Home() {
     fetch("/api/ads")
       .then((r) => r.json())
       .then((data: { source?: Source; ads?: Ad[] }) => {
-        if (!alive || !data?.ads?.length) return;
+        if (!alive) return;
+        setCollecting(false); // 응답 도착 → 수집 진행중 종료 (성공/폴백 모두)
+        if (!data?.ads?.length) return;
         setAllAds(data.ads);
         setSource(data.source ?? "sample");
 
@@ -48,6 +52,7 @@ export default function Home() {
       })
       .catch(() => {
         /* 네트워크 실패 시 목업 유지 */
+        if (alive) setCollecting(false);
       });
     return () => {
       alive = false;
@@ -92,6 +97,10 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // 배지 상태: 실시간(apify) / 수집 진행중(collecting) / 폴백(미연결)
+  const live = source === "apify";
+  const isCollecting = collecting && !live;
+
   return (
     <div className="min-h-full">
       <Header onReset={resetView} />
@@ -110,15 +119,19 @@ export default function Home() {
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                  source === "apify" ? "bg-primary/10 text-primary-ink" : "bg-border/60 text-muted"
+                  live || isCollecting ? "bg-primary/10 text-primary-ink" : "bg-border/60 text-muted"
                 }`}
               >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    source === "apify" ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-                {source === "apify" ? "실시간 수집 (Meta 광고 라이브러리)" : "수집 데이터 (개발용 · Apify 미연결)"}
+                {isCollecting ? (
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+                ) : (
+                  <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-primary" : "bg-muted"}`} />
+                )}
+                {live
+                  ? "실시간 수집 (Meta 광고 라이브러리)"
+                  : isCollecting
+                  ? "실시간 수집 중… (최대 2~4분, 새로고침 불필요)"
+                  : "수집 데이터 (개발용 · Apify 미연결)"}
               </span>
               {viewState === "loading" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-0.5 text-[11px] font-bold text-muted">
@@ -183,7 +196,7 @@ export default function Home() {
 
       <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
         DermaRadar · 피부과 광고 트렌드 · MVP ·{" "}
-        {source === "apify" ? "실시간 수집" : "수집 데이터(개발용)"}
+        {live ? "실시간 수집" : isCollecting ? "실시간 수집 중…" : "수집 데이터(개발용)"}
       </footer>
 
       {selected ? (

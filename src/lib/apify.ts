@@ -405,13 +405,17 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
         return true;
       });
 
-    if (ads.length === 0) return cache?.ads ?? null;
+    if (ads.length === 0) {
+      console.warn(`[apify] 수집 0건 (collected=${collected.length}) → 샘플 폴백. 토큰/크레딧/액터 확인.`);
+      return cache?.ads ?? null;
+    }
 
     // 네이버·카카오 지역검색(무료)으로 광고주가 실제 병원/의원인지 검증해
     // 비의료(화장품·제품 등) 광고를 제외한다. Apify 추가 호출 없음.
     const gated = await applyMedicalGate(ads);
 
     cache = { at: Date.now(), ads: gated };
+    console.log(`[apify] 수집 완료: collected=${collected.length} dedup=${ads.length} 의료검증후=${gated.length}`);
     return gated;
   } catch (err) {
     console.error("[apify] collect error:", err);
