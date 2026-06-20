@@ -76,18 +76,43 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
               </>
             )}
           </div>
-          {ad.sourceUrl ? (
-            <a
-              href={ad.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 pt-1 text-[12px] font-bold text-primary-ink hover:underline"
-            >
-              {ad.sourceUrl.includes("instagram.com")
-                ? `↗ 인스타그램${ad.igUsername ? ` (@${ad.igUsername})` : ""} 보기`
-                : "↗ 원본 광고 / 사이트 보기"}
-            </a>
-          ) : null}
+          {(() => {
+            const isOrganic = ad.kind === "organic";
+            // 광고 → 광고 라이브러리 항목, 오가닉 → 게시물 퍼머링크 (계정이 아니라 '그 광고'로 연결)
+            const adLink = isOrganic ? ad.sourceUrl : ad.adLibraryUrl ?? ad.sourceUrl;
+            const adLabel = isOrganic
+              ? "↗ 이 게시물 보기"
+              : ad.adLibraryUrl
+              ? "↗ 이 광고 보기 (광고 라이브러리)"
+              : "↗ 원본 광고 보기";
+            const acctUrl = ad.igUsername
+              ? `https://www.instagram.com/${ad.igUsername}/`
+              : undefined;
+            return (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                {adLink ? (
+                  <a
+                    href={adLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[12px] font-bold text-primary-ink hover:underline"
+                  >
+                    {adLabel}
+                  </a>
+                ) : null}
+                {acctUrl ? (
+                  <a
+                    href={acctUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-muted hover:underline"
+                  >
+                    인스타그램 (@{ad.igUsername}) 보기
+                  </a>
+                ) : null}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

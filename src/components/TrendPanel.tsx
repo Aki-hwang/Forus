@@ -93,46 +93,18 @@ export function TrendPanel({
     }
     return [...m.values()].sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || y.followers - x.followers);
   }, [ads, period, now]);
-  const rankByViews = ranked.some((c) => c.views != null);
-
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {/* 좌측: 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3 lg:col-span-5">
         <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-        {trends.hasViews ? (
-          <Stat label="▶ 평균 조회수" value={fmt(trends.avgViews)} hint="IG 릴스 조회수 중앙값" />
-        ) : trends.live ? (
-          <Stat label="평균 팔로워" value={fmt(trends.avgFollowers)} hint="광고주 IG 팔로워" />
-        ) : (
-          <Stat
-            label="평균 인게이지먼트"
-            value={trends.avgEngagement.toLocaleString()}
-            hint="좋아요+저장 평균"
-          />
-        )}
-        {trends.hasViews ? (
-          <Stat
-            label="🔥 최다 조회 광고"
-            value={trends.mostViewed?.views != null ? fmt(trends.mostViewed.views) : "-"}
-            hint={cleanClinic(trends.mostViewed?.clinic)}
-            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
-          />
-        ) : trends.live ? (
-          <Stat
-            label="👥 최다 팔로워"
-            value={trends.hottest ? fmt(trends.hottest.likes) : "-"}
-            hint={cleanClinic(trends.hottest?.clinic)}
-            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
-          />
-        ) : (
-          <Stat
-            label="🔥 최고 반응 광고"
-            value={trends.hottest ? `${(trends.hottest.likes / 1000).toFixed(1)}k` : "-"}
-            hint={cleanClinic(trends.hottest?.clinic)}
-            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
-          />
-        )}
+        <Stat label="▶ 평균 조회수" value={fmt(trends.avgViews)} hint="IG 릴스 조회수 중앙값" />
+        <Stat
+          label="🔥 최다 조회 광고"
+          value={trends.mostViewed?.views != null ? fmt(trends.mostViewed.views) : "-"}
+          hint={cleanClinic(trends.mostViewed?.clinic)}
+          onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
+        />
         <Stat
           label="🏥 광고 중 클리닉"
           value={`${trends.advertiserCount}곳`}
@@ -146,7 +118,7 @@ export function TrendPanel({
           <div className="sm:col-span-3">
             <div className="mb-3 flex items-center justify-between gap-2">
               <p className="shrink-0 whitespace-nowrap text-[13px] font-bold text-foreground">
-                {rankByViews ? "조회수 TOP 클리닉" : "팔로워 TOP 클리닉"}
+                조회수 TOP 클리닉
               </p>
               <div className="flex items-center gap-1">
                 <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
@@ -194,7 +166,7 @@ export function TrendPanel({
                       <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
                     </span>
                     <span className="shrink-0 text-[12px] font-bold text-primary-ink">
-                      {c.views != null ? `▶ ${fmt(c.views)}` : `👥 ${fmt(c.followers)}`}
+                      {c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
                     </span>
                   </>
                 );
