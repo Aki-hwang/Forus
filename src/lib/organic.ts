@@ -52,10 +52,17 @@ function hashtagTargets(): { tag: string; area?: Area }[] {
       .filter(Boolean)
       .map((tag) => ({ tag }));
   }
+  // 지역 라운드로빈 — 캡이 낮아도 강남/명동/홍대가 한 개씩 번갈아 들어오게 한다
+  // (순차로 넣으면 앞쪽 지역만 캡에 걸려 통과해 지역 편향이 생김)
   const out: { tag: string; area?: Area }[] = [];
-  (Object.keys(AREA_HASHTAGS) as Area[]).forEach((area) =>
-    AREA_HASHTAGS[area].forEach((tag) => out.push({ tag, area }))
-  );
+  const areas = Object.keys(AREA_HASHTAGS) as Area[];
+  const maxLen = Math.max(0, ...areas.map((a) => AREA_HASHTAGS[a].length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const area of areas) {
+      const tag = AREA_HASHTAGS[area][i];
+      if (tag) out.push({ tag, area });
+    }
+  }
   GENERAL_HASHTAGS.forEach((tag) => out.push({ tag }));
   return out;
 }
@@ -196,9 +203,34 @@ export async function fetchOrganicViaApify(): Promise<Ad[] | null> {
   const postsPerTag = num(process.env.ORGANIC_POSTS_PER_TAG, 20, 3);
 
   // 1) 워치리스트: 등록 클리닉 프로필의 최근 게시물 (핸들→지역 매핑 정확)
-  const handles = Array.from(
-    new Set(KNOWN_CLINICS.map((c) => c.handle.toLowerCase()).filter(Boolean))
-  ).slice(0, profileCap);
+  // 등록 순서는 강남·홍대가 앞, 명동이 뒤라 낮은 캡에서 명동이 통째로 잘린다.
+  // 지역(첫 지역 기준) 라운드로빈으로 뽑아 캡이 낮아도 3지역이 균등하게 들어오게 한다.
+  const buckets = new Map<string, string[]>();
+  for (const c of KNOWN_CLINICS) {
+    const h = c.handle.toLowerCase();
+    if (!h) continue;
+    const key = c.areas[0] ?? "기타";
+    (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(h);
+  }
+  const order = ["강남", "명동", "홍대", "기타"];
+  const handlesAll: string[] = [];
+  const picked = new Set<string>();
+  for (let i = 0; ; i++) {
+    let any = false;
+    for (const k of order) {
+      const arr = buckets.get(k);
+      if (arr && i < arr.length) {
+        any = true;
+        const h = arr[i];
+        if (!picked.has(h)) {
+          picked.add(h);
+          handlesAll.push(h);
+        }
+      }
+    }
+    if (!any) break;
+  }
+  const handles = handlesAll.slice(0, profileCap);
   const profileUrls = handles.map((h) => `https://www.instagram.com/${h}/`);
 
   // 2) 해시태그 발굴: 새 병원까지 포함 (area 힌트는 매핑 가능한 범위에서만)
