@@ -224,7 +224,10 @@ async function applyOrganicGate(ads: Ad[]): Promise<Ad[]> {
   return kept;
 }
 
-export async function fetchOrganicViaApify(force = false): Promise<Ad[] | null> {
+export async function fetchOrganicViaApify(
+  force = false,
+  opts: { profileCap?: number; postsPerProfile?: number; hashtagCap?: number; postsPerTag?: number } = {}
+): Promise<Ad[] | null> {
   const token = process.env.APIFY_TOKEN?.trim();
   if (!token) return null;
   if (process.env.ORGANIC_ENABLED === "0") return null;
@@ -232,10 +235,10 @@ export async function fetchOrganicViaApify(force = false): Promise<Ad[] | null> 
   const ttlMs = num(process.env.ORGANIC_TTL_SECONDS, 604_800) * 1000;
   if (!force && cache && Date.now() - cache.at < ttlMs) return cache.ads;
 
-  const profileCap = num(process.env.ORGANIC_PROFILE_CAP, 36);
-  const postsPerProfile = num(process.env.ORGANIC_POSTS_PER_PROFILE, 4, 3);
-  const hashtagCap = num(process.env.ORGANIC_HASHTAG_CAP, 6);
-  const postsPerTag = num(process.env.ORGANIC_POSTS_PER_TAG, 10, 3);
+  const profileCap = opts.profileCap ?? num(process.env.ORGANIC_PROFILE_CAP, 36);
+  const postsPerProfile = opts.postsPerProfile ?? num(process.env.ORGANIC_POSTS_PER_PROFILE, 4, 3);
+  const hashtagCap = opts.hashtagCap ?? num(process.env.ORGANIC_HASHTAG_CAP, 6);
+  const postsPerTag = opts.postsPerTag ?? num(process.env.ORGANIC_POSTS_PER_TAG, 10, 3);
 
   // 1) 워치리스트: 등록 클리닉 프로필의 최근 게시물 (핸들→지역 매핑 정확)
   // 등록 순서는 강남·홍대가 앞, 명동이 뒤라 낮은 캡에서 명동이 통째로 잘린다.

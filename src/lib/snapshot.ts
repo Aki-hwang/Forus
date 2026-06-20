@@ -55,3 +55,52 @@ export async function readSnapshot(kind: "ads" | "organic"): Promise<Snapshot | 
   }
   return null;
 }
+
+
+// ---------- 차단목록(blocklist): 저장본에서 특정 계정/이름 제외 (Apify 재호출 없음) ----------
+const BLOCK_FILE = "forus-blocklist.json";
+
+export async function readBlocklist(): Promise<string[]> {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    try {
+      const raw = await fs.readFile(path.join(dir, BLOCK_FILE), "utf8");
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr.map((x) => String(x).toLowerCase());
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return [];
+}
+
+async function writeBlocklist(list: string[]): Promise<void> {
+  const dir = await writableDir();
+  const uniq = Array.from(new Set(list.map((x) => x.toLowerCase()).filter(Boolean)));
+  await fs.writeFile(path.join(dir, BLOCK_FILE), JSON.stringify(uniq), "utf8");
+}
+
+export async function addToBlocklist(entry: string): Promise<string[]> {
+  const e = entry.trim().toLowerCase();
+  const list = await readBlocklist();
+  if (e && !list.includes(e)) list.push(e);
+  await writeBlocklist(list);
+  return list;
+}
+
+export async function removeFromBlocklist(entry: string): Promise<string[]> {
+  const e = entry.trim().toLowerCase();
+  const list = (await readBlocklist()).filter((x) => x !== e);
+  await writeBlocklist(list);
+  return list;
+}
+
+/** 차단목록(핸들 또는 클리닉명)에 걸리는 광고를 제거 */
+export function applyBlocklist(ads: Ad[], block: string[]): Ad[] {
+  if (block.length === 0) return ads;
+  const set = new Set(block);
+  return ads.filter((a) => {
+    const h = a.igUsername?.toLowerCase();
+    const n = a.clinic?.toLowerCase();
+    return !((h && set.has(h)) || (n && set.has(n)));
+  });
+}

@@ -9,17 +9,20 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export async function GET(req: Request) {
-  const key = new URL(req.url).searchParams.get("key");
+  const url = new URL(req.url);
+  const key = url.searchParams.get("key");
+  // ?full=1 → 월간 "풀 수집"(캡 확대). 그 외에는 절약 기본값.
+  const full = url.searchParams.get("full") === "1";
   const expected = process.env.COLLECT_KEY?.trim();
   if (!expected || key !== expected) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const result: Record<string, unknown> = { startedAt: new Date().toISOString() };
+  const result: Record<string, unknown> = { startedAt: new Date().toISOString(), full };
 
   // 1) 광고 라이브러리 + 조회수 보강 → 스냅샷 저장
   try {
-    const ads = await fetchAdsViaApify(true);
+    const ads = await fetchAdsViaApify(true, full ? { maxQueries: 70, perQuery: 40 } : {});
     if (ads && ads.length > 0) {
       const enriched =
         process.env.COLLECT_VIEWS === "0" ? ads : await enrichAdsWithViews(ads);
@@ -34,7 +37,10 @@ export async function GET(req: Request) {
 
   // 2) 오가닉(IG) → 스냅샷 저장
   try {
-    const organic = await fetchOrganicViaApify(true);
+    const organic = await fetchOrganicViaApify(
+      true,
+      full ? { profileCap: 80, postsPerProfile: 6, hashtagCap: 12, postsPerTag: 20 } : {}
+    );
     if (organic && organic.length > 0) {
       await writeSnapshot("organic", organic);
       result.organic = organic.length;

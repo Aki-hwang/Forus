@@ -23,6 +23,8 @@ export default function Home() {
   const [source, setSource] = useState<Source>("sample");
   // 오가닉(IG 자연 게시물) — 광고와 별개로 받아 합친다
   const [organicAds, setOrganicAds] = useState<Ad[]>([]);
+  // 관리 모드: URL ?key= 가 있으면 카드에 "제외" 버튼 표시 (저장본 편집용)
+  const [manageKey, setManageKey] = useState<string | null>(null);
   // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
   // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
@@ -71,6 +73,31 @@ export default function Home() {
       alive = false;
     };
   }, []);
+
+  // ?key= 감지 → 관리 모드 활성화
+  useEffect(() => {
+    const k = new URLSearchParams(window.location.search).get("key");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (k) setManageKey(k);
+  }, []);
+
+  // 저장본에서 계정 제외 (화면에서 즉시 제거 + 서버 차단목록에 기록)
+  const removeAd = async (ad: Ad) => {
+    if (!manageKey) return;
+    const handle = ad.igUsername?.toLowerCase();
+    const name = ad.clinic?.toLowerCase();
+    const match = (a: Ad) =>
+      Boolean(handle && a.igUsername?.toLowerCase() === handle) ||
+      Boolean(!handle && name && a.clinic?.toLowerCase() === name);
+    setAllAds((prev) => prev.filter((a) => !match(a)));
+    setOrganicAds((prev) => prev.filter((a) => !match(a)));
+    const entry = ad.igUsername || ad.clinic;
+    try {
+      await fetch(`/api/block?key=${encodeURIComponent(manageKey)}&handle=${encodeURIComponent(entry)}`);
+    } catch {
+      /* 무시 */
+    }
+  };
 
   // 타겟 언어(JP/CN) → 지역 필터 → 조회수 우선 정렬
   // 광고 + 오가닉 병합 (id 중복 제거)
@@ -214,7 +241,12 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {filtered.map((ad) => (
-                <AdCard key={ad.id} ad={ad} onSelect={setSelected} />
+                <AdCard
+                  key={ad.id}
+                  ad={ad}
+                  onSelect={setSelected}
+                  onRemove={manageKey ? removeAd : undefined}
+                />
               ))}
             </div>
           )}
