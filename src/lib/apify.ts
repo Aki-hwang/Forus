@@ -1,7 +1,7 @@
 // Meta(페이스북) 광고 라이브러리 → Ad 모델 변환 (온디맨드 수집, 목업 폴백용)
 //
-// 지역별 검색어(adQueries.ts)로 활성 광고를 긁어와 본문(캡션)에서
-// 시술·스타일·언어를 추론해 Ad[] 로 매핑한다. 주 1회 갱신(검색어 로테이션).
+// 지역별 검색어(adQueries.ts)를 KR·JP·TW 송출국가로 확장해 활성 광고를 긁어와 본문(캡션)
+// 에서 시술·스타일·언어를 추론해 Ad[] 로 매핑한다. 매 수집마다 전체 검색(로테이션 없음, 7일 캐시).
 //
 // 환경변수:
 //   APIFY_TOKEN        (필수) 없으면 수집을 건너뛰고 null 반환 → 목업 폴백.
@@ -290,6 +290,7 @@ async function runActorForUrl(
   token: string,
   url: string,
   count: number,
+  country: string,
   deadline?: number
 ): Promise<FbAd[]> {
   const ms = deadline ? Math.min(150_000, deadline - Date.now()) : 150_000;
@@ -305,7 +306,7 @@ async function runActorForUrl(
         scrapeAdDetails: true,
         count,
         "scrapePageAds.activeStatus": "active",
-        "scrapePageAds.countryCode": "KR",
+        "scrapePageAds.countryCode": country,
       }),
       cache: "no-store",
       signal: controller.signal,
@@ -344,7 +345,7 @@ async function collectAds(
   async function worker() {
     while (next < queries.length && Date.now() < deadline) {
       const q = queries[next++];
-      const items = await runActorForUrl(token, q.url, perQuery, deadline);
+      const items = await runActorForUrl(token, q.url, perQuery, q.country, deadline);
       for (const fb of items) {
         const ad = mapFbAdToAd(fb, q.area);
         if (ad) out.push(ad);
@@ -374,13 +375,16 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
   try {
     const collected = await collectAds(token, queries, perQuery);
 
-    // 중복 제거(칼같이): 같은 광고주가 같은 지역·시술로 변형 크리에이티브를 여러 개
-    // 도배하므로, 광고주+지역+시술 기준 1건만 남긴다. 최신순 정렬 후 첫 1건(최신)을 대표로.
+    // 중복 제거(칼같이): 같은 광고주가 같은 지역·시술·언어로 변형 크리에이티브를 여러 개
+    // 도배하므로, 광고주+지역+시술+언어 기준 1건만 남긴다. 최신순 정렬 후 첫 1건(최신)을 대표로.
+    // ※ 언어(lang)를 키에 포함하는 게 핵심: 한국 클리닉은 국내 KR 광고를 훨씬 많이 올려서,
+    //   언어를 빼면 (clinic+area+treatment) 대표가 거의 KR로 잡혀 일본인(JP) 광고가 통째로
+    //   묻힌다. 언어를 넣으면 같은 클리닉의 JP·KR·CN 광고가 각각 1건씩 살아남는다.
     const seen = new Set<string>();
     const ads = collected
       .sort((a, b) => b.date.localeCompare(a.date))
       .filter((ad) => {
-        const key = `${ad.igUsername ?? ad.clinic}|${ad.area}|${ad.treatment}`;
+        const key = `${ad.igUsername ?? ad.clinic}|${ad.area}|${ad.treatment}|${ad.lang}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;

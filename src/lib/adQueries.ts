@@ -52,6 +52,17 @@ const GENERAL_QUERIES: LangQueries = {
   cn: ["韩国 皮肤管理 中文", "韩国 医美 中文", "韩国 水光针"],
 };
 
+// 언어별 광고 "송출 국가" — 한국 클리닉의 외국인 타겟 광고는 현지(타겟국) 송출이 많다.
+//   일본인 타겟: 한국(방한 일본인) + 일본(방한 전 일본 거주자에게 노출) → KR·JP 둘 다 검색
+//   중국인 타겟: 한국 + 대만(번체 중화권·Meta 사용) → KR·TW   ※ 중국 본토는 Meta 미사용
+//   한국인 타겟: 한국만
+// country=KR 만 검색하면 "일본에서 송출되는" 한국 클리닉의 일본어 광고를 통째로 놓친다.
+const LANG_COUNTRIES: Record<keyof LangQueries, string[]> = {
+  jp: ["KR", "JP"],
+  kr: ["KR"],
+  cn: ["KR", "TW"],
+};
+
 /** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) — 권역 동/역명, JP한자·CN간체 포함 */
 const AREA_TERMS: Record<Area, string[]> = {
   // 강남 권역: 신사·압구정·역삼·청담·논현 포함 (狎鴎亭=JP, 狎鸥亭=CN 간체)
@@ -83,15 +94,16 @@ const AREA_TERMS: Record<Area, string[]> = {
 
 const AD_LIBRARY_BASE = "https://www.facebook.com/ads/library/";
 
-/** 검색어로 광고 라이브러리 검색 URL 생성
+/** 검색어 + 송출국가로 광고 라이브러리 검색 URL 생성
+ *  country — 광고가 송출된 국가(KR/JP/TW…). 일본 송출 광고를 잡으려면 JP 로 검색해야 한다.
  *  start_date[min] — 최근 30일 이내 시작 광고만 서버단에서 사전 필터링.
  *  30일 초과 광고는 클라이언트 측 MAX_ACTIVE_DAYS 로도 한 번 더 걸러낸다. */
-export function buildAdLibraryUrl(keyword: string): string {
+export function buildAdLibraryUrl(keyword: string, country = "KR"): string {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
   const params = new URLSearchParams({
     active_status: "active",
     ad_type: "all",
-    country: "KR",
+    country,
     is_targeted_country: "false",
     media_type: "all",
     q: keyword,
@@ -106,61 +118,58 @@ export function buildAdLibraryUrl(keyword: string): string {
 export interface SearchQuery {
   /** 지역이 확정된 검색이면 지역, 일반 검색이면 undefined */
   area?: Area;
+  /** 광고 송출 국가 (KR/JP/TW) — 액터 입력에도 전달 */
+  country: string;
   keyword: string;
   url: string;
 }
 
-/** 여러 리스트를 라운드로빈으로 평탄화 ([a0,b0,c0,a1,b1,...]) */
-function roundRobin<T>(lists: T[][]): T[] {
-  const out: T[] = [];
-  const maxLen = Math.max(0, ...lists.map((l) => l.length));
-  for (let i = 0; i < maxLen; i++) {
-    for (const l of lists) if (l[i] !== undefined) out.push(l[i]);
-  }
-  return out;
-}
-
 /**
- * 이번 수집의 전체 검색 쿼리 — 지역(권역)별 KR·JP·CN + 일반(시술) 검색어를 "모두" 훑는다.
- *   강남(JP4+KR3+CN2=9) + 명동(JP3+KR2+CN3=8) + 홍대(JP4+KR2+CN2=8) = 25개 지역
- *   + 일반(JP4+KR1+CN3=8) = 총 33개 검색. 주차 로테이션 없이 매 수집마다 전부 실행.
- *   URL에 start_date[min]=(30일전)을 붙여 최근 30일 광고를 서버단에서 사전 필터링.
+ * 이번 수집의 전체 검색 쿼리 — 지역(권역)별 KR·JP·CN + 일반(시술) 검색어를, 각 언어의
+ * "송출국가"(LANG_COUNTRIES)로 확장해 "모두" 훑는다. 일본인 타겟 광고는 한국(KR)뿐 아니라
+ * 일본(JP) 송출분까지 검색해야 누락이 없다. 주차 로테이션 없이 매 수집마다 전부 실행.
+ *   지역: 강남(JP4+KR3+CN2)+명동(JP3+KR2+CN3)+홍대(JP4+KR2+CN2) × (JP·CN은 2개국, KR 1개국)
+ *   일반(시술): JP4+KR1+CN3 도 동일하게 송출국가로 확장.
+ *   URL에 start_date[min]=(30일전)을 붙여 최근 30일 광고만 서버단에서 사전 필터링.
  *   결과는 7일 캐시. 수집량/속도는 APIFY_PER_QUERY·APIFY_CONCURRENCY 로 조절.
  *
- *   순서는 (언어 × 권역) 라운드로빈으로 인터리브한다 — APIFY_COLLECT_MS(기본 210s) 예산에
- *   잘려 일부만 실행되더라도 강남·명동·홍대 3권역과 JP·KR·CN 3언어가 고루 섞이도록.
+ *   순서는 (언어 × 송출국가 × 권역) 라운드로빈으로 인터리브한다 — APIFY_COLLECT_MS 예산에
+ *   잘려 일부만 실행돼도 JP(KR·JP 송출)·권역이 앞쪽부터 고루 섞이도록(일본인 광고 우선 확보).
  */
 export function searchQueries(): SearchQuery[] {
   const areas = Object.keys(AREA_QUERIES) as Area[];
   const langs: (keyof LangQueries)[] = ["jp", "kr", "cn"];
 
-  // (언어, 권역) 스트림들을 라운드로빈 → 앞쪽부터 전 권역·언어를 고루 커버
-  const streams: { area: Area; words: string[] }[] = [];
+  // (언어 × 송출국가 × 권역) + (언어 × 송출국가 × 일반) 스트림. 라운드로빈으로 앞쪽부터 골고루.
+  const streams: { area?: Area; country: string; words: string[] }[] = [];
   for (const lang of langs) {
-    for (const area of areas) streams.push({ area, words: AREA_QUERIES[area][lang] });
+    for (const country of LANG_COUNTRIES[lang]) {
+      for (const area of areas) {
+        streams.push({ area, country, words: AREA_QUERIES[area][lang] });
+      }
+    }
   }
-  const areaQs: SearchQuery[] = [];
+  for (const lang of langs) {
+    for (const country of LANG_COUNTRIES[lang]) {
+      streams.push({ country, words: GENERAL_QUERIES[lang] });
+    }
+  }
+
+  // 라운드로빈 인터리브 + (검색어,국가) 중복 제거
+  const out: SearchQuery[] = [];
+  const seen = new Set<string>();
   const maxLen = Math.max(0, ...streams.map((s) => s.words.length));
   for (let i = 0; i < maxLen; i++) {
     for (const s of streams) {
       const keyword = s.words[i];
-      if (keyword) areaQs.push({ area: s.area, keyword, url: buildAdLibraryUrl(keyword) });
+      if (!keyword) continue;
+      const dedup = `${keyword}|${s.country}`;
+      if (seen.has(dedup)) continue;
+      seen.add(dedup);
+      out.push({ area: s.area, country: s.country, keyword, url: buildAdLibraryUrl(keyword, s.country) });
     }
   }
-
-  const generalQs: SearchQuery[] = roundRobin([
-    GENERAL_QUERIES.jp,
-    GENERAL_QUERIES.kr,
-    GENERAL_QUERIES.cn,
-  ]).map((keyword) => ({ keyword, url: buildAdLibraryUrl(keyword) }));
-
-  // 검색어 중복 제거
-  const seen = new Set<string>();
-  return [...areaQs, ...generalQs].filter((q) => {
-    if (seen.has(q.keyword)) return false;
-    seen.add(q.keyword);
-    return true;
-  });
+  return out;
 }
 
 /** 검색 URL/본문 텍스트에서 지역(권역) 판별 */
