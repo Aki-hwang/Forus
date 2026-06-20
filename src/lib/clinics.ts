@@ -25,7 +25,8 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "블리비의원", handle: "velybclinic", areas: [], followers: "15K", note: "전국 55개 지점, 일본어 계정 별도" },
   { name: "쁨클리닉", handle: "ppeum_clinic_jp", areas: ["강남", "홍대", "명동"], followers: "32K", note: "글로벌점 운영" },
   { name: "오블리주의원", handle: "ohvelyjoo_hongdae_jp", areas: ["홍대"], followers: "4.5K", note: "홍대 위치" },
-  { name: "리엔장", handle: "lienjang.japan", areas: ["강남", "홍대"], followers: "30K", note: "X·인스타·틱톡·유튜브 등 운영중" },
+  { name: "리엔장 강남점", handle: "lienjang.japan", areas: ["강남"], followers: "30K", note: "강남 일본어 계정, X·인스타·틱톡·유튜브 운영" },
+  { name: "리엔장 홍대점", handle: "lienjang.hongdae_jp", areas: ["홍대"], followers: "", note: "홍대 일본어 계정" },
   // 홍대 권역 (2026-06-20 xlsx 임포트)
   { name: "닥터쁘띠의원 홍대점", handle: "dp_hd_jp", areas: ["홍대"], followers: "", note: "홍대입구역, 일본어 통역 상주, LINE 문의" },
   { name: "제이필클리닉 홍대점", handle: "jfeelclinic_jp", areas: ["홍대"], followers: "", note: "홍대입구역 8번 출구 직결, 일본어 계정, LINE" },
@@ -48,9 +49,10 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "명동 아이디의원", handle: "idclinic_md_jp", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 공식 계정·LINE" },
   { name: "밴스의원 명동점", handle: "vands_myeongdong_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어·영어 글로벌 계정" },
   { name: "닥터디자이너클리닉 명동점", handle: "drdesigner_md_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 글로벌 계정" },
-  // 카인드글로벌의원·오테나의원: 핸들 미확인 → CLINIC_ALLOWLIST로 광고 보호, 핸들 확인 후 재등록
+  { name: "카인드글로벌의원", handle: "kindglobalclinic", areas: ["명동"], followers: "", note: "명동/을지로입구, 한국인 타깃·다국어 국제환자 대응" },
+  // 오테나의원: 핸들 미확인 → CLINIC_ALLOWLIST로 광고 보호, 핸들 확인 후 재등록
   { name: "톡스앤필 명동점", handle: "myeongdong_toxnfill", areas: ["명동"], followers: "", note: "명동/을지로입구, 다국어 사이트·LINE" },
-  { name: "리엔장의원 명동점", handle: "lienjang_myeongdong", areas: ["명동"], followers: "", note: "명동/눈스퀘어, 네트워크형 외국인 타깃" },
+  { name: "리엔장의원 명동점", handle: "lienjang.md_jp", areas: ["명동"], followers: "", note: "명동/눈스퀘어, 일본어 계정·외국인 타깃" },
   { name: "우미클리닉 명동", handle: "umi_clinic__jp", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 계정·블로그·LINE" },
   { name: "BLS클리닉 명동점", handle: "blsclinic_eng", areas: ["명동"], followers: "", note: "명동역, 영문 계정·일본어 통역" },
   { name: "데이뷰의원 명동더프리미엄점", handle: "daybeaumd_luxe_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 프리미엄·야간진료" },
