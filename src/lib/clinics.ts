@@ -200,6 +200,13 @@ function categoryMatch(cat: string | undefined, list: string[]): boolean {
 }
 
 /** Meta 페이지 카테고리가 의료(병원/피부과/성형외과 등)인지 — 의료기관 검증의 양성 신호 */
+/** 텍스트(계정명·핸들·캡션 등)에 의료기관 신호(의원/클리닉/피부과/clinic/皮膚科 등)가 있는지 */
+export function hasClinicSignal(text?: string): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return CLINIC_SIGNALS.some((sig) => t.includes(sig.toLowerCase()));
+}
+
 export function isMedicalCategory(pageCategory?: string): boolean {
   return categoryMatch(pageCategory, MEDICAL_CATEGORIES);
 }

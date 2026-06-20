@@ -18,7 +18,8 @@
 //   ORGANIC_HASHTAGS           (선택) 쉼표구분 커스텀 해시태그(#·공백 제거 자동). 주면 내장 목록 대체.
 
 import { Ad, Area } from "./ads";
-import { KNOWN_CLINICS, findClinicByHandle, isExcludedAd } from "./clinics";
+import { KNOWN_CLINICS, findClinicByHandle, isExcludedAd, hasClinicSignal } from "./clinics";
+import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 import { areaFromText } from "./adQueries";
 import {
   inferTreatment,
@@ -189,6 +190,40 @@ async function runIgScraper(
 // ---------- TTL 캐시 + 수집 ----------
 let cache: { at: number; ads: Ad[] } | null = null;
 
+/**
+ * 오가닉 의료 게이트 — 해시태그로 들어온 정체불명 계정(인플루언서·블로그)을 걸러낸다.
+ *  통과(OR): ① 등록 클리닉(featured) | ② 계정명/핸들/캡션에 병원 신호 |
+ *           ③ 네이버·카카오 지도에서 병원/의원 확인.
+ *  검증 키가 없으면 신호 없는 계정은 보수적으로 제외(정밀도 우선).
+ */
+async function applyOrganicGate(ads: Ad[]): Promise<Ad[]> {
+  const decided = new Map<Ad, boolean>();
+  const needVerify: Ad[] = [];
+  for (const a of ads) {
+    if (
+      a.featured ||
+      hasClinicSignal(a.clinic) ||
+      hasClinicSignal(a.igUsername) ||
+      hasClinicSignal(a.caption)
+    ) {
+      decided.set(a, true);
+    } else {
+      needVerify.push(a);
+    }
+  }
+  if (needVerify.length > 0 && hasClinicVerifyKeys()) {
+    const names = Array.from(new Set(needVerify.map((a) => a.clinic)));
+    const verdicts = await verifyAdvertisers(names);
+    for (const a of needVerify) decided.set(a, Boolean(verdicts.get(a.clinic)?.medical));
+  } else {
+    // 검증 불가 → 병원 신호 없는 계정은 제외(인플루언서·블로그 차단)
+    for (const a of needVerify) decided.set(a, false);
+  }
+  const kept = ads.filter((a) => decided.get(a) === true);
+  console.log(`[organic] 의료게이트: ${ads.length} → ${kept.length} (제외 ${ads.length - kept.length})`);
+  return kept;
+}
+
 export async function fetchOrganicViaApify(): Promise<Ad[] | null> {
   const token = process.env.APIFY_TOKEN?.trim();
   if (!token) return null;
@@ -279,7 +314,11 @@ export async function fetchOrganicViaApify(): Promise<Ad[] | null> {
     return cache?.ads ?? null;
   }
 
-  cache = { at: Date.now(), ads };
-  console.log(`[organic] 수집 완료: raw=${out.length} dedup=${ads.length}`);
-  return ads;
+  // 의료 게이트로 인플루언서·블로그 제외 (등록 클리닉·병원 신호는 통과)
+  const gated = await applyOrganicGate(ads);
+  const finalAds = gated.length > 0 ? gated : ads;
+
+  cache = { at: Date.now(), ads: finalAds };
+  console.log(`[organic] 수집 완료: raw=${out.length} dedup=${ads.length} 게이트후=${finalAds.length}`);
+  return finalAds;
 }
