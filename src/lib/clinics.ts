@@ -25,7 +25,21 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "블리비의원", handle: "velybclinic", areas: [], followers: "15K", note: "전국 55개 지점, 일본어 계정 별도" },
   { name: "쁨클리닉", handle: "ppeum_clinic_jp", areas: ["강남", "홍대", "명동"], followers: "32K", note: "글로벌점 운영" },
   { name: "오블리주의원", handle: "ohvelyjoo_hongdae_jp", areas: ["홍대"], followers: "4.5K", note: "홍대 위치" },
-  { name: "리엔장", handle: "lienjang.japan", areas: ["강남"], followers: "30K", note: "X·인스타·틱톡·유튜브 등 운영중" },
+  { name: "리엔장", handle: "lienjang.japan", areas: ["강남", "홍대"], followers: "30K", note: "X·인스타·틱톡·유튜브 등 운영중" },
+  // 홍대 권역 (2026-06-20 xlsx 임포트)
+  { name: "닥터쁘띠의원 홍대점", handle: "dp_hd_jp", areas: ["홍대"], followers: "", note: "홍대입구역, 일본어 통역 상주, LINE 문의" },
+  { name: "제이필클리닉 홍대점", handle: "jfeelclinic_jp", areas: ["홍대"], followers: "", note: "홍대입구역 8번 출구 직결, 일본어 계정, LINE" },
+  { name: "프로젝트유의원 홍대", handle: "projectu_jp", areas: ["홍대"], followers: "", note: "홍대, 일본어 계정, 실리프팅·필러 특화" },
+  { name: "셀린클리닉 홍대점", handle: "cellin_hongdae", areas: ["홍대"], followers: "", note: "홍대, 일본어 LINE 전환, 日本語対応" },
+  { name: "아비쥬의원 홍대", handle: "abijouclinic", areas: ["홍대"], followers: "", note: "홍대 글로벌센터, 다국어 통역" },
+  { name: "리엘르의원 홍대본점", handle: "reele_clinic_hongdae", areas: ["홍대"], followers: "", note: "홍대·신촌, LINE 고객센터" },
+  { name: "뷰티블라썸의원", handle: "beautyblossom_clinic", areas: ["홍대"], followers: "", note: "합정·홍대" },
+  { name: "포레나클리닉 홍대", handle: "forenaclinic", areas: ["홍대"], followers: "", note: "홍대, 외국인 후기 콘텐츠" },
+  { name: "마인드피부과", handle: "mindskin_clinic", areas: ["홍대"], followers: "", note: "홍대" },
+  { name: "아르스킨의원 홍대", handle: "arskin_hongdae", areas: ["홍대"], followers: "", note: "홍대입구역, 리프팅·피부관리" },
+  { name: "나인의원 홍대점", handle: "nainskin_hongdae", areas: ["홍대"], followers: "", note: "홍대입구역 2번 출구" },
+  { name: "리즈온의원 홍대점", handle: "lizonclinic_hongdae", areas: ["홍대"], followers: "", note: "홍대입구역 9번 출구" },
+  { name: "에스리본의원 홍대점", handle: "sreborn_clinic", areas: ["홍대"], followers: "", note: "홍대입구역 8번 출구, 弘大皮膚科 해시태그" },
 ];
 
 const BY_HANDLE = new Map(KNOWN_CLINICS.map((c) => [c.handle.toLowerCase(), c]));
@@ -47,6 +61,7 @@ const BLOCKED_HANDLES = new Set<string>([
   "terapia",
   "sisterann_official",
   "sisterann",
+  "ogeasai",
 ]);
 const BLOCKED_NAME_PARTS = [
   "beaund",
@@ -66,6 +81,8 @@ const BLOCKED_NAME_PARTS = [
   "store",
   "sisterann",
   "시스터앤",
+  "ogeasai",
+  "ógeasaí",
 ];
 
 export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boolean {
@@ -85,6 +102,11 @@ const CLINIC_ALLOWLIST = [
   "리엔장", "lienjang", "daybeau", "celliday", "idclinic", "diore",
   "vellicell", "cellin", "theclim", "slimyoung", "wooa", "mayclinic",
   "오블리주", "ohvelyjoo", "arskin", "forteclinic", "drdesigner", "doctorpetit",
+  // 홍대 권역 추가 (2026-06-20)
+  "dp_hd_jp", "닥터쁘띠", "jfeelclinic", "제이필", "projectu", "프로젝트유",
+  "reele", "리엘르", "beautyblossom", "뷰티블라썸", "forenaclinic", "포레나",
+  "mindskin", "nainskin", "나인의원", "lizonclinic", "리즈온", "sreborn", "에스리본",
+  "abijou", "아비쥬",
 ];
 
 const CLINIC_SIGNALS = [
