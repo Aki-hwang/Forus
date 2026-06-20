@@ -61,6 +61,11 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "카린의원 명동", handle: "karinclinic_eng", areas: ["명동"], followers: "", note: "명동, 영문 글로벌 계정" },
   { name: "클리암클리닉 글로벌", handle: "kleam_clinic_global", areas: ["명동"], followers: "", note: "명동 프리미엄 지점, 글로벌 계정" },
   { name: "벤자민피부과 명동", handle: "benjaminclinic_en", areas: ["명동"], followers: "", note: "명동, 피부과 전문의·영문 계정" },
+  // 강남 권역 (2026-06-20 xlsx 임포트) — 핸들 확정된 곳만 등록, 나머지는 ALLOWLIST 로 보호
+  { name: "샤인빔의원 강남", handle: "shinebeam_gangnam", areas: ["강남"], followers: "", note: "강남역, 일본어 계정·LINE @shinebeam" },
+  { name: "닥터스피부과 신사점", handle: "doctors_jp", areas: ["강남"], followers: "", note: "신사역/가로수길, 일본어 계정" },
+  { name: "밴스클리닉 신사점", handle: "vands_sinsa.jp", areas: ["강남"], followers: "", note: "신사역, 일본어 계정" },
+  { name: "VS라인클리닉 압구정", handle: "vslineclinic", areas: ["강남"], followers: "", note: "압구정, 일본어 단서" },
 ];
 
 const BY_HANDLE = new Map(KNOWN_CLINICS.map((c) => [c.handle.toLowerCase(), c]));
@@ -132,6 +137,12 @@ const CLINIC_ALLOWLIST = [
   "drevers", "에버스", "vands", "밴스", "kindglobal", "카인드글로벌", "otena", "오테나",
   "umi_clinic", "우미클리닉", "blsclinic", "lijinclinic", "리진의원", "reberry", "리베리",
   "karinclinic", "카린의원", "kleam", "클리암", "benjamin", "벤자민",
+  // 강남 권역 추가 (2026-06-20) — 핸들/브랜드명으로 보호
+  "shinebeam", "샤인빔", "doctors_jp", "닥터스피부과", "vsline", "vs라인",
+  "바로그", "누와", "레픽", "오션클리닉", "포엔", "엔젤미", "룬피부과", "루아브",
+  "오엔의원", "연세라인", "메이린", "오가나셀", "oganacell", "그로브원", "groveone",
+  "소유클리닉", "미앤미", "테시토", "베일러", "bailor", "leecrew", "louave",
+  "verme", "uline", "theheal", "dewy.d", "ppangclinic", "빵클리닉",
 ];
 
 const CLINIC_SIGNALS = [
