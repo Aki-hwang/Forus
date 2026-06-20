@@ -40,6 +40,27 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "나인의원 홍대점", handle: "nainskin_hongdae", areas: ["홍대"], followers: "", note: "홍대입구역 2번 출구" },
   { name: "리즈온의원 홍대점", handle: "lizonclinic_hongdae", areas: ["홍대"], followers: "", note: "홍대입구역 9번 출구" },
   { name: "에스리본의원 홍대점", handle: "sreborn_clinic", areas: ["홍대"], followers: "", note: "홍대입구역 8번 출구, 弘大皮膚科 해시태그" },
+  // 명동 권역 (2026-06-20 xlsx 임포트)
+  { name: "아비쥬의원 명동점", handle: "abijouclinic_md", areas: ["명동"], followers: "", note: "명동/을지로입구, 다국어 통역 글로벌센터" },
+  { name: "닥터쁘띠의원 명동점", handle: "dp_md_jp", areas: ["명동"], followers: "", note: "명동/퇴계로, 일본어 전용 계정·LINE" },
+  { name: "닥터에버스의원 명동점", handle: "drevers_jp", areas: ["명동"], followers: "", note: "명동/을지로, 일본어 계정·LINE" },
+  { name: "셀린클리닉 명동점", handle: "cellinclinic_myeongdong", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 LINE, 365일 진료" },
+  { name: "명동 아이디의원", handle: "idclinic_md_jp", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 공식 계정·LINE" },
+  { name: "밴스의원 명동점", handle: "vands_myeongdong_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어·영어 글로벌 계정" },
+  { name: "닥터디자이너클리닉 명동점", handle: "drdesigner_md_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 글로벌 계정" },
+  { name: "카인드글로벌의원", handle: "kindglobalclinic", areas: ["명동"], followers: "", note: "명동/을지로입구, 다국어 국제환자 대응" },
+  { name: "오테나의원 명동", handle: "otenaclinic.en", areas: ["명동"], followers: "", note: "명동/남대문로, 일·영·중·태 다국어" },
+  { name: "톡스앤필 명동점", handle: "myeongdong_toxnfill", areas: ["명동"], followers: "", note: "명동/을지로입구, 다국어 사이트·LINE" },
+  { name: "리엔장의원 명동점", handle: "lienjang_myeongdong", areas: ["명동"], followers: "", note: "명동/눈스퀘어, 네트워크형 외국인 타깃" },
+  { name: "우미클리닉 명동", handle: "umi_clinic__jp", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 계정·블로그·LINE" },
+  { name: "BLS클리닉 명동점", handle: "blsclinicmd_eng", areas: ["명동"], followers: "", note: "명동역, 영문 계정·일본어 통역" },
+  { name: "데이뷰의원 명동더프리미엄점", handle: "daybeaumd_luxe_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 프리미엄·야간진료" },
+  { name: "리진의원 명동", handle: "lijinclinic", areas: ["명동"], followers: "", note: "명동역 인근, 다국어 계정 분화" },
+  { name: "리베리의원 명동점", handle: "reberrymd_en", areas: ["명동"], followers: "", note: "명동역, 영문 계정" },
+  { name: "메이의원 명동", handle: "mayclinic_official", areas: ["명동"], followers: "", note: "명동역, 영문·LINE·WhatsApp·Kakao" },
+  { name: "카린의원 명동", handle: "karinclinic_eng", areas: ["명동"], followers: "", note: "명동, 영문 글로벌 계정" },
+  { name: "클리암클리닉 글로벌", handle: "kleam_clinic_global", areas: ["명동"], followers: "", note: "명동 프리미엄 지점, 글로벌 계정" },
+  { name: "벤자민피부과 명동", handle: "benjaminclinic_en", areas: ["명동"], followers: "", note: "명동, 피부과 전문의·영문 계정" },
 ];
 
 const BY_HANDLE = new Map(KNOWN_CLINICS.map((c) => [c.handle.toLowerCase(), c]));
@@ -107,6 +128,10 @@ const CLINIC_ALLOWLIST = [
   "reele", "리엘르", "beautyblossom", "뷰티블라썸", "forenaclinic", "포레나",
   "mindskin", "nainskin", "나인의원", "lizonclinic", "리즈온", "sreborn", "에스리본",
   "abijou", "아비쥬",
+  // 명동 권역 추가 (2026-06-20)
+  "drevers", "에버스", "vands", "밴스", "kindglobal", "카인드글로벌", "otena", "오테나",
+  "umi_clinic", "우미클리닉", "blsclinic", "lijinclinic", "리진의원", "reberry", "리베리",
+  "karinclinic", "카린의원", "kleam", "클리암", "benjamin", "벤자민",
 ];
 
 const CLINIC_SIGNALS = [
