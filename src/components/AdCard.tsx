@@ -15,6 +15,7 @@ export function AdCard({
   onSelect: (ad: Ad) => void;
 }) {
   const isLive = ad.live === true;
+  const isOrganic = ad.kind === "organic";
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
@@ -43,6 +44,13 @@ export function AdCard({
             <span className="rounded-md bg-background px-2 py-0.5 text-[11px] font-bold text-muted">
               📍 {ad.area}
             </span>
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${
+                isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
+              }`}
+            >
+              {isOrganic ? "📷 오가닉" : "💰 광고"}
+            </span>
             {ad.featured ? (
               <span
                 title={ad.note}
@@ -53,7 +61,15 @@ export function AdCard({
             ) : null}
           </div>
           <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-muted">
-            {isLive ? (
+            {isOrganic ? (
+              <>
+                {ad.views != null ? (
+                  <span title="릴스 조회수">▶ {fmt(ad.views)}</span>
+                ) : null}
+                <span title="좋아요">♡ {fmt(ad.likes)}</span>
+                <span title="댓글">💬 {fmt(ad.saves)}</span>
+              </>
+            ) : isLive ? (
               <>
                 {ad.views != null ? (
                   <span title="인스타 릴스 조회수(중앙값)">▶ {fmt(ad.views)}</span>

@@ -5,7 +5,7 @@ import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { sampleAds } from "@/lib/sampleAds";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
-import { FilterBar, type SortKey } from "@/components/FilterBar";
+import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
@@ -15,11 +15,14 @@ export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
   const [sort, setSort] = useState<SortKey>("views");
+  const [kind, setKind] = useState<KindKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
 
   // 수집 스냅샷(샘플)으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체
   const [allAds, setAllAds] = useState<Ad[]>(sampleAds);
   const [source, setSource] = useState<Source>("sample");
+  // 오가닉(IG 자연 게시물) — 광고와 별개로 받아 합친다
+  const [organicAds, setOrganicAds] = useState<Ad[]>([]);
   // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
   // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
@@ -54,15 +57,36 @@ export default function Home() {
         /* 네트워크 실패 시 목업 유지 */
         if (alive) setCollecting(false);
       });
+
+    // 오가닉(IG 자연 게시물) 수집 — 광고와 독립적으로 받아 합친다
+    fetch("/api/organic")
+      .then((r) => r.json())
+      .then((data: { ads?: Ad[] }) => {
+        if (alive && data?.ads?.length) setOrganicAds(data.ads);
+      })
+      .catch(() => {
+        /* 오가닉 실패는 무시(광고만 표시) */
+      });
     return () => {
       alive = false;
     };
   }, []);
 
   // 타겟 언어(JP/CN) → 지역 필터 → 조회수 우선 정렬
+  // 광고 + 오가닉 병합 (id 중복 제거)
+  const merged = useMemo(() => {
+    const seen = new Set(allAds.map((a) => a.id));
+    return [...allAds, ...organicAds.filter((a) => !seen.has(a.id))];
+  }, [allAds, organicAds]);
+
   const base = useMemo(
-    () => allAds.filter((a) => lang === "전체" || a.lang === lang),
-    [allAds, lang]
+    () =>
+      merged.filter(
+        (a) =>
+          (lang === "전체" || a.lang === lang) &&
+          (kind === "전체" || (a.kind ?? "ad") === kind)
+      ),
+    [merged, lang, kind]
   );
 
   const filtered = useMemo(() => {
@@ -92,13 +116,14 @@ export default function Home() {
   const resetView = () => {
     setArea("전체");
     setLang("전체");
+    setKind("전체");
     setSort("views");
     setSelected(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // 배지 상태: 실시간(apify) / 수집 진행중(collecting) / 폴백(미연결)
-  const live = source === "apify";
+  const live = source === "apify" || organicAds.length > 0;
   const isCollecting = collecting && !live;
 
   return (
@@ -177,6 +202,8 @@ export default function Home() {
             onArea={setArea}
             sort={sort}
             onSort={setSort}
+            kind={kind}
+            onKind={setKind}
             resultCount={filtered.length}
           />
 

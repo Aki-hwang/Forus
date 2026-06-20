@@ -66,6 +66,8 @@ export interface Ad {
   views?: number;
   /** 2단계: 광고주 IG 최근 게시물 대표 좋아요 (중앙값) */
   igLikes?: number;
+  /** 콘텐츠 종류: 유료 광고(ad) vs 인스타 오가닉 게시물(organic). 없으면 ad 취급 */
+  kind?: "ad" | "organic";
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];

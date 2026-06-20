@@ -33,7 +33,7 @@ const PROMO_KEYWORDS = ["이벤트", "할인", "프로모션", "期間限定", "
 const BEFORE_AFTER_KEYWORDS = ["비포", "애프터", "before", "after", "ビフォー", "アフター", "前後", "前后", "对比", "對比", "변화"];
 const INFO_KEYWORDS = ["효과", "원리", "について", "ポイント", "解説", "知っ", "tip", "꿀팁", "정보", "차이", "技術", "原理"];
 
-const PALETTE_BY_TREATMENT: Record<TreatmentKey, [string, string]> = {
+export const PALETTE_BY_TREATMENT: Record<TreatmentKey, [string, string]> = {
   물광주사: ["#a7f3d0", "#5eead4"],
   리프팅: ["#fbcfe8", "#f9a8d4"],
   보톡스: ["#fde68a", "#fcd34d"],
@@ -43,7 +43,7 @@ const PALETTE_BY_TREATMENT: Record<TreatmentKey, [string, string]> = {
   스킨부스터: ["#a5f3fc", "#67e8f9"],
 };
 
-const TAGS_BY_TREATMENT: Record<TreatmentKey, string[]> = {
+export const TAGS_BY_TREATMENT: Record<TreatmentKey, string[]> = {
   물광주사: ["물광", "톤업", "수분"],
   리프팅: ["리프팅", "탄력", "V라인"],
   보톡스: ["보톡스", "주름", "동안"],
@@ -57,7 +57,7 @@ const DEFAULT_TREATMENT: TreatmentKey = "물광주사";
 
 // ---------- 추론 헬퍼 ----------
 
-function inferTreatment(text: string): TreatmentKey {
+export function inferTreatment(text: string): TreatmentKey {
   const lower = text.toLowerCase();
   for (const key of Object.keys(TREATMENT_KEYWORDS) as TreatmentKey[]) {
     if (TREATMENT_KEYWORDS[key].some((kw) => lower.includes(kw.toLowerCase()))) {
@@ -67,7 +67,7 @@ function inferTreatment(text: string): TreatmentKey {
   return DEFAULT_TREATMENT;
 }
 
-function inferStyle(text: string): StyleKey {
+export function inferStyle(text: string): StyleKey {
   const lower = text.toLowerCase();
   if (PROMO_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))) return "프로모션";
   if (BEFORE_AFTER_KEYWORDS.some((kw) => lower.includes(kw.toLowerCase()))) return "비포애프터";
@@ -79,7 +79,7 @@ function inferStyle(text: string): StyleKey {
 //   중국어 광고에 한글 해시태그(#강남 #부산)가 몇 개 섞였다고 한국어로 분류되면 안 된다.
 //   hint = 검색어 언어(jp/kr/cn) — 한자만 있는 모호한 경우의 최종 타이브레이커.
 // 우선순위: 가나(일본어 고유) > 한글vs한자 우세 비교 > 한자만이면 hint.
-function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
+export function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
   // 가나(히라가나·가타카나)는 일본어에만 있음 → 1자라도 있으면 일본어
   if (/[぀-ヿ]/.test(text)) return "JP";
   const hangul = (text.match(/[가-힣]/g) || []).length;
@@ -92,7 +92,7 @@ function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
   return hint === "cn" ? "CN" : "JP";
 }
 
-function extractHashtags(text: string, treatment: TreatmentKey): string[] {
+export function extractHashtags(text: string, treatment: TreatmentKey): string[] {
   const found = (text.match(/#[^\s#.,!?，。！？]+/g) ?? []).slice(0, 6);
   if (found.length >= 3) return Array.from(new Set(found)).slice(0, 5);
   const fallback = ["#韓国美容", ...TAGS_BY_TREATMENT[treatment].map((t) => `#${t}`)];
@@ -100,7 +100,7 @@ function extractHashtags(text: string, treatment: TreatmentKey): string[] {
 }
 
 /** 본문에서 해시태그/멘션/URL을 걷어내고 메인 카피 1~2줄 추출 */
-function buildHeadline(caption: string): { headline: string; sub: string } {
+export function buildHeadline(caption: string): { headline: string; sub: string } {
   const lines = caption
     .replace(/https?:\/\/\S+/g, "")
     .split(/[\n。！？!?]/)
@@ -284,6 +284,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     pageCategory,
     featured: Boolean(known),
     note: known?.note,
+    kind: "ad",
   };
 }
 
