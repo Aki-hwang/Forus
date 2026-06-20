@@ -21,7 +21,8 @@ export async function GET(req: Request) {
   try {
     const ads = await fetchAdsViaApify(true);
     if (ads && ads.length > 0) {
-      const enriched = await enrichAdsWithViews(ads);
+      const enriched =
+        process.env.COLLECT_VIEWS === "0" ? ads : await enrichAdsWithViews(ads);
       await writeSnapshot("ads", enriched);
       result.ads = enriched.length;
     } else {

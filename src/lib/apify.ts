@@ -384,12 +384,16 @@ export async function fetchAdsViaApify(force = false): Promise<Ad[] | null> {
     return cache.ads;
   }
 
-  const queries = searchQueries();
+  // 비용 보호: 전체 검색(약 70개) 대신 APIFY_MAX_QUERIES(기본 24)개만 실행.
+  // searchQueries()는 (언어×국가×지역) 라운드로빈이라 앞쪽만 잘라도 균형이 유지된다.
+  const allQueries = searchQueries();
+  const maxQueries = Math.max(1, Number(process.env.APIFY_MAX_QUERIES) || 24);
+  const queries = allQueries.slice(0, maxQueries);
   // 검색당 최대 수집 건수 (액터 최소 10). URL의 start_date[min] 덕에 최근 광고만 반환되므로
   // 예전보다 높여도 시간 예산 내에 소화 가능. 낮으면 광고가 적게 보임 ↔ 높이면 비용·시간↑.
   // 기본 40: 쿼리 70개 × 40 ≈ 2,800건/수집. 쿼리 다양성(JP 42개)이 100건+ 확보를 좌우하므로
   //   같은 광고를 깊게 파는 것(높은 perQuery)보다 넓게 훑는 게 dedup 후 고유 광고 확보에 유리·저렴.
-  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 40);
+  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 20);
 
   try {
     const collected = await collectAds(token, queries, perQuery);
@@ -495,8 +499,8 @@ export async function fetchViewsForHandles(
     if (uniq.every((h) => h in viewsCache!.map)) return viewsCache.map;
   }
 
-  const cap = Math.max(1, Number(process.env.APIFY_IG_PROFILES_CAP) || 40);
-  const postsPer = Math.max(3, Number(process.env.APIFY_IG_POSTS) || 8);
+  const cap = Math.max(1, Number(process.env.APIFY_IG_PROFILES_CAP) || 20);
+  const postsPer = Math.max(3, Number(process.env.APIFY_IG_POSTS) || 5);
   const targets = uniq.slice(0, cap);
 
   const controller = new AbortController();
