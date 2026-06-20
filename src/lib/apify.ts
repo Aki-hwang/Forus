@@ -214,12 +214,18 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
 
   const known = findClinicByHandle(igUsername);
 
-  // 지역: 등록 클리닉이 단일 지역이면 그걸로, 아니면 URL/본문 추론, 최후엔 강남
+  // 지역 결정 우선순위:
+  //  ① 단일지역 등록 클리닉 → 그 지역(가장 정확)
+  //  ② 검색한 지역(fallbackArea) → "明洞 皮膚科"처럼 그 지역어로 FB에 매칭돼 잡힌 광고이므로
+  //     신뢰도 높음. 다지점 클리닉(쁨·밴스·리엔장)은 본문에 江南店/明洞店/ホンデ店을 모두 적어
+  //     본문 추론이 첫 매치인 '강남'으로 쏠리는 문제가 커, 본문보다 검색지역을 우선한다.
+  //  ③ 광고 랜딩 URL(클리닉 사이트)의 지역어 → ④ 본문 추론 → ⑤ 최후 강남(일반 검색分만 해당)
   const area: Area =
     (known && known.areas.length === 1 ? known.areas[0] : undefined) ??
+    fallbackArea ??
+    areaFromText(s.link_url ?? "") ??
     areaFromText(fb.url ?? "") ??
     areaFromText(blob) ??
-    fallbackArea ??
     "강남";
   const treatmentLabel = lang === "JP" ? TREATMENT_LABEL[treatment].jp : TREATMENT_LABEL[treatment].ko;
 
@@ -343,7 +349,10 @@ async function collectAds(
   queries: SearchQuery[],
   perQuery: number
 ): Promise<Ad[]> {
-  const concurrency = Math.max(1, Number(process.env.APIFY_CONCURRENCY) || 6);
+  // 동시성 10: 70개 쿼리를 시간 예산(210s) 안에 더 많이 완료 → JP 커버리지↑(대기시간은 동일).
+  //   Apify 동시 실행 한도를 넘으면 일부 런이 429로 실패(=해당 쿼리 0건)할 수 있어, 한도가 낮은
+  //   플랜이면 APIFY_CONCURRENCY 로 6~8로 낮춰 조정. 실패한 런은 graceful 폴백([])이라 안전.
+  const concurrency = Math.max(1, Number(process.env.APIFY_CONCURRENCY) || 10);
   const budgetMs = Math.max(60_000, Number(process.env.APIFY_COLLECT_MS) || 210_000);
   const deadline = Date.now() + budgetMs;
   const out: Ad[] = [];
