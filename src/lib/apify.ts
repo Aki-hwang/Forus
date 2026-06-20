@@ -6,7 +6,7 @@
 // 환경변수:
 //   APIFY_TOKEN        (필수) 없으면 수집을 건너뛰고 null 반환 → 목업 폴백.
 //   APIFY_AD_ACTOR     (선택) 기본 "curious_coder/facebook-ads-library-scraper"
-//   APIFY_PER_QUERY    (선택) 검색당 최대 수집(과금) 건수, 기본 80 (최소 10)
+//   APIFY_PER_QUERY    (선택) 검색당 최대 수집(과금) 건수, 기본 40 (최소 10)
 //   APIFY_CONCURRENCY  (선택) 검색 동시 실행 수, 기본 6
 //   APIFY_COLLECT_MS   (선택) 수집 시간 예산(ms), 기본 210000 (라우트 300s 보호)
 //   APIFY_TTL_SECONDS  (선택) 결과 캐시 TTL(초), 기본 604800 (7일)
@@ -377,7 +377,9 @@ export async function fetchAdsViaApify(): Promise<Ad[] | null> {
   const queries = searchQueries();
   // 검색당 최대 수집 건수 (액터 최소 10). URL의 start_date[min] 덕에 최근 광고만 반환되므로
   // 예전보다 높여도 시간 예산 내에 소화 가능. 낮으면 광고가 적게 보임 ↔ 높이면 비용·시간↑.
-  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 80);
+  // 기본 40: 쿼리 70개 × 40 ≈ 2,800건/수집. 쿼리 다양성(JP 42개)이 100건+ 확보를 좌우하므로
+  //   같은 광고를 깊게 파는 것(높은 perQuery)보다 넓게 훑는 게 dedup 후 고유 광고 확보에 유리·저렴.
+  const perQuery = Math.max(10, Number(process.env.APIFY_PER_QUERY) || 40);
 
   try {
     const collected = await collectAds(token, queries, perQuery);
