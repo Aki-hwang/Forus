@@ -50,7 +50,7 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "밴스의원 명동점", handle: "vands_myeongdong_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어·영어 글로벌 계정" },
   { name: "닥터디자이너클리닉 명동점", handle: "drdesigner_md_global", areas: ["명동"], followers: "", note: "명동/을지로입구, 글로벌 계정" },
   { name: "카인드글로벌의원", handle: "kindglobalclinic", areas: ["명동"], followers: "", note: "명동/을지로입구, 한국인 타깃·다국어 국제환자 대응" },
-  // 오테나의원: 핸들 미확인 → CLINIC_ALLOWLIST로 광고 보호, 핸들 확인 후 재등록
+  { name: "오테나의원 명동", handle: "otenaclinic.jp", areas: ["명동"], followers: "", note: "명동/남대문로, 일본어 계정·일·영·중·태 다국어" },
   { name: "톡스앤필 명동점", handle: "myeongdong_toxnfill", areas: ["명동"], followers: "", note: "명동/을지로입구, 다국어 사이트·LINE" },
   { name: "리엔장의원 명동점", handle: "lienjang.md_jp", areas: ["명동"], followers: "", note: "명동/눈스퀘어, 일본어 계정·외국인 타깃" },
   { name: "우미클리닉 명동", handle: "umi_clinic__jp", areas: ["명동"], followers: "", note: "명동/을지로입구, 일본어 계정·블로그·LINE" },
