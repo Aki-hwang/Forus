@@ -76,6 +76,24 @@ export function TrendPanel({
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
+  // 평균 조회수 — 유료(조회수 0) 제외, 조회수 있는 것만
+  const avgViews = useMemo(() => {
+    const v = clinicAds
+      .map((a) => a.views)
+      .filter((x): x is number => typeof x === "number" && x > 0);
+    return v.length ? Math.round(v.reduce((s, n) => s + n, 0) / v.length) : 0;
+  }, [clinicAds]);
+  // 인기 시술 / 인기 키워드
+  const topTreatments = trends.byTreatment.slice(0, 4);
+  const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
+  const topKeywords = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of ads) for (const h of a.hashtags ?? []) {
+      const k = h.trim();
+      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([tag]) => tag);
+  }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
   const [period, setPeriod] = useState<number>(30);
@@ -106,7 +124,7 @@ export function TrendPanel({
       {/* 좌측: 핵심 지표 */}
       <div className="grid grid-cols-2 gap-3 lg:col-span-5">
         <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-        <Stat label="▶ 평균 조회수" value={fmt(trends.avgViews)} hint="IG 릴스 조회수 중앙값" />
+        <Stat label="▶ 평균 조회수" value={fmt(avgViews)} hint="무료(오가닉) 릴스 조회수" />
         <Stat
           label="🔥 최다 조회 광고"
           value={topAd?.views != null ? fmt(topAd.views) : "-"}
@@ -201,13 +219,54 @@ export function TrendPanel({
             </div>
           </div>
 
-          <div className="sm:col-span-2">
-            <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
-            <div className="space-y-2.5">
-              {trends.byArea.map((a) => (
-                <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
-              ))}
+          <div className="space-y-4 sm:col-span-2">
+            <div>
+              <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
+              <div className="space-y-2.5">
+                {trends.byArea.map((a) => (
+                  <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+                ))}
+              </div>
             </div>
+            <div>
+              <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
+              <div className="space-y-2">
+                {topTreatments.map((t) => {
+                  const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
+                  return (
+                    <div key={t.key} className="flex items-center gap-2">
+                      <span className="w-16 shrink-0 truncate text-[12px] font-medium text-foreground">
+                        {t.label}
+                      </span>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-7 shrink-0 text-right text-[12px] font-bold text-muted">
+                        {t.count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {topKeywords.length > 0 ? (
+              <div>
+                <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {topKeywords.map((k) => (
+                    <span
+                      key={k}
+                      className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
+                    >
+                      {k}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

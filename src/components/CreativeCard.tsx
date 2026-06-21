@@ -92,21 +92,14 @@ export function CreativeCard({
         </div>
       )}
 
-      {/* clinic footer */}
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between px-4 py-3">
-        <span className="text-[11px] font-bold text-white/95 drop-shadow">
-          {clinicName}
-        </span>
-        <span
-          className={`rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${
-            kind === "organic"
-              ? "bg-accent/90 text-white"
-              : "bg-white/85 text-foreground/70"
-          }`}
-        >
-          {kind === "organic" ? "무료" : "AD"}
-        </span>
-      </div>
+      {/* 종류 칩 (무료=오가닉 / AD=유료) */}
+      <span
+        className={`absolute bottom-2 right-2 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider shadow-sm ${
+          kind === "organic" ? "bg-accent/90 text-white" : "bg-white/85 text-foreground/70"
+        }`}
+      >
+        {kind === "organic" ? "무료" : "AD"}
+      </span>
     </div>
   );
 }

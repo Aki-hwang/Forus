@@ -54,17 +54,12 @@ export function AdCard({
       </div>
 
       <div className="space-y-1.5 p-3">
+        <p className="truncate text-[13px] font-bold text-foreground">
+          {ad.clinic.replace(/\s*\(.*\)$/, "")}
+        </p>
         <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
           <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold leading-none">
             📍 {ad.area}
-          </span>
-          <span
-            title={isOrganic ? "오가닉(자연 게시물)" : "유료 광고"}
-            className={`whitespace-nowrap rounded-md px-1.5 py-0.5 font-bold leading-none ${
-              isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
-            }`}
-          >
-            {isOrganic ? "무료" : "광고"}
           </span>
           {ad.featured ? (
             <span
