@@ -116,7 +116,7 @@ export function TrendPanel({
         if (k) m.set(k, (m.get(k) ?? 0) + 1);
       }
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 13).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20).map(([tag]) => tag);
   }, [keywordAds, kwLang]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
@@ -190,7 +190,7 @@ export function TrendPanel({
             </div>
           </div>
           {topKeywords.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex h-[72px] flex-wrap content-start gap-1.5 overflow-hidden">
               {topKeywords.map((k) => (
                 <span
                   key={k}
