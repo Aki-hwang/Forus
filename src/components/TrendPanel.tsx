@@ -129,7 +129,7 @@ export function TrendPanel({
                 조회수 TOP 클리닉
               </p>
               <div className="flex items-center gap-1">
-                <div className="inline-flex rounded-lg border border-border bg-background p-0.5">
+                <div className="inline-flex items-center rounded-lg border border-border bg-background p-0.5">
                   {[7, 30].map((p) => (
                     <button
                       key={p}
@@ -141,18 +141,20 @@ export function TrendPanel({
                       {`${p}일`}
                     </button>
                   ))}
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="직접"
+                    value={![7, 30].includes(period) ? period : ""}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setPeriod(Number.isFinite(v) && v > 0 ? v : 30);
+                    }}
+                    className={`w-12 rounded-md bg-transparent px-2 py-0.5 text-center text-[11px] font-bold outline-none transition placeholder:font-normal placeholder:text-muted ${
+                      ![7, 30].includes(period) ? "bg-surface text-primary-ink shadow-sm" : "text-muted"
+                    }`}
+                  />
                 </div>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="직접"
-                  value={![7, 30].includes(period) ? period : ""}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    setPeriod(Number.isFinite(v) && v > 0 ? v : 30);
-                  }}
-                  className="w-12 rounded-md border border-border bg-background px-1.5 py-0.5 text-[11px] outline-none focus:border-primary"
-                />
                 <span className="text-[11px] text-muted">일</span>
               </div>
             </div>
