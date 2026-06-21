@@ -98,7 +98,7 @@ export function CreativeCard({
           kind === "organic" ? "bg-accent/90 text-white" : "bg-white/85 text-foreground/70"
         }`}
       >
-        {kind === "organic" ? "무료" : "AD"}
+        {kind === "organic" ? "무료" : "유료"}
       </span>
     </div>
   );

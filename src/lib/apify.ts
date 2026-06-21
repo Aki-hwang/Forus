@@ -16,18 +16,9 @@ import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { searchQueries, areaFromText, SearchQuery } from "./adQueries";
 import { findClinicByHandle, isExcludedAd, isMedicalCategory } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
+import { classifyTreatment, DEFAULT_TREATMENT } from "./treatments";
 
 // ---------- 시술/스타일 추론 사전 ----------
-
-const TREATMENT_KEYWORDS: Record<TreatmentKey, string[]> = {
-  물광주사: ["물광", "水光", "水光注射", "水光针", "글로우주사", "skinglow", "글로우"],
-  리프팅: ["리프팅", "リフティング", "提升", "线雕", "線雕", "ulthera", "울쎄라", "슈링크", "shurink", "lift", "hifu", "超聲", "超声", "vライン", "v脸", "拉提", "실리프팅"],
-  보톡스: ["보톡스", "ボトックス", "肉毒", "瘦脸针", "瘦臉", "botox", "사각턱", "エラ"],
-  필러: ["필러", "フィラー", "玻尿酸", "ヒアルロン酸", "filler", "히알루론"],
-  미백토닝: ["미백", "토닝", "美白", "トーニング", "调理", "提亮", "toning", "whitening", "레이저토닝", "잡티", "シミ", "美白肌"],
-  모공여드름: ["모공", "여드름", "毛穴", "ニキビ", "毛孔", "祛痘", "痘", "暗瘡", "pore", "acne", "트러블", "흉터"],
-  스킨부스터: ["스킨부스터", "スキンブースター", "肤质", "膚質", "booster", "리쥬란", "rejuran", "인모드", "juvelook", "쥬베룩", "ブースター"],
-};
 
 const PROMO_KEYWORDS = ["이벤트", "할인", "프로모션", "期間限定", "キャンペーン", "优惠", "優惠", "活动", "活動", "限定", "sale", "off", "%", "특가", "오픈", "初回", "特別価格", "企劃"];
 const BEFORE_AFTER_KEYWORDS = ["비포", "애프터", "before", "after", "ビフォー", "アフター", "前後", "前后", "对比", "對比", "변화"];
@@ -53,18 +44,10 @@ export const TAGS_BY_TREATMENT: Record<TreatmentKey, string[]> = {
   스킨부스터: ["수분", "광채", "탄력"],
 };
 
-const DEFAULT_TREATMENT: TreatmentKey = "물광주사";
-
 // ---------- 추론 헬퍼 ----------
 
 export function inferTreatment(text: string): TreatmentKey {
-  const lower = text.toLowerCase();
-  for (const key of Object.keys(TREATMENT_KEYWORDS) as TreatmentKey[]) {
-    if (TREATMENT_KEYWORDS[key].some((kw) => lower.includes(kw.toLowerCase()))) {
-      return key;
-    }
-  }
-  return DEFAULT_TREATMENT;
+  return classifyTreatment(text) ?? DEFAULT_TREATMENT;
 }
 
 export function inferStyle(text: string): StyleKey {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ad, TrendSummary } from "@/lib/ads";
+import { Ad, TreatmentKey, TREATMENT_LABEL, TrendSummary } from "@/lib/ads";
+import { classifyTreatment } from "@/lib/treatments";
 import { hasClinicSignal } from "@/lib/clinics";
 
 function fmt(n: number): string {
@@ -76,15 +77,18 @@ export function TrendPanel({
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
-  // 평균 조회수 — 유료(조회수 0) 제외, 조회수 있는 것만
-  const avgViews = useMemo(() => {
-    const v = clinicAds
-      .map((a) => a.views)
-      .filter((x): x is number => typeof x === "number" && x > 0);
-    return v.length ? Math.round(v.reduce((s, n) => s + n, 0) / v.length) : 0;
-  }, [clinicAds]);
-  // 인기 시술 / 인기 키워드
-  const topTreatments = trends.byTreatment.slice(0, 4);
+  // 인기 시술 — 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
+  const topTreatments = useMemo(() => {
+    const m = new Map<TreatmentKey, number>();
+    for (const a of ads) {
+      const t = classifyTreatment(`${a.headline ?? ""} ${a.caption ?? ""}`);
+      if (t) m.set(t, (m.get(t) ?? 0) + 1);
+    }
+    return [...m.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 5)
+      .map(([key, count]) => ({ key, label: TREATMENT_LABEL[key].ko, count }));
+  }, [ads]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
   const topKeywords = useMemo(() => {
     const m = new Map<string, number>();
@@ -122,20 +126,58 @@ export function TrendPanel({
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {/* 좌측: 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 self-start lg:col-span-5">
-        <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-        <Stat label="▶ 평균 조회수" value={fmt(avgViews)} hint="무료(오가닉) 릴스 조회수" />
-        <Stat
-          label="🔥 최다 조회 광고"
-          value={topAd?.views != null ? fmt(topAd.views) : "-"}
-          hint={cleanClinic(topAd?.clinic)}
-          onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
-        />
-        <Stat
-          label="🏥 광고 중 클리닉"
-          value={`${trends.advertiserCount}곳`}
-          hint="중복 제외 광고주 수"
-        />
+      <div className="space-y-3 lg:col-span-5">
+        <div className="grid grid-cols-2 gap-3">
+          <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
+          <Stat
+            label="🔥 최다 조회 광고"
+            value={topAd?.views != null ? fmt(topAd.views) : "-"}
+            hint={cleanClinic(topAd?.clinic)}
+            onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
+          />
+        </div>
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
+          <div className="space-y-2">
+            {topTreatments.length === 0 ? (
+              <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
+            ) : null}
+            {topTreatments.map((t) => {
+              const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
+              return (
+                <div key={t.key} className="flex items-center gap-2">
+                  <span className="w-20 shrink-0 truncate text-[12px] font-medium text-foreground">
+                    {t.label}
+                  </span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 shrink-0 text-right text-[12px] font-bold text-muted">
+                    {t.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {topKeywords.length > 0 ? (
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
+            <div className="flex flex-wrap gap-1.5">
+              {topKeywords.map((k) => (
+                <span
+                  key={k}
+                  className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
+                >
+                  {k}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
@@ -176,7 +218,7 @@ export function TrendPanel({
                 <span className="text-[11px] text-muted">일</span>
               </div>
             </div>
-            <div className="space-y-1 max-w-[380px]">
+            <div className="space-y-1 max-w-[300px]">
               {ranked.length === 0 ? (
                 <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
               ) : null}
@@ -219,54 +261,13 @@ export function TrendPanel({
             </div>
           </div>
 
-          <div className="space-y-4 sm:col-span-2">
-            <div>
-              <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
-              <div className="space-y-2.5">
-                {trends.byArea.map((a) => (
-                  <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
-                ))}
-              </div>
+          <div className="sm:col-span-2">
+            <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
+            <div className="space-y-2.5">
+              {trends.byArea.map((a) => (
+                <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+              ))}
             </div>
-            <div>
-              <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
-              <div className="space-y-2">
-                {topTreatments.map((t) => {
-                  const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
-                  return (
-                    <div key={t.key} className="flex items-center gap-2">
-                      <span className="w-16 shrink-0 truncate text-[12px] font-medium text-foreground">
-                        {t.label}
-                      </span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="w-7 shrink-0 text-right text-[12px] font-bold text-muted">
-                        {t.count}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {topKeywords.length > 0 ? (
-              <div>
-                <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {topKeywords.map((k) => (
-                    <span
-                      key={k}
-                      className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
-                    >
-                      {k}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
