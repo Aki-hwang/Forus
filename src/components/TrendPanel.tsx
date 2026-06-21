@@ -126,58 +126,62 @@ export function TrendPanel({
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {/* 좌측: 핵심 지표 */}
-      <div className="space-y-3 lg:col-span-5">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-5">
+        {/* 1열: 수집된 광고 → 인기 시술 */}
+        <div className="space-y-3">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
+            <div className="space-y-2">
+              {topTreatments.length === 0 ? (
+                <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
+              ) : null}
+              {topTreatments.map((t) => {
+                const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
+                return (
+                  <div key={t.key} className="flex items-center gap-1.5">
+                    <span className="w-14 shrink-0 truncate text-[12px] font-medium text-foreground">
+                      {t.label}
+                    </span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="w-6 shrink-0 text-right text-[12px] font-bold text-muted">
+                      {t.count}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        {/* 2열: 최다 조회 광고 → 인기 키워드 */}
+        <div className="space-y-3">
           <Stat
             label="🔥 최다 조회 광고"
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
             hint={cleanClinic(topAd?.clinic)}
             onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
-        </div>
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
-          <div className="space-y-2">
-            {topTreatments.length === 0 ? (
-              <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
-            ) : null}
-            {topTreatments.map((t) => {
-              const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
-              return (
-                <div key={t.key} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 truncate text-[12px] font-medium text-foreground">
-                    {t.label}
+          {topKeywords.length > 0 ? (
+            <div className="rounded-2xl border border-border bg-surface p-4">
+              <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
+              <div className="flex flex-wrap gap-1.5">
+                {topKeywords.map((k) => (
+                  <span
+                    key={k}
+                    className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
+                  >
+                    {k}
                   </span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="w-8 shrink-0 text-right text-[12px] font-bold text-muted">
-                    {t.count}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        {topKeywords.length > 0 ? (
-          <div className="rounded-2xl border border-border bg-surface p-4">
-            <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
-            <div className="flex flex-wrap gap-1.5">
-              {topKeywords.map((k) => (
-                <span
-                  key={k}
-                  className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
-                >
-                  {k}
-                </span>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
 
       {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
