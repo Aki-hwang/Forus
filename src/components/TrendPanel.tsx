@@ -276,7 +276,7 @@ export function TrendPanel({
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
-          <div className="space-y-1 max-w-[320px]">
+          <div className="space-y-1">
             {ranked.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
             ) : null}
