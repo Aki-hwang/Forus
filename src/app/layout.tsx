@@ -24,6 +24,7 @@ const OG_IMAGE =
   "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_033423_bbed649f-e6e5-4be1-a477-f48be87e1d65.png";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://forus-advertising.up.railway.app"),
   title: SITE_TITLE,
   description: SITE_DESC,
   applicationName: "DermaRadar",
