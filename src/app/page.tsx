@@ -13,7 +13,7 @@ type Source = "sample" | "apify";
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
-  const [sort, setSort] = useState<SortKey>("views");
+  const [sort, setSort] = useState<SortKey>("recent");
   const [kind, setKind] = useState<KindKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
 
@@ -141,7 +141,7 @@ export default function Home() {
     setArea("전체");
     setLang("전체");
     setKind("전체");
-    setSort("views");
+    setSort("recent");
     setSelected(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

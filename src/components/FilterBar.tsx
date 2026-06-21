@@ -6,9 +6,9 @@ export type SortKey = "views" | "followers" | "recent" | "activeDays";
 export type KindKey = "전체" | "ad" | "organic";
 
 const SORTS: [SortKey, string][] = [
+  ["recent", "최신순"],
   ["views", "조회수순"],
   ["followers", "팔로워순"],
-  ["recent", "최신순"],
 ];
 
 const KINDS: [KindKey, string][] = [
