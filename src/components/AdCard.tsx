@@ -25,7 +25,7 @@ export function AdCard({
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
       <div className="relative">
         {onExclude || onBlock ? (
-          <div className="absolute right-2 top-2 z-10 flex gap-1">
+          <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
             {onExclude ? (
               <button
                 onClick={(e) => {
@@ -33,7 +33,7 @@ export function AdCard({
                   onExclude(ad);
                 }}
                 title="이 게시물만 이번 수집에서 제외 (다음 수집 때 다시 보임)"
-                className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow transition hover:bg-black/80"
+                className="inline-flex h-6 items-center rounded-full bg-black/60 px-2.5 text-[11px] font-bold leading-none text-white shadow transition hover:bg-black/80"
               >
                 제외
               </button>
@@ -45,7 +45,7 @@ export function AdCard({
                   onBlock(ad);
                 }}
                 title="이 계정 자체를 차단 (재수집해도 안 보임)"
-                className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow transition hover:bg-red-500"
+                className="inline-flex h-6 items-center rounded-full bg-black/60 px-2.5 text-[11px] font-bold leading-none text-white shadow transition hover:bg-red-500"
               >
                 🚫 차단
               </button>
