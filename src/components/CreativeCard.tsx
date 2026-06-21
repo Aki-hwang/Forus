@@ -27,7 +27,11 @@ export function CreativeCard({
   kind?: "ad" | "organic";
 }) {
   const [imgOk, setImgOk] = useState(true);
-  const showImage = Boolean(imageUrl) && imgOk;
+  // 인스타/Meta CDN 이미지는 핫링크 차단되므로 서버 프록시 경유로 로드
+  const proxied = imageUrl
+    ? `/api/img?u=${encodeURIComponent(imageUrl)}`
+    : undefined;
+  const showImage = Boolean(proxied) && imgOk;
 
   return (
     <div
@@ -40,7 +44,7 @@ export function CreativeCard({
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            src={proxied}
             alt={clinicName}
             loading="lazy"
             onError={() => setImgOk(false)}
