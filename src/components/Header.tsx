@@ -30,7 +30,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
             <p className="text-[15px] font-black tracking-tight text-foreground">
               DermaRadar
             </p>
-            <p className="text-[11px] text-muted">피부과 광고 트렌드 레이더</p>
+            <p className="text-[11px] text-muted">Developed by doctorstock</p>
           </div>
         </Link>
 

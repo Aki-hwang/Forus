@@ -279,7 +279,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
-        DermaRadar · 피부과 광고 트렌드 · Doctorstock Developed by 황철진
+        DermaRadar · 피부과 광고 트렌드
       </footer>
 
       {selected ? (
