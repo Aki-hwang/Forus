@@ -22,7 +22,7 @@ function Stat({
 }) {
   const inner = (
     <>
-      <p className="text-[12px] font-medium text-muted">{label}</p>
+      <p className="text-[13px] font-bold text-foreground">{label}</p>
       <p className="mt-1 text-2xl font-black tracking-tight text-foreground">{value}</p>
       {hint ? <p className="mt-0.5 truncate text-[11px] text-muted">{hint}</p> : null}
     </>
@@ -110,7 +110,7 @@ export function TrendPanel({
       const k = h.trim();
       if (k) m.set(k, (m.get(k) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 9).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([tag]) => tag);
   }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
