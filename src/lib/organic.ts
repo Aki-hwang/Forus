@@ -27,6 +27,7 @@ import {
   inferLang,
   extractHashtags,
   buildHeadline,
+  clip,
   TAGS_BY_TREATMENT,
   PALETTE_BY_TREATMENT,
 } from "./apify";
@@ -120,8 +121,8 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
     clinic: known?.name ?? p.ownerFullName ?? username,
     area,
     treatment,
-    headline: (headline || "韓国美容ケア").slice(0, 28),
-    sub: (sub || "").slice(0, 26),
+    headline: clip(headline || "韓国美容ケア", 30),
+    sub: clip(sub || "", 28),
     caption: (caption || "").slice(0, 200),
     hashtags: extractHashtags(caption, treatment),
     tags: TAGS_BY_TREATMENT[treatment],

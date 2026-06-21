@@ -100,6 +100,16 @@ export function extractHashtags(text: string, treatment: TreatmentKey): string[]
 }
 
 /** 본문에서 해시태그/멘션/URL을 걷어내고 메인 카피 1~2줄 추출 */
+/** 단어 경계에서 말줄임(…) — CJK처럼 공백 없으면 그냥 자르고 …. */
+export function clip(s: string, n: number): string {
+  const t = (s ?? "").trim();
+  if (t.length <= n) return t;
+  const cut = t.slice(0, n);
+  const sp = cut.lastIndexOf(" ");
+  const base = sp > n * 0.6 ? cut.slice(0, sp) : cut;
+  return base.replace(/[\s.,!?·、，。]+$/, "") + "…";
+}
+
 export function buildHeadline(caption: string): { headline: string; sub: string } {
   const lines = caption
     .replace(/https?:\/\/\S+/g, "")
@@ -107,8 +117,8 @@ export function buildHeadline(caption: string): { headline: string; sub: string 
     .map((l) => l.replace(/#[^\s#]+/g, "").replace(/@[^\s@]+/g, "").trim())
     .filter((l) => l.length > 1);
 
-  const headline = (lines[0] ?? caption.trim()).slice(0, 28) || "韓国美容ケア";
-  const sub = (lines[1] ?? "").slice(0, 26);
+  const headline = clip(lines[0] ?? caption.trim(), 30) || "韓国美容ケア";
+  const sub = clip(lines[1] ?? "", 28);
   return { headline, sub };
 }
 
@@ -235,8 +245,8 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     !t || t.trim().length < 3 || /https?:|instagram\.com|^line\b|\b(line|lin)\.(ee|me)\b|add line|visit instagram|\.(com|net|ly|me)\b/i.test(t);
   let headline = hl;
   if (looksBad(headline)) headline = looksBad(title) ? treatmentLabel : title;
-  headline = headline.slice(0, 28);
-  const sub = (sb && !looksBad(sb) ? sb : treatmentLabel).slice(0, 26);
+  headline = clip(headline, 30);
+  const sub = clip(sb && !looksBad(sb) ? sb : treatmentLabel, 28);
 
   const days = activeDays(fb.start_date_formatted, fb.end_date_formatted);
   // 집행 일수가 상한(기본 30일)을 넘는 오래된 광고는 제외 (시작일 미상 days=0 은 유지)

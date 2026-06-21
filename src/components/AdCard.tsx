@@ -52,43 +52,39 @@ export function AdCard({
         </button>
       </div>
 
-      <div className="space-y-2 p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="rounded-md bg-background px-2 py-0.5 text-[11px] font-bold text-muted">
-              📍 {ad.area}
-            </span>
+      <div className="space-y-1.5 p-3">
+        <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
+          <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold">
+            📍 {ad.area}
+          </span>
+          <span
+            title={isOrganic ? "오가닉(자연 게시물)" : "유료 광고"}
+            className={`whitespace-nowrap rounded-md px-1.5 py-0.5 font-bold ${
+              isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
+            }`}
+          >
+            {isOrganic ? "📷" : "💰"}
+          </span>
+          {ad.featured ? (
             <span
-              className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${
-                isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
-              }`}
+              title={ad.note ? `등록 클리닉 · ${ad.note}` : "등록 클리닉"}
+              className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary-ink"
             >
-              {isOrganic ? "📷 오가닉" : "💰 광고"}
+              ⭐
             </span>
-            {ad.featured ? (
-              <span
-                title={ad.note}
-                className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary-ink"
-              >
-                ⭐ 등록
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-2.5 text-[11.5px] font-medium text-muted">
+          ) : null}
+          <span className="ml-auto flex items-center gap-2 whitespace-nowrap">
             {isOrganic ? (
               <>
-                {ad.views != null ? (
-                  <span title="릴스 조회수">▶ {fmt(ad.views)}</span>
-                ) : null}
+                {ad.views != null ? <span title="릴스 조회수">▶ {fmt(ad.views)}</span> : null}
                 <span title="좋아요">♡ {fmt(ad.likes)}</span>
-                <span title="댓글">💬 {fmt(ad.saves)}</span>
               </>
             ) : isLive ? (
               <>
                 {ad.views != null ? (
-                  <span title="인스타 릴스 조회수(중앙값)">▶ {fmt(ad.views)}</span>
+                  <span title="릴스 조회수(중앙값)">▶ {fmt(ad.views)}</span>
                 ) : ad.likes > 0 ? (
-                  <span title="인스타 팔로워">👥 {fmt(ad.likes)}</span>
+                  <span title="팔로워">👥 {fmt(ad.likes)}</span>
                 ) : null}
                 <span title="집행 일수">📅 {ad.activeDays ?? 0}일</span>
               </>
@@ -98,14 +94,19 @@ export function AdCard({
                 <span>🔖 {fmt(ad.saves)}</span>
               </>
             )}
-          </div>
+          </span>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {ad.tags.map((t) => (
-            <span key={t} className="text-[11px] font-medium text-primary-ink">
-              #{t}
-            </span>
-          ))}
+        <div className="flex gap-1 overflow-hidden">
+          {(ad.hashtags && ad.hashtags.length ? ad.hashtags : ad.tags.map((t) => `#${t}`))
+            .slice(0, 3)
+            .map((t) => (
+              <span
+                key={t}
+                className="max-w-[33%] shrink-0 truncate whitespace-nowrap text-[11px] font-medium text-primary-ink"
+              >
+                {t}
+              </span>
+            ))}
         </div>
       </div>
     </div>

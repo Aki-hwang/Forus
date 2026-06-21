@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Ad, TrendSummary } from "@/lib/ads";
+import { hasClinicSignal } from "@/lib/clinics";
 
 function fmt(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
@@ -66,8 +67,16 @@ export function TrendPanel({
 }) {
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
-  // 최다 조회(없으면 최다 반응) 광고 — 클릭 시 모달
-  const topAd = trends.mostViewed ?? trends.hottest;
+  // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
+  const isLikelyClinic = (a: Ad) =>
+    a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
+  const clinicAds = useMemo(() => ads.filter(isLikelyClinic), [ads]);
+  // 최다 조회 광고 — 클리닉만 기준 (클릭 시 모달)
+  const topAd = useMemo(() => {
+    const v = clinicAds.filter((a) => typeof a.views === "number");
+    if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
+    return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
+  }, [clinicAds]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
   const [period, setPeriod] = useState<number>(30);
@@ -75,7 +84,7 @@ export function TrendPanel({
   const ranked = useMemo(() => {
     const inRange = ads.filter((a) => {
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
-      return !Number.isNaN(t) && now - t <= period * 86_400_000;
+      return !Number.isNaN(t) && now - t <= period * 86_400_000 && isLikelyClinic(a);
     });
     const m = new Map<
       string,
@@ -101,8 +110,8 @@ export function TrendPanel({
         <Stat label="▶ 평균 조회수" value={fmt(trends.avgViews)} hint="IG 릴스 조회수 중앙값" />
         <Stat
           label="🔥 최다 조회 광고"
-          value={trends.mostViewed?.views != null ? fmt(trends.mostViewed.views) : "-"}
-          hint={cleanClinic(trends.mostViewed?.clinic)}
+          value={topAd?.views != null ? fmt(topAd.views) : "-"}
+          hint={cleanClinic(topAd?.clinic)}
           onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
         />
         <Stat
