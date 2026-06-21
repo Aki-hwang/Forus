@@ -20,6 +20,7 @@
 import { Ad, Area } from "./ads";
 import { KNOWN_CLINICS, findClinicByHandle, isExcludedAd, hasClinicSignal } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
+import { readApprovedClinics } from "./snapshot";
 import { areaFromText } from "./adQueries";
 import {
   inferTreatment,
@@ -93,13 +94,21 @@ function postId(p: IgPost): string {
 }
 
 /** IG 게시물 → Ad(kind:"organic"). 비클리닉(제품/인플루언서 등)은 제외, 등록 클리닉은 항상 유지. */
+// 승인된 병원(런타임, /data) 핸들→이름/지역. 수집 시작 시 채워진다.
+let APPROVED_LOOKUP: Map<string, { name: string; areas: Area[]; note?: string }> = new Map();
+function lookupClinic(username: string): { name: string; areas: Area[]; note?: string } | undefined {
+  const k = findClinicByHandle(username);
+  if (k) return { name: k.name, areas: k.areas, note: k.note };
+  return APPROVED_LOOKUP.get(username.toLowerCase());
+}
+
 function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
   const username = p.ownerUsername?.trim();
   if (!username) return null;
   const caption = (p.caption ?? "").trim();
   if (!caption && !p.displayUrl) return null;
 
-  const known = findClinicByHandle(username);
+  const known = lookupClinic(username);
   // 등록 클리닉이면 무조건 유지, 아니면 비클리닉 신호로 거른다.
   if (!known && isExcludedAd(username, p.ownerFullName, caption, undefined)) return null;
 
@@ -249,6 +258,17 @@ export async function fetchOrganicViaApify(
     const h = c.handle.toLowerCase();
     if (!h) continue;
     const key = c.areas[0] ?? "기타";
+    (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(h);
+  }
+  // 승인된 병원(관리자 등록)도 워치리스트에 합치고, 매칭용 lookup 구성
+  const approved = await readApprovedClinics();
+  APPROVED_LOOKUP = new Map(
+    approved.map((c) => [c.handle.toLowerCase(), { name: c.name, areas: c.areas as Area[], note: undefined }])
+  );
+  for (const c of approved) {
+    const h = c.handle.toLowerCase();
+    if (!h) continue;
+    const key = (c.areas[0] as string) ?? "기타";
     (buckets.get(key) ?? buckets.set(key, []).get(key)!).push(h);
   }
   const order = ["강남", "명동", "홍대", "기타"];

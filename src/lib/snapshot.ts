@@ -260,3 +260,52 @@ export async function addRegisterRequest(
   await fs.writeFile(path.join(dir, REQ_FILE), JSON.stringify(list), "utf8");
   return entry;
 }
+
+
+// ---------- 승인된 병원(워치리스트) + 등록요청 처리 ----------
+const APPROVED_FILE = "forus-approved-clinics.json";
+
+export interface ApprovedClinic {
+  name: string;
+  handle: string; // @ 제외 소문자
+  areas: string[]; // ["강남"] 등, 기타는 []
+  instagram: string; // 원문 입력
+  addedAt: string;
+}
+
+export async function readApprovedClinics(): Promise<ApprovedClinic[]> {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    try {
+      const raw = await fs.readFile(path.join(dir, APPROVED_FILE), "utf8");
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr as ApprovedClinic[];
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return [];
+}
+
+export async function addApprovedClinic(entry: ApprovedClinic): Promise<void> {
+  const list = await readApprovedClinics();
+  const h = entry.handle.toLowerCase();
+  const next = list.filter((c) => c.handle.toLowerCase() !== h);
+  next.unshift({ ...entry, handle: h });
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, APPROVED_FILE), JSON.stringify(next), "utf8");
+}
+
+export async function removeApprovedClinic(handle: string): Promise<void> {
+  const list = await readApprovedClinics();
+  const h = handle.toLowerCase();
+  const next = list.filter((c) => c.handle.toLowerCase() !== h);
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, APPROVED_FILE), JSON.stringify(next), "utf8");
+}
+
+export async function removeRegisterRequest(id: string): Promise<void> {
+  const list = await readRegisterRequests();
+  const next = list.filter((r) => r.id !== id);
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, REQ_FILE), JSON.stringify(next), "utf8");
+}
