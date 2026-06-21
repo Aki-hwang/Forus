@@ -25,7 +25,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
           className="flex items-center gap-2.5"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="DermaRadar" className="h-9 w-9" />
+          <img src="/logo.svg" alt="DermaRadar" className="h-7 w-7" />
           <div className="leading-tight">
             <p className="text-[24px] font-black tracking-tight text-foreground">
               DermaRadar
