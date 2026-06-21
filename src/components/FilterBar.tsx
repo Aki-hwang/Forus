@@ -38,14 +38,14 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex max-w-full items-center gap-2 overflow-x-auto sm:gap-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* 지역 탭 */}
-        <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+        <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface p-1">
           {areaTabs.map((a) => (
             <button
               key={a}
               onClick={() => onArea(a)}
-              className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition ${
+              className={`rounded-lg px-3 py-1.5 text-[13px] font-bold transition sm:px-3.5 ${
                 area === a
                   ? "bg-foreground text-white shadow-sm"
                   : "text-muted hover:text-foreground"
@@ -57,7 +57,7 @@ export function FilterBar({
         </div>
 
         {/* 유료/오가닉 토글 */}
-        <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+        <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface p-1">
           {KINDS.map(([key, label]) => (
             <button
               key={key}
