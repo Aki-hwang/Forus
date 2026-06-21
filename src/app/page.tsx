@@ -115,6 +115,12 @@ export default function Home() {
   // 첫 로드 중(아직 데이터 없음) → 81 깜빡임 대신 로딩 표시
   const loading = collecting && merged.length === 0;
 
+  // 키워드 언어탭용 — kind(유료/무료)만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
+  const kindPool = useMemo(
+    () => merged.filter((a) => kind === "전체" || (a.kind ?? "ad") === kind),
+    [merged, kind]
+  );
+
   const base = useMemo(
     () =>
       merged.filter(
@@ -172,6 +178,7 @@ export default function Home() {
                 한눈에
               </span>
             </h1>
+            {manageKey ? (
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
@@ -201,6 +208,7 @@ export default function Home() {
                 </span>
               ) : null}
             </div>
+            ) : null}
           </div>
 
           <div className="inline-flex rounded-xl border border-border bg-surface p-1">
@@ -233,7 +241,12 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-6">
-          <TrendPanel trends={trends} ads={base} onSelectAd={setSelected} />
+          <TrendPanel
+            trends={trends}
+            ads={base}
+            keywordAds={kindPool}
+            onSelectAd={setSelected}
+          />
 
           <FilterBar
             area={area}

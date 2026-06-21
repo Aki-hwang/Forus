@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ad, TreatmentKey, TREATMENT_LABEL, TrendSummary } from "@/lib/ads";
+import { Ad, Lang, TreatmentKey, TREATMENT_LABEL, TrendSummary } from "@/lib/ads";
 import { classifyTreatment } from "@/lib/treatments";
 import { hasClinicSignal } from "@/lib/clinics";
 
@@ -31,14 +31,14 @@ function Stat({
     return (
       <button
         onClick={onClick}
-        className="flex h-full flex-col justify-center rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+        className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
       </button>
     );
   }
   return (
-    <div className="flex h-full flex-col justify-center rounded-2xl border border-border bg-surface p-4">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4">
       {inner}
     </div>
   );
@@ -63,12 +63,15 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
 export function TrendPanel({
   trends,
   ads,
+  keywordAds,
   onSelectAd,
 }: {
   trends: TrendSummary;
   ads: Ad[];
+  keywordAds: Ad[];
   onSelectAd?: (ad: Ad) => void;
 }) {
+  const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
@@ -106,12 +109,15 @@ export function TrendPanel({
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
   const topKeywords = useMemo(() => {
     const m = new Map<string, number>();
-    for (const a of ads) for (const h of a.hashtags ?? []) {
-      const k = h.trim();
-      if (k) m.set(k, (m.get(k) ?? 0) + 1);
+    for (const a of keywordAds) {
+      if (kwLang !== "전체" && a.lang !== kwLang) continue;
+      for (const h of a.hashtags ?? []) {
+        const k = h.trim();
+        if (k) m.set(k, (m.get(k) ?? 0) + 1);
+      }
     }
     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 9).map(([tag]) => tag);
-  }, [ads]);
+  }, [keywordAds, kwLang]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
   const period = 30;
@@ -161,7 +167,28 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
-          <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[13px] font-bold text-foreground">인기 키워드</p>
+            <div className="inline-flex shrink-0 rounded-lg border border-border bg-background p-0.5">
+              {([
+                ["전체", "전체"],
+                ["KR", "한"],
+                ["JP", "일"],
+                ["CN", "중"],
+                ["EN", "영"],
+              ] as [Lang | "전체", string][]).map(([k, l]) => (
+                <button
+                  key={k}
+                  onClick={() => setKwLang(k)}
+                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold transition ${
+                    kwLang === k ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
           {topKeywords.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {topKeywords.map((k) => (
