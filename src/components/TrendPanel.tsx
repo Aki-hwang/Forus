@@ -72,6 +72,30 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
   );
 }
 
+function classifyContentType(text: string): string {
+  const t = text.toLowerCase();
+  const has = (arr: string[]) => arr.some((k) => t.includes(k));
+  if (
+    has([
+      "이벤트", "할인", "특가", "프로모", "오픈", "혜택", "쿠폰", "선착순", "페이백",
+      "%", "event", "sale", "off", "割引", "キャンペーン", "优惠", "活动", "折扣",
+    ])
+  )
+    return "이벤트·할인";
+  if (has(["전후", "비포", "애프터", "before", "after", "변화", "결과"]))
+    return "비포애프터";
+  if (has(["후기", "리뷰", "review", "口コミ", "レビュー", "评价", "재방문", "만족"]))
+    return "후기·리뷰";
+  if (
+    has([
+      "시술", "효과", "정보", "추천", "방법", "부작용", "다운타임", "회복", "원리",
+      "관리", "꿀팁", "케어",
+    ])
+  )
+    return "시술정보";
+  return "브랜딩·일상";
+}
+
 export function TrendPanel({
   trends,
   ads,
@@ -123,7 +147,10 @@ export function TrendPanel({
   // 콘텐츠 유형 — 광고 스타일 분포
   const topStyles = useMemo(() => {
     const m = new Map<string, number>();
-    for (const a of ads) m.set(a.style, (m.get(a.style) ?? 0) + 1);
+    for (const a of ads) {
+      const t = classifyContentType(`${a.headline ?? ""} ${a.caption ?? ""}`);
+      m.set(t, (m.get(t) ?? 0) + 1);
+    }
     return [...m.entries()]
       .filter(([, c]) => c > 0)
       .sort((x, y) => y[1] - x[1])
@@ -332,7 +359,7 @@ export function TrendPanel({
               const pct = Math.max(8, Math.round((count / maxStyle) * 100));
               return (
                 <div key={key} className="flex items-center gap-2 px-1.5 py-1">
-                  <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
+                  <span className="w-20 shrink-0 truncate text-[12.5px] font-medium text-foreground">
                     {key}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
