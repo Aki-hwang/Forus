@@ -31,13 +31,17 @@ function Stat({
     return (
       <button
         onClick={onClick}
-        className="rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+        className="flex h-full flex-col justify-center rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
       </button>
     );
   }
-  return <div className="rounded-2xl border border-border bg-surface p-4">{inner}</div>;
+  return (
+    <div className="flex h-full flex-col justify-center rounded-2xl border border-border bg-surface p-4">
+      {inner}
+    </div>
+  );
 }
 
 function Bar({ label, count, max }: { label: string; count: number; max: number }) {
@@ -106,7 +110,7 @@ export function TrendPanel({
       const k = h.trim();
       if (k) m.set(k, (m.get(k) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 9).map(([tag]) => tag);
   }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
