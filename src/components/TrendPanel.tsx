@@ -110,7 +110,7 @@ export function TrendPanel({
       const k = h.trim();
       if (k) m.set(k, (m.get(k) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 9).map(([tag]) => tag);
   }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
@@ -140,7 +140,7 @@ export function TrendPanel({
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="grid grid-cols-3 gap-3 lg:col-span-5">
+        <div className="grid grid-cols-3 gap-3 lg:col-span-4">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
           <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
           <Stat
@@ -160,7 +160,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-3">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
           {topKeywords.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
