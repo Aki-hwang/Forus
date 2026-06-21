@@ -184,7 +184,7 @@ export default function Home() {
                   <span className={`h-1.5 w-1.5 rounded-full ${live ? "bg-primary" : "bg-muted"}`} />
                 )}
                 {live
-                  ? "수집 데이터 (광고 + 오가닉)"
+                  ? "수집 데이터 (유료 + 무료)"
                   : isCollecting
                   ? "데이터 불러오는 중…"
                   : "샘플 데이터 (아직 수집 전)"}
