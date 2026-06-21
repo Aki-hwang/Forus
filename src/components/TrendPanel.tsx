@@ -9,6 +9,16 @@ function fmt(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
+// 해시태그의 글자(스크립트) 판별 — 게시물 언어가 아니라 태그 자체 기준
+type Script = "JP" | "KR" | "HAN" | "EN" | null;
+function tagScript(t: string): Script {
+  if (/[぀-ヿ]/.test(t)) return "JP"; // 가나
+  if (/[가-힣]/.test(t)) return "KR";
+  if (/[㐀-鿿]/.test(t)) return "HAN"; // 한자(일본 한자/중국어 모호)
+  if (/[A-Za-z]/.test(t)) return "EN";
+  return null;
+}
+
 function Stat({
   label,
   value,
@@ -110,10 +120,17 @@ export function TrendPanel({
   const topKeywords = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of keywordAds) {
-      if (kwLang !== "전체" && a.lang !== kwLang) continue;
       for (const h of a.hashtags ?? []) {
         const k = h.trim();
-        if (k) m.set(k, (m.get(k) ?? 0) + 1);
+        if (!k) continue;
+        if (kwLang !== "전체") {
+          const sc = tagScript(k);
+          if (kwLang === "EN" && sc !== "EN") continue;
+          if (kwLang === "KR" && sc !== "KR") continue;
+          if (kwLang === "JP" && !(sc === "JP" || (sc === "HAN" && a.lang === "JP"))) continue;
+          if (kwLang === "CN" && !(sc === "HAN" && a.lang !== "JP")) continue;
+        }
+        m.set(k, (m.get(k) ?? 0) + 1);
       }
     }
     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20).map(([tag]) => tag);
