@@ -170,7 +170,7 @@ export default function Home() {
       <main className="mx-auto max-w-7xl px-5 pb-6 pt-4">
         {/* 헤더: 타이틀·상태(좌) + 타겟 언어 탭(우) 한 줄 */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="pl-4 text-left">
+          <div className="pl-2 text-left">
             <h1 className="text-[17px] font-black leading-tight tracking-tight text-foreground sm:text-[21px]">
               강남·명동·홍대 피부과 마케팅 트렌드를
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
