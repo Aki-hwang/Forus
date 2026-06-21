@@ -19,7 +19,9 @@ const notoJP = Noto_Sans_JP({
 
 const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
-  "강남·명동·홍대 피부과의 일본/중국인 관광객 대상 광고를 조회수순으로 한눈에. 카드를 누르면 원본 인스타그램으로 이동합니다.";
+  "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에. 어떤 시술·콘텐츠가 뜨는지 한국어·일본어·중국어·영어로 확인하세요.";
+const OG_IMAGE =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_033423_bbed649f-e6e5-4be1-a477-f48be87e1d65.png";
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -30,11 +32,13 @@ export const metadata: Metadata = {
     description: SITE_DESC,
     siteName: "DermaRadar",
     type: "website",
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: SITE_TITLE }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESC,
+    images: [OG_IMAGE],
   },
 };
 
