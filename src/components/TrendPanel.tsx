@@ -122,7 +122,7 @@ export function TrendPanel({
   return (
     <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {/* 좌측: 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 lg:col-span-5">
+      <div className="grid grid-cols-2 gap-3 self-start lg:col-span-5">
         <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
         <Stat label="▶ 평균 조회수" value={fmt(avgViews)} hint="무료(오가닉) 릴스 조회수" />
         <Stat
