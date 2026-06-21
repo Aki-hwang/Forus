@@ -24,7 +24,7 @@ const OG_IMAGE =
   "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_072446_c4228c56-221c-4c92-958f-c9e0ab5b2987.png";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dermaradar.kr"),
+  metadataBase: new URL("https://www.dermaradar.kr"),
   title: SITE_TITLE,
   description: SITE_DESC,
   applicationName: "DermaRadar",
