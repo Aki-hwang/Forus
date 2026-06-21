@@ -100,7 +100,7 @@ export function TrendPanel({
   }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
-  const [period, setPeriod] = useState<number>(30);
+  const period = 30;
   const [now] = useState(() => Date.now());
   const ranked = useMemo(() => {
     const inRange = ads.filter((a) => {
@@ -188,40 +188,7 @@ export function TrendPanel({
       <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
           <div className="sm:col-span-3">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <p className="shrink-0 whitespace-nowrap text-[13px] font-bold text-foreground">
-                조회수 TOP 클리닉
-              </p>
-              <div className="flex items-center gap-1">
-                <div className="inline-flex items-center rounded-lg border border-border bg-background p-0.5">
-                  {[7, 30].map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => setPeriod(p)}
-                      className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
-                        period === p ? "bg-surface text-primary-ink shadow-sm" : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      {`${p}일`}
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="직접"
-                    value={![7, 30].includes(period) ? period : ""}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      setPeriod(Number.isFinite(v) && v > 0 ? v : 30);
-                    }}
-                    className={`w-12 rounded-md bg-transparent px-2 py-0.5 text-center text-[11px] font-bold outline-none transition placeholder:font-normal placeholder:text-muted ${
-                      ![7, 30].includes(period) ? "bg-surface text-primary-ink shadow-sm" : "text-muted"
-                    }`}
-                  />
-                </div>
-                <span className="text-[11px] text-muted">일</span>
-              </div>
-            </div>
+            <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
             <div className="space-y-1 max-w-[300px]">
               {ranked.length === 0 ? (
                 <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
