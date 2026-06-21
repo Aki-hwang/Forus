@@ -33,7 +33,6 @@ function Stat({
         className="rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
-        <span className="mt-1 block text-[10px] font-bold text-primary-ink">클릭해서 광고 보기 →</span>
       </button>
     );
   }
