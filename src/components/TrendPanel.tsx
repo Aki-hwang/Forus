@@ -222,8 +222,8 @@ export function TrendPanel({
   return (
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="grid grid-cols-3 gap-3 lg:col-span-4">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div className="grid grid-cols-3 gap-3 md:col-span-4">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint={collectedLabel} />
           <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
           <Stat
@@ -234,7 +234,7 @@ export function TrendPanel({
           />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
           <div className="space-y-2.5">
             {trends.byArea.map((a) => (
@@ -243,7 +243,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <p className="text-[13px] font-bold text-foreground">인기 키워드</p>
@@ -292,8 +292,8 @@ export function TrendPanel({
       </section>
 
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
           <div className="space-y-2.5">
             {ranked.length === 0 ? (
@@ -340,7 +340,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 게시물</p>
           <div className="space-y-2.5">
             {topPosts.length === 0 ? (
@@ -371,7 +371,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">인기 시술</p>
           <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
@@ -399,7 +399,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">콘텐츠 유형</p>
           <div className="space-y-2.5">
             {topStyles.length === 0 ? (
