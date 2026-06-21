@@ -294,7 +294,7 @@ export default function Home() {
       </main>
 
       <footer className="flex flex-col items-center gap-2 border-t border-border py-6 text-center text-[12px] text-muted">
-        <span>DermaRadar · 피부과 광고 트렌드</span>
+        <span>DermaRadar · © Doctorstock Inc. All Rights Reserved</span>
         <AdminGate manageKey={manageKey} onSet={setManageKey} />
       </footer>
 

@@ -294,7 +294,7 @@ export function TrendPanel({
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
-          <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
           <div className="space-y-2.5">
             {ranked.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
@@ -341,7 +341,7 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
-          <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 게시물</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 게시물</p>
           <div className="space-y-2.5">
             {topPosts.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">집행된 게시물이 없어요.</p>
@@ -372,7 +372,7 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
-          <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">인기 시술</p>
           <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
               <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
@@ -400,7 +400,7 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
-          <p className="mb-3 text-[13px] font-bold text-foreground">콘텐츠 유형</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">콘텐츠 유형</p>
           <div className="space-y-2.5">
             {topStyles.length === 0 ? (
               <p className="text-[12px] text-muted">분류된 콘텐츠가 없어요.</p>

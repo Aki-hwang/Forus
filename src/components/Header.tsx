@@ -27,10 +27,9 @@ export function Header({ onReset }: { onReset?: () => void }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="DermaRadar" className="h-9 w-9" />
           <div className="leading-tight">
-            <p className="text-[18px] font-black tracking-tight text-foreground">
+            <p className="text-[24px] font-black tracking-tight text-foreground">
               DermaRadar
             </p>
-            <p className="text-[11px] text-muted">Developed by doctorstock</p>
           </div>
         </Link>
 
