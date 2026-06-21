@@ -163,18 +163,18 @@ export function TrendPanel({
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="grid grid-cols-3 gap-3 lg:col-span-5">
+        <div className="grid grid-cols-3 gap-3 lg:col-span-4">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
           <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
           <Stat
-            label="🔥 최다 조회 광고"
+            label="🔥 최다 조회"
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
             hint={cleanClinic(topAd?.clinic)}
             onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-3">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
           <div className="space-y-2.5">
             {trends.byArea.map((a) => (
