@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -41,6 +41,19 @@ export const metadata: Metadata = {
     description: SITE_DESC,
     images: [OG_IMAGE],
   },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "DermaRadar",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
