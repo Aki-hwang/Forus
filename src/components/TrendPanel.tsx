@@ -165,12 +165,14 @@ export function TrendPanel({
                   ? `https://www.instagram.com/${c.igUsername}/`
                   : undefined;
                 const rowClass =
-                  "flex items-center gap-2.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
+                  "flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
+                const name = c.clinic.replace(/\s*\(.*\)$/, "");
+                const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
                 const inner = (
                   <>
-                    <span className="w-4 shrink-0 text-[12px] font-black text-muted">{i + 1}</span>
+                    <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">{i + 1}</span>
                     <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                      {c.clinic.replace(/\s*\(.*\)$/, "")}
+                      {shortName}
                       <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
                     </span>
                     <span className="shrink-0 text-[12px] font-bold text-primary-ink">
