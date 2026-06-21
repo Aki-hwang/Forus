@@ -78,14 +78,9 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
             )}
           </div>
           {(() => {
-            const isOrganic = ad.kind === "organic";
-            // 광고 → 광고 라이브러리 항목, 오가닉 → 게시물 퍼머링크 (계정이 아니라 '그 광고'로 연결)
-            const adLink = isOrganic ? ad.sourceUrl : ad.adLibraryUrl ?? ad.sourceUrl;
-            const adLabel = isOrganic
-              ? "↗ 이 게시물 보기"
-              : ad.adLibraryUrl
-              ? "↗ 이 광고 보기 (광고 라이브러리)"
-              : "↗ 원본 광고 보기";
+            // 항상 실제 게시물/원본으로 연결 (소스 우선, 없으면 광고 라이브러리)
+            const adLink = ad.sourceUrl ?? ad.adLibraryUrl;
+            const adLabel = "↗ 이 게시물 보기";
             const acctUrl = ad.igUsername
               ? `https://www.instagram.com/${ad.igUsername}/`
               : undefined;
