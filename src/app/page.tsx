@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
 import { AdminRequests } from "@/components/AdminRequests";
+import { AdminGate } from "@/components/AdminGate";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
@@ -280,8 +281,9 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
-        DermaRadar · 피부과 광고 트렌드
+      <footer className="flex flex-col items-center gap-2 border-t border-border py-6 text-center text-[12px] text-muted">
+        <span>DermaRadar · 피부과 광고 트렌드</span>
+        <AdminGate manageKey={manageKey} onSet={setManageKey} />
       </footer>
 
       {selected ? (
