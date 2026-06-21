@@ -21,7 +21,7 @@ const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
   "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에. 어떤 시술·콘텐츠가 뜨는지 한국어·일본어·중국어·영어로 확인하세요.";
 const OG_IMAGE =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_033423_bbed649f-e6e5-4be1-a477-f48be87e1d65.png";
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_033953_c7924ecf-85d2-4587-95c6-7070aaec150d.png";
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
