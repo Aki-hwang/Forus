@@ -7,7 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { RegisterClinic } from "./RegisterClinic";
 
 export function Header({ onReset }: { onReset?: () => void }) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const pathname = usePathname();
 
   return (
@@ -41,9 +41,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
 
           <RegisterClinic />
 
-          {status === "loading" ? (
-            <div className="h-8 w-20 animate-pulse rounded-lg bg-border/60" />
-          ) : session?.user ? (
+          {session?.user ? (
             <UserMenu
               name={session.user.name ?? "회원"}
               image={session.user.image ?? null}
