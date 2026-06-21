@@ -33,22 +33,24 @@ function Stat({
   const inner = (
     <>
       <p className="text-[13px] font-bold text-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-black tracking-tight text-foreground">{value}</p>
-      {hint ? <p className="mt-0.5 truncate text-[11px] text-muted">{hint}</p> : null}
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <p className="text-2xl font-black tracking-tight text-foreground">{value}</p>
+        {hint ? <p className="mt-0.5 max-w-full truncate text-[11px] text-muted">{hint}</p> : null}
+      </div>
     </>
   );
   if (onClick) {
     return (
       <button
         onClick={onClick}
-        className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-surface p-4 text-center transition hover:border-primary/40 hover:shadow-sm"
+        className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
       </button>
     );
   }
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-surface p-4 text-center">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left">
       {inner}
     </div>
   );
