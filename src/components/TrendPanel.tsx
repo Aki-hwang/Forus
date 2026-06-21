@@ -70,6 +70,7 @@ export function TrendPanel({
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
   const isLikelyClinic = (a: Ad) =>
     a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
+  const [now] = useState(() => Date.now());
   const clinicAds = useMemo(() => ads.filter(isLikelyClinic), [ads]);
   // 최다 조회 광고 — 클리닉만 기준 (클릭 시 모달)
   const topAd = useMemo(() => {
@@ -105,12 +106,11 @@ export function TrendPanel({
       const k = h.trim();
       if (k) m.set(k, (m.get(k) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([tag]) => tag);
   }, [ads]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
   const period = 30;
-  const [now] = useState(() => Date.now());
   const ranked = useMemo(() => {
     const inRange = ads.filter((a) => {
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
