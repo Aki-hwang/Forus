@@ -7,6 +7,7 @@ import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
 import { AdminRequests } from "@/components/AdminRequests";
 import { AdminGate } from "@/components/AdminGate";
+import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
@@ -18,6 +19,15 @@ export default function Home() {
   const [sort, setSort] = useState<SortKey>("recent");
   const [kind, setKind] = useState<KindKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
+  // 카드/게시물 상세 열기 + GA 클릭 이벤트(인기 클릭 추적)
+  const openAd = (ad: Ad) => {
+    setSelected(ad);
+    gaEvent("card_click", {
+      clinic: ad.clinic.replace(/\s*\(.*\)$/, ""),
+      area: ad.area,
+      kind: ad.kind === "organic" ? "무료" : "유료",
+    });
+  };
 
   // 수집 스냅샷(샘플)으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체
   const [allAds, setAllAds] = useState<Ad[]>([]);
@@ -262,7 +272,7 @@ export default function Home() {
             trends={trends}
             ads={base}
             keywordAds={kindPool}
-            onSelectAd={setSelected}
+            onSelectAd={openAd}
             collectedAt={collectedAt}
           />
 
@@ -286,7 +296,7 @@ export default function Home() {
                 <AdCard
                   key={ad.id}
                   ad={ad}
-                  onSelect={setSelected}
+                  onSelect={openAd}
                   onExclude={manageKey ? excludeAd : undefined}
                   onBlock={manageKey ? blockAccount : undefined}
                 />

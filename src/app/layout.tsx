@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import Script from "next/script";
 
 const notoKR = Noto_Sans_KR({
   variable: "--font-sans-kr",
@@ -16,6 +17,8 @@ const notoJP = Noto_Sans_JP({
   weight: ["400", "500", "700", "900"],
   display: "swap",
 });
+
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
@@ -67,6 +70,17 @@ export default function RootLayout({
       className={`${notoKR.variable} ${notoJP.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        {GA_ID ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
+            </Script>
+          </>
+        ) : null}
         <Providers>{children}</Providers>
       </body>
     </html>
