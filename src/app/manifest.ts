@@ -4,8 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "DermaRadar — 피부과 광고 트렌드 레이더",
     short_name: "DermaRadar",
-    description:
-      "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에.",
+    description: "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에 확인하세요.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
