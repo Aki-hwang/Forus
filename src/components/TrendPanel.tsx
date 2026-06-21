@@ -77,6 +77,15 @@ export function TrendPanel({
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
+  // 신규 광고 — 최근 7일 내 시작
+  const newAds7 = useMemo(
+    () =>
+      ads.filter((a) => {
+        const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
+        return !Number.isNaN(t) && now - t <= 7 * 86_400_000;
+      }).length,
+    [ads, now]
+  );
   // 인기 시술 — 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
   const topTreatments = useMemo(() => {
     const m = new Map<TreatmentKey, number>();
@@ -127,8 +136,9 @@ export function TrendPanel({
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="grid grid-cols-2 gap-3 lg:col-span-5">
+        <div className="grid grid-cols-3 gap-3 lg:col-span-5">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
+          <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
           <Stat
             label="🔥 최다 조회 광고"
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
