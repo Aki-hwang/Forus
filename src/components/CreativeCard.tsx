@@ -82,11 +82,11 @@ export function CreativeCard({
 
       {/* headline — 실제 이미지가 없을 때만 (이미지엔 자체 카피가 있음) */}
       {showImage ? null : (
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-5">
-          <h3 className="font-jp whitespace-pre-line text-[22px] font-black leading-[1.25] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)]">
+        <div className="absolute inset-x-0 top-1/2 max-h-[88%] -translate-y-1/2 overflow-hidden px-4 sm:px-5">
+          <h3 className="font-jp line-clamp-3 [overflow-wrap:anywhere] text-[15px] font-black leading-[1.2] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.25)] sm:line-clamp-4 sm:text-[22px] sm:leading-[1.25]">
             {headline}
           </h3>
-          <p className="font-jp mt-2 inline-block rounded-md bg-white/25 px-2 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
+          <p className="font-jp mt-2 line-clamp-2 inline-block max-w-full rounded-md bg-white/25 px-2 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
             {sub}
           </p>
         </div>
