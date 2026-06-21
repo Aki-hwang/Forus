@@ -120,14 +120,9 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const list = base.filter((a) => area === "전체" || a.area === area);
-    const byViews = (a: Ad, b: Ad) => {
-      const av = a.views,
-        bv = b.views;
-      if (av != null && bv != null) return bv - av;
-      if (av != null) return -1;
-      if (bv != null) return 1;
-      return b.likes - a.likes;
-    };
+    // 조회수순 — 조회수 없으면(유료 광고) 팔로워 수를 대용으로 써서 오가닉과 섞이게 한다.
+    const reach = (a: Ad) => a.views ?? a.likes ?? 0;
+    const byViews = (a: Ad, b: Ad) => reach(b) - reach(a);
     const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
       views: byViews,
       followers: (a, b) => b.likes - a.likes,
