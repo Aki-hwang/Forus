@@ -19,6 +19,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // 볼륨 가드 — 이 인스턴스에 영구 볼륨이 안 붙어있으면 수집을 거부한다(=과금 0).
+  // 저장 안 될 임시 인스턴스에서 헛돈 쓰는 것을 원천 차단. Railway Replicas=1 권장.
+  const mountPath = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  if (mountPath !== "/data" && process.env.COLLECT_ALLOW_NO_VOLUME !== "1") {
+    return NextResponse.json(
+      {
+        error: "no_volume",
+        message:
+          "이 인스턴스에 /data 볼륨이 없어 수집 결과가 저장되지 않습니다. Railway에서 Replicas=1로 두고 재배포해 볼륨 인스턴스로 단일화한 뒤 다시 시도하세요. (무시하려면 COLLECT_ALLOW_NO_VOLUME=1)",
+        railwayMountPath: mountPath ?? null,
+      },
+      { status: 409 }
+    );
+  }
+
   const full = url.searchParams.get("full") === "1";
   const part = url.searchParams.get("part"); // "ads" | "organic" | null(둘 다)
   const doAds = part !== "organic";
