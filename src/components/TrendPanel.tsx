@@ -121,8 +121,9 @@ export function TrendPanel({
   }, [ads]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
   // 콘텐츠 유형 — 광고 스타일 분포
+  const STYLE_KEYS = ["프로모션", "비포애프터", "정보형", "감성", "미니멀"];
   const topStyles = useMemo(() => {
-    const m = new Map<string, number>();
+    const m = new Map<string, number>(STYLE_KEYS.map((k) => [k, 0]));
     for (const a of ads) m.set(a.style, (m.get(a.style) ?? 0) + 1);
     return [...m.entries()].sort((x, y) => y[1] - x[1]).slice(0, 5);
   }, [ads]);
