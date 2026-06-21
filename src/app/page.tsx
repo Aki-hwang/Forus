@@ -211,7 +211,7 @@ export default function Home() {
             ) : null}
           </div>
 
-          <div className="flex max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-1">
+          <div className="flex max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {([
               ["전체", "전체"],
               ["KR", "🇰🇷 한국어"],
