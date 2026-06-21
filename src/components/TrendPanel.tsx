@@ -124,124 +124,124 @@ export function TrendPanel({
     return [...m.values()].sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || y.followers - x.followers);
   }, [ads, period, now]);
   return (
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-      {/* 좌측: 핵심 지표 */}
-      <div className="grid grid-cols-2 gap-3 lg:col-span-5">
-        {/* 1열: 수집된 광고 → 인기 시술 */}
-        <div className="space-y-3">
+    <div className="space-y-4">
+      {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="grid grid-cols-2 gap-3 lg:col-span-5">
           <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
-          <div className="rounded-2xl border border-border bg-surface p-4">
-            <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
-            <div className="space-y-2">
-              {topTreatments.length === 0 ? (
-                <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
-              ) : null}
-              {topTreatments.map((t) => {
-                const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
-                return (
-                  <div key={t.key} className="flex items-center gap-1.5">
-                    <span className="w-14 shrink-0 truncate text-[12px] font-medium text-foreground">
-                      {t.label}
-                    </span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="w-6 shrink-0 text-right text-[12px] font-bold text-muted">
-                      {t.count}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-        {/* 2열: 최다 조회 광고 → 인기 키워드 */}
-        <div className="space-y-3">
           <Stat
             label="🔥 최다 조회 광고"
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
             hint={cleanClinic(topAd?.clinic)}
             onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
-          {topKeywords.length > 0 ? (
-            <div className="rounded-2xl border border-border bg-surface p-4">
-              <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
-              <div className="flex flex-wrap gap-1.5">
-                {topKeywords.map((k) => (
-                  <span
-                    key={k}
-                    className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
-                  >
-                    {k}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
-      </div>
 
-      {/* 우측: 조회수 TOP 클리닉 + 지역별 분포 */}
-      <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-5">
-          <div className="sm:col-span-3">
-            <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
-            <div className="space-y-1 max-w-[300px]">
-              {ranked.length === 0 ? (
-                <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
-              ) : null}
-              {ranked.slice(0, 5).map((c, i) => {
-                const href = c.igUsername
-                  ? `https://www.instagram.com/${c.igUsername}/`
-                  : undefined;
-                const rowClass =
-                  "flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
-                const name = c.clinic.replace(/\s*\(.*\)$/, "");
-                const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
-                const inner = (
-                  <>
-                    <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">{i + 1}</span>
-                    <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                      {shortName}
-                      <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
-                    </span>
-                    <span className="shrink-0 text-[12px] font-bold text-primary-ink">
-                      {c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
-                    </span>
-                  </>
-                );
-                return href ? (
-                  <a
-                    key={c.clinic + i}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={rowClass}
-                  >
-                    {inner}
-                  </a>
-                ) : (
-                  <div key={c.clinic + i} className={rowClass}>
-                    {inner}
-                  </div>
-                );
-              })}
-            </div>
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+          <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
+          <div className="space-y-2.5">
+            {trends.byArea.map((a) => (
+              <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+            ))}
           </div>
+        </div>
 
-          <div className="sm:col-span-2">
-            <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
-            <div className="space-y-2.5">
-              {trends.byArea.map((a) => (
-                <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-3">
+          <p className="mb-2 text-[13px] font-bold text-foreground">인기 키워드</p>
+          {topKeywords.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {topKeywords.map((k) => (
+                <span
+                  key={k}
+                  className="rounded-full bg-background px-2 py-0.5 text-[11px] font-medium text-primary-ink"
+                >
+                  {k}
+                </span>
               ))}
             </div>
+          ) : (
+            <p className="text-[12px] text-muted">키워드 없음</p>
+          )}
+        </div>
+      </section>
+
+      {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
+          <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
+          <div className="space-y-1 max-w-[320px]">
+            {ranked.length === 0 ? (
+              <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
+            ) : null}
+            {ranked.slice(0, 5).map((c, i) => {
+              const href = c.igUsername
+                ? `https://www.instagram.com/${c.igUsername}/`
+                : undefined;
+              const rowClass =
+                "flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
+              const name = c.clinic.replace(/\s*\(.*\)$/, "");
+              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
+              const inner = (
+                <>
+                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+                    {shortName}
+                    <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
+                  </span>
+                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+                    {c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
+                  </span>
+                </>
+              );
+              return href ? (
+                <a
+                  key={c.clinic + i}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={rowClass}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={c.clinic + i} className={rowClass}>
+                  {inner}
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
-    </section>
+
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-5">
+          <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
+          <div className="space-y-2">
+            {topTreatments.length === 0 ? (
+              <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
+            ) : null}
+            {topTreatments.map((t) => {
+              const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
+              return (
+                <div key={t.key} className="flex items-center gap-2">
+                  <span className="w-16 shrink-0 truncate text-[12px] font-medium text-foreground">
+                    {t.label}
+                  </span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-7 shrink-0 text-right text-[12px] font-bold text-muted">
+                    {t.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
