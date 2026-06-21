@@ -218,3 +218,45 @@ export function applyBlocklist(ads: Ad[], block: string[]): Ad[] {
     return !((h && set.has(h)) || (n && set.has(n)));
   });
 }
+
+
+// ---------- 병원 등록 요청 (공개 폼 → 서버 저장, 관리자 조회) ----------
+const REQ_FILE = "forus-register-requests.json";
+
+export interface RegisterRequest {
+  id: string;
+  clinic: string;
+  instagram: string;
+  area?: string;
+  contact?: string;
+  message?: string;
+  createdAt: string;
+}
+
+export async function readRegisterRequests(): Promise<RegisterRequest[]> {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    try {
+      const raw = await fs.readFile(path.join(dir, REQ_FILE), "utf8");
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr as RegisterRequest[];
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return [];
+}
+
+export async function addRegisterRequest(
+  r: Omit<RegisterRequest, "id" | "createdAt">
+): Promise<RegisterRequest> {
+  const list = await readRegisterRequests();
+  const entry: RegisterRequest = {
+    ...r,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+  };
+  list.unshift(entry);
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, REQ_FILE), JSON.stringify(list), "utf8");
+  return entry;
+}

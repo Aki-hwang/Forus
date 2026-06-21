@@ -5,6 +5,7 @@ import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
+import { AdminRequests } from "@/components/AdminRequests";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
 
@@ -241,6 +242,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-4">
+          {manageKey ? <AdminRequests adminKey={manageKey} /> : null}
           <TrendPanel
             trends={trends}
             ads={base}

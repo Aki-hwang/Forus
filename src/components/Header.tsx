@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { RegisterClinic } from "./RegisterClinic";
 
 export function Header({ onReset }: { onReset?: () => void }) {
   const { data: session, status } = useSession();
@@ -37,6 +38,8 @@ export function Header({ onReset }: { onReset?: () => void }) {
           <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted md:inline">
             한·일·중 타겟
           </span>
+
+          <RegisterClinic />
 
           {status === "loading" ? (
             <div className="h-8 w-20 animate-pulse rounded-lg bg-border/60" />
