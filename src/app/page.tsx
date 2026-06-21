@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
-import { sampleAds } from "@/lib/sampleAds";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
@@ -19,7 +18,7 @@ export default function Home() {
   const [selected, setSelected] = useState<Ad | null>(null);
 
   // 수집 스냅샷(샘플)으로 먼저 그리고, 마운트 후 /api/ads 로 실시간 수집분으로 교체
-  const [allAds, setAllAds] = useState<Ad[]>(sampleAds);
+  const [allAds, setAllAds] = useState<Ad[]>([]);
   const [source, setSource] = useState<Source>("sample");
   // 오가닉(IG 자연 게시물) — 광고와 별개로 받아 합친다
   const [organicAds, setOrganicAds] = useState<Ad[]>([]);
@@ -105,6 +104,9 @@ export default function Home() {
     const seen = new Set(allAds.map((a) => a.id));
     return [...allAds, ...organicAds.filter((a) => !seen.has(a.id))];
   }, [allAds, organicAds]);
+
+  // 첫 로드 중(아직 데이터 없음) → 81 깜빡임 대신 로딩 표시
+  const loading = collecting && merged.length === 0;
 
   const base = useMemo(
     () =>
@@ -221,7 +223,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted">
+            <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+            <span className="text-[13px] font-bold">데이터 불러오는 중…</span>
+          </div>
+        ) : (
+          <div className="space-y-6">
           <TrendPanel trends={trends} ads={base} onSelectAd={setSelected} />
 
           <FilterBar
@@ -250,7 +258,8 @@ export default function Home() {
               ))}
             </div>
           )}
-        </div>
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-border py-6 text-center text-[12px] text-muted">
