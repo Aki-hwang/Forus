@@ -167,9 +167,9 @@ export default function Home() {
     <div className="min-h-full">
       <Header onReset={resetView} />
 
-      <main className="mx-auto max-w-7xl px-5 py-6">
+      <main className="mx-auto max-w-7xl px-5 pb-6 pt-4">
         {/* 헤더: 타이틀·상태(좌) + 타겟 언어 탭(우) 한 줄 */}
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="text-left">
             <h1 className="text-[17px] font-black leading-tight tracking-tight text-foreground sm:text-[21px]">
               강남·명동·홍대 피부과 마케팅 트렌드를
