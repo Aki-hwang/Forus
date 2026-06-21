@@ -167,12 +167,8 @@ export default function Home() {
 
   // 로고 클릭 시 첫 화면 상태로 복귀 (맨 위 스크롤 + 필터/선택 초기화)
   const resetView = () => {
-    setArea("전체");
-    setLang("전체");
-    setKind("전체");
-    setSort("recent");
-    setSelected(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // 로고 클릭 = 새로고침 (스냅샷 재요청, 필터 초기화)
+    window.location.reload();
   };
 
   // 배지 상태: 실시간(apify) / 수집 진행중(collecting) / 폴백(미연결)
