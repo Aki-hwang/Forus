@@ -23,9 +23,8 @@ export function Header({ onReset }: { onReset?: () => void }) {
           }}
           className="flex items-center gap-2.5"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-base font-black text-white shadow-sm">
-            D
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="DermaRadar" className="h-9 w-9" />
           <div className="leading-tight">
             <p className="text-[15px] font-black tracking-tight text-foreground">
               DermaRadar
