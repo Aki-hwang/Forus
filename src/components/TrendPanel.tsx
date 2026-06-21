@@ -101,15 +101,26 @@ export function TrendPanel({
   ads,
   keywordAds,
   onSelectAd,
+  collectedAt,
 }: {
   trends: TrendSummary;
   ads: Ad[];
   keywordAds: Ad[];
   onSelectAd?: (ad: Ad) => void;
+  collectedAt?: string | null;
 }) {
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const [kwOpen, setKwOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
+  const collectedLabel = (() => {
+    if (!collectedAt) return "강남·명동·홍대";
+    const d = new Date(collectedAt);
+    if (Number.isNaN(d.getTime())) return "강남·명동·홍대";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}.${m}.${day} 수집`;
+  })();
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
   const isLikelyClinic = (a: Ad) =>
@@ -213,7 +224,7 @@ export function TrendPanel({
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="grid grid-cols-3 gap-3 lg:col-span-4">
-          <Stat label="수집된 광고" value={`${trends.total}건`} hint="강남·명동·홍대" />
+          <Stat label="수집된 광고" value={`${trends.total}건`} hint={collectedLabel} />
           <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
           <Stat
             label="🔥 최다 조회"

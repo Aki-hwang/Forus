@@ -30,18 +30,20 @@ export default function Home() {
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
   // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
   const [collecting, setCollecting] = useState(true);
+  const [collectedAt, setCollectedAt] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     // 1단계: 빠르게 광고 목록 (팔로워순)
     fetch("/api/ads")
       .then((r) => r.json())
-      .then((data: { source?: Source; ads?: Ad[] }) => {
+      .then((data: { source?: Source; ads?: Ad[]; collectedAt?: string }) => {
         if (!alive) return;
         setCollecting(false); // 응답 도착 → 수집 진행중 종료 (성공/폴백 모두)
         if (!data?.ads?.length) return;
         setAllAds(data.ads);
         setSource(data.source ?? "sample");
+        if (data.collectedAt) setCollectedAt(data.collectedAt);
 
         // 2단계: 조회수 보강 (느림 → 끝나면 재정렬)
         if (data.source === "apify") {
@@ -261,6 +263,7 @@ export default function Home() {
             ads={base}
             keywordAds={kindPool}
             onSelectAd={setSelected}
+            collectedAt={collectedAt}
           />
 
           <FilterBar
