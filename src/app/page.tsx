@@ -30,6 +30,7 @@ export default function Home() {
   const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
   // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
   const [collecting, setCollecting] = useState(true);
+  const [organicDone, setOrganicDone] = useState(false);
   const [collectedAt, setCollectedAt] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,9 @@ export default function Home() {
       })
       .catch(() => {
         /* 오가닉 실패는 무시(광고만 표시) */
+      })
+      .finally(() => {
+        if (alive) setOrganicDone(true);
       });
     return () => {
       alive = false;
@@ -128,8 +132,8 @@ export default function Home() {
     return all.map((a) => (isEN(a) ? { ...a, lang: "EN" as Lang } : a));
   }, [allAds, organicAds]);
 
-  // 첫 로드 중(아직 데이터 없음) → 81 깜빡임 대신 로딩 표시
-  const loading = collecting && merged.length === 0;
+  // 첫 로드: 광고+무료 둘 다 도착 전엔 로딩 표시(숫자 점프 방지)
+  const loading = collecting || !organicDone;
 
   // 키워드 언어탭용 — kind(유료/무료)만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
   const kindPool = useMemo(
