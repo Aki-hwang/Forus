@@ -120,6 +120,13 @@ export function TrendPanel({
       .map(([key, count]) => ({ key, label: TREATMENT_LABEL[key].ko, count }));
   }, [ads]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
+  // 콘텐츠 유형 — 광고 스타일 분포
+  const topStyles = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of ads) m.set(a.style, (m.get(a.style) ?? 0) + 1);
+    return [...m.entries()].sort((x, y) => y[1] - x[1]).slice(0, 5);
+  }, [ads]);
+  const maxStyle = Math.max(1, ...topStyles.map(([, c]) => c));
   const kwCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of keywordAds) {
@@ -237,7 +244,7 @@ export function TrendPanel({
 
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-7">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
           <div className="space-y-1 max-w-[320px]">
             {ranked.length === 0 ? (
@@ -284,7 +291,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-5">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
           <div className="space-y-1">
             {topTreatments.length === 0 ? (
@@ -305,6 +312,34 @@ export function TrendPanel({
                   </div>
                   <span className="w-7 shrink-0 text-right text-[12.5px] font-bold text-muted">
                     {t.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+          <p className="mb-3 text-[13px] font-bold text-foreground">콘텐츠 유형</p>
+          <div className="space-y-1">
+            {topStyles.length === 0 ? (
+              <p className="text-[12px] text-muted">분류된 콘텐츠가 없어요.</p>
+            ) : null}
+            {topStyles.map(([key, count]) => {
+              const pct = Math.max(8, Math.round((count / maxStyle) * 100));
+              return (
+                <div key={key} className="flex items-center gap-2 px-1.5 py-1">
+                  <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
+                    {key}
+                  </span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-7 shrink-0 text-right text-[12.5px] font-bold text-muted">
+                    {count}
                   </span>
                 </div>
               );
