@@ -156,7 +156,7 @@ export function TrendPanel({
                 <span className="text-[11px] text-muted">일</span>
               </div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 max-w-[380px]">
               {ranked.length === 0 ? (
                 <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
               ) : null}
