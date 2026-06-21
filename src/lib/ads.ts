@@ -68,6 +68,10 @@ export interface Ad {
   igLikes?: number;
   /** 콘텐츠 종류: 유료 광고(ad) vs 인스타 오가닉 게시물(organic). 없으면 ad 취급 */
   kind?: "ad" | "organic";
+  /** 누적 병합: 최초 수집 시각(ISO). 신규 판별·보관기간 기준 */
+  firstSeen?: string;
+  /** 누적 병합: 마지막으로 수집에 잡힌 시각(ISO) */
+  lastSeen?: string;
 }
 
 export const AREAS: Area[] = ["강남", "명동", "홍대"];

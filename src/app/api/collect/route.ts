@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchAdsViaApify, enrichAdsWithViews } from "@/lib/apify";
 import { fetchOrganicViaApify } from "@/lib/organic";
-import { writeSnapshot } from "@/lib/snapshot";
+import { writeSnapshot, mergeSnapshot, warmImageCache } from "@/lib/snapshot";
 
 // 실제 수집(=Apify 과금)이 일어나는 유일한 엔드포인트. COLLECT_KEY 로 보호.
 // 시간제한(5분)을 넘기지 않도록 광고/오가닉을 따로 호출할 수 있게 part 지원.
@@ -40,16 +40,26 @@ export async function GET(req: Request) {
   const doOrganic = part !== "ads";
   // 조회수 보강(추가 과금·시간). 기본 켜짐, ?views=0 또는 COLLECT_VIEWS=0 이면 끔.
   const enrich = url.searchParams.get("views") !== "0" && process.env.COLLECT_VIEWS !== "0";
+  // 기본: 90일 누적 병합. ?merge=0 이면 기존 데이터 무시하고 덮어쓰기.
+  const doMerge = url.searchParams.get("merge") !== "0";
 
-  const result: Record<string, unknown> = { startedAt: new Date().toISOString(), full, part: part ?? "both", enrich };
+  const result: Record<string, unknown> = { startedAt: new Date().toISOString(), full, part: part ?? "both", enrich, merge: doMerge };
 
   if (doAds) {
     try {
       const ads = await fetchAdsViaApify(true, full ? { maxQueries: 70, perQuery: 40 } : {});
       if (ads && ads.length > 0) {
         const finalAds = enrich ? await enrichAdsWithViews(ads) : ads;
-        await writeSnapshot("ads", finalAds);
-        result.ads = finalAds.length;
+        if (doMerge) {
+          const m = await mergeSnapshot("ads", finalAds);
+          result.ads = m.total;
+          result.adsAdded = m.added;
+          result.adsUpdated = m.updated;
+        } else {
+          await writeSnapshot("ads", finalAds);
+          result.ads = finalAds.length;
+        }
+        result.adsImgCached = await warmImageCache(finalAds);
       } else {
         result.ads = 0;
       }
@@ -65,8 +75,16 @@ export async function GET(req: Request) {
         full ? { profileCap: 80, postsPerProfile: 6, hashtagCap: 12, postsPerTag: 20 } : {}
       );
       if (organic && organic.length > 0) {
-        await writeSnapshot("organic", organic);
-        result.organic = organic.length;
+        if (doMerge) {
+          const m = await mergeSnapshot("organic", organic);
+          result.organic = m.total;
+          result.organicAdded = m.added;
+          result.organicUpdated = m.updated;
+        } else {
+          await writeSnapshot("organic", organic);
+          result.organic = organic.length;
+        }
+        result.organicImgCached = await warmImageCache(organic);
       } else {
         result.organic = 0;
       }

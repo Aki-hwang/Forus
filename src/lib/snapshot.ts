@@ -10,6 +10,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import { Ad } from "./ads";
 
 const PRIMARY_DIR = process.env.DATA_DIR?.trim() || "/data";
@@ -41,6 +42,119 @@ export async function writeSnapshot(kind: "ads" | "organic", ads: Ad[]): Promise
   const dir = await writableDir();
   const snap: Snapshot = { collectedAt: new Date().toISOString(), source: "apify", ads };
   await fs.writeFile(path.join(dir, fileName(kind)), JSON.stringify(snap), "utf8");
+}
+
+// ---------- 누적 병합 (90일 보관) ----------
+// 새로 수집한 결과를 기존 스냅샷에 합친다. 게시물/광고 고유 id 기준 중복 제거:
+//  - 기존에 있던 항목 → 최신 데이터로 갱신(조회수·좋아요 등), 단 firstSeen 은 유지.
+//  - 처음 본 항목 → firstSeen/lastSeen 기록.
+//  - 이번 수집에 없던 과거 항목 → 그대로 보존(누적). 단 보관기간(90일) 지나면 제거.
+const RETENTION_DAYS = 90;
+
+function refDateMs(a: Ad): number {
+  const d = new Date((a.date ?? "").replace(" ", "T")).getTime();
+  if (!Number.isNaN(d)) return d;
+  const f = new Date(a.firstSeen ?? "").getTime();
+  return Number.isNaN(f) ? Date.now() : f;
+}
+
+export async function mergeSnapshot(
+  kind: "ads" | "organic",
+  fresh: Ad[]
+): Promise<{ total: number; added: number; updated: number }> {
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+  const prev = (await readSnapshot(kind))?.ads ?? [];
+  const map = new Map<string, Ad>();
+  for (const a of prev) map.set(a.id, a);
+
+  let added = 0;
+  let updated = 0;
+  for (const f of fresh) {
+    const old = map.get(f.id);
+    if (old) {
+      map.set(f.id, { ...f, firstSeen: old.firstSeen ?? old.date ?? nowIso, lastSeen: nowIso });
+      updated++;
+    } else {
+      map.set(f.id, { ...f, firstSeen: nowIso, lastSeen: nowIso });
+      added++;
+    }
+  }
+
+  const merged = [...map.values()].filter(
+    (a) => nowMs - refDateMs(a) <= RETENTION_DAYS * 86_400_000
+  );
+
+  const dir = await writableDir();
+  const snap: Snapshot = { collectedAt: nowIso, source: "apify", ads: merged };
+  await fs.writeFile(path.join(dir, fileName(kind)), JSON.stringify(snap), "utf8");
+  return { total: merged.length, added, updated };
+}
+
+// ---------- 이미지 캐시 미리 데우기 ----------
+// 수집 시점(링크가 살아있을 때) 각 이미지를 받아 /data/img-cache 에 저장해 둔다.
+// /api/img 와 동일한 키(서명 제외 경로의 sha1)·동일 디렉터리를 써서 이후 프록시가 그대로 재사용.
+const IMG_CACHE_DIR = path.join(process.env.DATA_DIR?.trim() || "/data", "img-cache");
+const IMG_HOSTS = ["cdninstagram.com", "fbcdn.net", "fna.fbcdn.net"];
+const IMG_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic", ".gif"]);
+
+function imgCacheFile(u: string): string | null {
+  try {
+    const t = new URL(u);
+    if (!IMG_HOSTS.some((h) => t.hostname.endsWith(h))) return null;
+    const ext0 = (path.extname(t.pathname).toLowerCase() || ".jpg").slice(0, 6);
+    const safe = IMG_EXTS.has(ext0) ? ext0 : ".jpg";
+    const hash = crypto.createHash("sha1").update(t.pathname).digest("hex");
+    return path.join(IMG_CACHE_DIR, hash + safe);
+  } catch {
+    return null;
+  }
+}
+
+export async function warmImageCache(ads: Ad[]): Promise<number> {
+  const urls = Array.from(
+    new Set(ads.map((a) => a.imageUrl).filter((x): x is string => Boolean(x)))
+  );
+  let saved = 0;
+  try {
+    await fs.mkdir(IMG_CACHE_DIR, { recursive: true });
+  } catch {
+    return 0;
+  }
+  const BATCH = 6;
+  for (let i = 0; i < urls.length; i += BATCH) {
+    await Promise.all(
+      urls.slice(i, i + BATCH).map(async (u) => {
+        const file = imgCacheFile(u);
+        if (!file) return;
+        try {
+          await fs.access(file);
+          return; // 이미 캐시됨
+        } catch {
+          /* 미스 → 받기 */
+        }
+        try {
+          const r = await fetch(u, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+              Accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+            },
+            cache: "no-store",
+          });
+          if (!r.ok) return;
+          const buf = Buffer.from(await r.arrayBuffer());
+          if (buf.length > 0) {
+            await fs.writeFile(file, buf);
+            saved++;
+          }
+        } catch {
+          /* 실패 무시 */
+        }
+      })
+    );
+  }
+  return saved;
 }
 
 export async function readSnapshot(kind: "ads" | "organic"): Promise<Snapshot | null> {
