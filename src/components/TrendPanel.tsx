@@ -82,6 +82,7 @@ export function TrendPanel({
   onSelectAd?: (ad: Ad) => void;
 }) {
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
+  const [kwOpen, setKwOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
@@ -117,7 +118,7 @@ export function TrendPanel({
       .map(([key, count]) => ({ key, label: TREATMENT_LABEL[key].ko, count }));
   }, [ads]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
-  const topKeywords = useMemo(() => {
+  const kwCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of keywordAds) {
       for (const h of a.hashtags ?? []) {
@@ -133,8 +134,9 @@ export function TrendPanel({
         m.set(k, (m.get(k) ?? 0) + 1);
       }
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20).map(([tag]) => tag);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [keywordAds, kwLang]);
+  const topKeywords = useMemo(() => kwCounts.slice(0, 20).map(([tag]) => tag), [kwCounts]);
 
   // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
   const period = 30;
@@ -185,7 +187,15 @@ export function TrendPanel({
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-[13px] font-bold text-foreground">인기 키워드</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-[13px] font-bold text-foreground">인기 키워드</p>
+              <button
+                onClick={() => setKwOpen(true)}
+                className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-primary-ink transition hover:bg-background"
+              >
+                더보기
+              </button>
+            </div>
             <div className="inline-flex shrink-0 rounded-lg border border-border bg-background p-0.5">
               {([
                 ["전체", "전체"],
@@ -274,15 +284,15 @@ export function TrendPanel({
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-5">
           <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {topTreatments.length === 0 ? (
               <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
             ) : null}
             {topTreatments.map((t) => {
               const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
               return (
-                <div key={t.key} className="flex items-center gap-2">
-                  <span className="w-16 shrink-0 truncate text-[12px] font-medium text-foreground">
+                <div key={t.key} className="flex items-center gap-2 px-1.5 py-1">
+                  <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
                     {t.label}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
@@ -291,7 +301,7 @@ export function TrendPanel({
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <span className="w-7 shrink-0 text-right text-[12px] font-bold text-muted">
+                  <span className="w-7 shrink-0 text-right text-[12.5px] font-bold text-muted">
                     {t.count}
                   </span>
                 </div>
@@ -300,6 +310,45 @@ export function TrendPanel({
           </div>
         </div>
       </section>
+
+      {kwOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setKwOpen(false)}
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[15px] font-bold text-foreground">
+                인기 키워드 전체{" "}
+                <span className="text-[12px] font-medium text-muted">({kwCounts.length}개)</span>
+              </p>
+              <button
+                onClick={() => setKwOpen(false)}
+                className="rounded-md px-2 py-1 text-[14px] text-muted transition hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            {kwCounts.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {kwCounts.map(([tag, count]) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-background px-2 py-1 text-[12px] font-medium text-primary-ink"
+                  >
+                    {tag} <span className="text-muted">{count}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted">키워드가 없어요.</p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
