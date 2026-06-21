@@ -88,6 +88,8 @@ export function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
   // (한글 해시태그 몇 개 섞인 중국어 광고가 KR로 새는 것을 방지)
   if (han > hangul) return hint === "jp" ? "JP" : "CN";
   if (hangul > 0) return "KR"; // 한글 우세 → 한국어
+  // 한자·한글·가나 없고 라틴문자 우세 → 영어
+  if ((text.match(/[A-Za-z]/g) || []).length >= 4) return "EN";
   // 문자 정보가 거의 없으면 검색어 언어로 결정 (cn→CN, 그 외 JP)
   return hint === "cn" ? "CN" : "JP";
 }

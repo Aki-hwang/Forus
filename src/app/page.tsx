@@ -102,7 +102,14 @@ export default function Home() {
   // 광고 + 오가닉 병합 (id 중복 제거)
   const merged = useMemo(() => {
     const seen = new Set(allAds.map((a) => a.id));
-    return [...allAds, ...organicAds.filter((a) => !seen.has(a.id))];
+    const all = [...allAds, ...organicAds.filter((a) => !seen.has(a.id))];
+    // 기존 데이터엔 EN 분류가 없으므로, 한자·한글·가나 없고 라틴문자 우세하면 영어로 재분류
+    const isEN = (a: Ad) => {
+      const t = `${a.headline ?? ""} ${a.caption ?? ""}`;
+      if (/[぀-ヿ가-힣㐀-鿿]/.test(t)) return false;
+      return (t.match(/[A-Za-z]/g) || []).length >= 4;
+    };
+    return all.map((a) => (isEN(a) ? { ...a, lang: "EN" as Lang } : a));
   }, [allAds, organicAds]);
 
   // 첫 로드 중(아직 데이터 없음) → 81 깜빡임 대신 로딩 표시
@@ -199,9 +206,10 @@ export default function Home() {
           <div className="inline-flex rounded-xl border border-border bg-surface p-1">
             {([
               ["전체", "전체"],
-              ["KR", "🇰🇷 한국인"],
-              ["JP", "🇯🇵 일본인"],
-              ["CN", "🇨🇳 중국인"],
+              ["KR", "🇰🇷 한국어"],
+              ["JP", "🇯🇵 일본어"],
+              ["CN", "🇨🇳 중국어"],
+              ["EN", "🇬🇧 영어"],
             ] as [Lang | "전체", string][]).map(([key, label]) => (
               <button
                 key={key}
