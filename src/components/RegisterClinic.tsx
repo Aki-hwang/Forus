@@ -66,7 +66,7 @@ export function RegisterClinic() {
         onClick={() => setOpen(true)}
         className="rounded-lg bg-gradient-to-r from-primary to-accent px-3.5 py-2 text-[13px] font-bold text-white shadow-sm transition hover:opacity-90"
       >
-        병원 등록 요청
+        인스타그램 계정 등록
       </button>
 
       {open ? (
