@@ -93,7 +93,7 @@ function classifyContentType(text: string): string {
     ])
   )
     return "시술정보";
-  return "브랜딩·일상";
+  return "브랜딩";
 }
 
 export function TrendPanel({
