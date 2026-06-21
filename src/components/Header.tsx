@@ -34,10 +34,6 @@ export function Header({ onReset }: { onReset?: () => void }) {
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="hidden rounded-full border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted md:inline">
-            한·일·중 타겟
-          </span>
-
           <RegisterClinic />
 
           {session?.user ? (
