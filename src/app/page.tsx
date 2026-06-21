@@ -214,7 +214,7 @@ export default function Home() {
               <button
                 key={key}
                 onClick={() => setLang(key)}
-                className={`rounded-lg px-4 py-2 text-[13.5px] font-bold transition ${
+                className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition ${
                   lang === key
                     ? "bg-gradient-to-r from-primary to-accent text-white shadow-sm"
                     : "text-muted hover:text-foreground"
