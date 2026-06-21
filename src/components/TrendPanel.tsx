@@ -122,6 +122,14 @@ export function TrendPanel({
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
+  // 조회수 TOP 게시물 — 개별 게시물(클릭 시 모달)
+  const topPosts = useMemo(
+    () =>
+      [...clinicAds]
+        .sort((a, b) => (b.views ?? b.likes) - (a.views ?? a.likes))
+        .slice(0, 5),
+    [clinicAds]
+  );
   // 신규 광고 — 최근 7일 내 시작
   const newAds7 = useMemo(
     () =>
@@ -274,9 +282,9 @@ export function TrendPanel({
 
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
           <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
-          <div className="space-y-1">
+          <div className="space-y-2.5">
             {ranked.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
             ) : null}
@@ -285,7 +293,7 @@ export function TrendPanel({
                 ? `https://www.instagram.com/${c.igUsername}/`
                 : undefined;
               const rowClass =
-                "flex items-center gap-1.5 rounded-lg px-1.5 py-1 transition hover:bg-background";
+                "flex items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-background";
               const name = c.clinic.replace(/\s*\(.*\)$/, "");
               const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
               const inner = (
@@ -321,16 +329,47 @@ export function TrendPanel({
           </div>
         </div>
 
+        <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-2">
+          <p className="mb-3 text-[13px] font-bold text-foreground">조회수 TOP 게시물</p>
+          <div className="space-y-2.5">
+            {topPosts.length === 0 ? (
+              <p className="py-3 text-[12px] text-muted">집행된 게시물이 없어요.</p>
+            ) : null}
+            {topPosts.map((a, i) => {
+              const name = a.clinic.replace(/\s*\(.*\)$/, "");
+              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
+              const reach = a.views ?? a.likes;
+              return (
+                <button
+                  key={a.id}
+                  onClick={() => onSelectAd?.(a)}
+                  className="flex w-full items-center gap-1.5 rounded-lg px-1.5 text-left transition hover:bg-background"
+                >
+                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+                    {shortName}
+                  </span>
+                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+                    ▶ {fmt(reach)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">인기 시술</p>
-          <div className="space-y-1">
+          <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
               <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
             ) : null}
             {topTreatments.map((t) => {
               const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
               return (
-                <div key={t.key} className="flex items-center gap-2 px-1.5 py-1">
+                <div key={t.key} className="flex items-center gap-2 px-1.5">
                   <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
                     {t.label}
                   </span>
@@ -351,14 +390,14 @@ export function TrendPanel({
 
         <div className="rounded-2xl border border-border bg-surface p-4 lg:col-span-4">
           <p className="mb-3 text-[13px] font-bold text-foreground">콘텐츠 유형</p>
-          <div className="space-y-1">
+          <div className="space-y-2.5">
             {topStyles.length === 0 ? (
               <p className="text-[12px] text-muted">분류된 콘텐츠가 없어요.</p>
             ) : null}
             {topStyles.map(([key, count]) => {
               const pct = Math.max(8, Math.round((count / maxStyle) * 100));
               return (
-                <div key={key} className="flex items-center gap-2 px-1.5 py-1">
+                <div key={key} className="flex items-center gap-2 px-1.5">
                   <span className="w-20 shrink-0 truncate text-[12.5px] font-medium text-foreground">
                     {key}
                   </span>
