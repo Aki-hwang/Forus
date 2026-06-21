@@ -13,8 +13,8 @@ const SORTS: [SortKey, string][] = [
 
 const KINDS: [KindKey, string][] = [
   ["전체", "전체"],
-  ["ad", "💰 유료"],
-  ["organic", "📷 오가닉"],
+  ["ad", "유료"],
+  ["organic", "무료"],
 ];
 
 export function FilterBar({

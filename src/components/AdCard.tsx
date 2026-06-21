@@ -64,7 +64,7 @@ export function AdCard({
               isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
             }`}
           >
-            {isOrganic ? "오가닉" : "광고"}
+            {isOrganic ? "무료" : "광고"}
           </span>
           {ad.featured ? (
             <span

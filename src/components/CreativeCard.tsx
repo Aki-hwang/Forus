@@ -104,7 +104,7 @@ export function CreativeCard({
               : "bg-white/85 text-foreground/70"
           }`}
         >
-          {kind === "organic" ? "오가닉" : "AD"}
+          {kind === "organic" ? "무료" : "AD"}
         </span>
       </div>
     </div>
