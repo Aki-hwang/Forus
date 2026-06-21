@@ -309,3 +309,20 @@ export async function removeRegisterRequest(id: string): Promise<void> {
   const dir = await writableDir();
   await fs.writeFile(path.join(dir, REQ_FILE), JSON.stringify(next), "utf8");
 }
+
+
+// 단일 게시물 제외 — 현재 스냅샷에서만 제거(다음 수집 때 다시 들어옴). 차단(blocklist)과 다름.
+export async function removeAdById(id: string): Promise<boolean> {
+  let removed = false;
+  for (const kind of ["ads", "organic"] as const) {
+    const snap = await readSnapshot(kind);
+    if (!snap) continue;
+    const next = snap.ads.filter((a) => a.id !== id);
+    if (next.length !== snap.ads.length) {
+      const dir = await writableDir();
+      await fs.writeFile(path.join(dir, fileName(kind)), JSON.stringify({ ...snap, ads: next }), "utf8");
+      removed = true;
+    }
+  }
+  return removed;
+}

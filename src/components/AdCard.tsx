@@ -10,11 +10,13 @@ function fmt(n: number): string {
 export function AdCard({
   ad,
   onSelect,
-  onRemove,
+  onExclude,
+  onBlock,
 }: {
   ad: Ad;
   onSelect: (ad: Ad) => void;
-  onRemove?: (ad: Ad) => void;
+  onExclude?: (ad: Ad) => void;
+  onBlock?: (ad: Ad) => void;
 }) {
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
@@ -22,17 +24,33 @@ export function AdCard({
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
       <div className="relative">
-        {onRemove ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove(ad);
-            }}
-            title="이 계정을 저장본에서 제외 (재수집 없음)"
-            className="absolute right-2 top-2 z-10 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow hover:bg-red-500"
-          >
-            🚫 제외
-          </button>
+        {onExclude || onBlock ? (
+          <div className="absolute right-2 top-2 z-10 flex gap-1">
+            {onExclude ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onExclude(ad);
+                }}
+                title="이 게시물만 이번 수집에서 제외 (다음 수집 때 다시 보임)"
+                className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow transition hover:bg-black/80"
+              >
+                제외
+              </button>
+            ) : null}
+            {onBlock ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBlock(ad);
+                }}
+                title="이 계정 자체를 차단 (재수집해도 안 보임)"
+                className="rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow transition hover:bg-red-500"
+              >
+                🚫 차단
+              </button>
+            ) : null}
+          </div>
         ) : null}
         <button onClick={() => onSelect(ad)} className="block w-full text-left">
           <CreativeCard

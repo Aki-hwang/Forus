@@ -82,8 +82,8 @@ export default function Home() {
     if (k) setManageKey(k);
   }, []);
 
-  // 저장본에서 계정 제외 (화면에서 즉시 제거 + 서버 차단목록에 기록)
-  const removeAd = async (ad: Ad) => {
+  // 차단: 계정 자체를 영구 차단 (화면에서 즉시 제거 + 서버 차단목록 기록 → 재수집해도 안 보임)
+  const blockAccount = async (ad: Ad) => {
     if (!manageKey) return;
     const handle = ad.igUsername?.toLowerCase();
     const name = ad.clinic?.toLowerCase();
@@ -95,6 +95,18 @@ export default function Home() {
     const entry = ad.igUsername || ad.clinic;
     try {
       await fetch(`/api/block?key=${encodeURIComponent(manageKey)}&handle=${encodeURIComponent(entry)}`);
+    } catch {
+      /* 무시 */
+    }
+  };
+
+  // 제외: 이 게시물만 현재 스냅샷에서 제거 (다음 수집 때 다시 보임)
+  const excludeAd = async (ad: Ad) => {
+    if (!manageKey) return;
+    setAllAds((prev) => prev.filter((a) => a.id !== ad.id));
+    setOrganicAds((prev) => prev.filter((a) => a.id !== ad.id));
+    try {
+      await fetch(`/api/exclude?key=${encodeURIComponent(manageKey)}&id=${encodeURIComponent(ad.id)}`);
     } catch {
       /* 무시 */
     }
@@ -272,7 +284,8 @@ export default function Home() {
                   key={ad.id}
                   ad={ad}
                   onSelect={setSelected}
-                  onRemove={manageKey ? removeAd : undefined}
+                  onExclude={manageKey ? excludeAd : undefined}
+                  onBlock={manageKey ? blockAccount : undefined}
                 />
               ))}
             </div>
