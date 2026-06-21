@@ -45,14 +45,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
               name={session.user.name ?? "회원"}
               image={session.user.image ?? null}
             />
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-lg bg-foreground px-3.5 py-2 text-[13px] font-bold text-white transition hover:opacity-90"
-            >
-              로그인
-            </Link>
-          )}
+          ) : null}
         </div>
       </div>
     </header>
