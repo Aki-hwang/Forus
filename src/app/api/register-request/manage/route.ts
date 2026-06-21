@@ -5,6 +5,7 @@ import {
   addApprovedClinic,
   readApprovedClinics,
   removeApprovedClinic,
+  removeFromBlocklist,
 } from "@/lib/snapshot";
 
 // 관리자 전용(?key=COLLECT_KEY): 등록 요청 처리.
@@ -72,6 +73,9 @@ export async function POST(req: Request) {
       instagram: r.instagram,
       addedAt: new Date().toISOString(),
     });
+    // 등록 = 보여주겠다는 의도 → 혹시 차단돼 있었다면 해제(핸들·병원명 둘 다)
+    await removeFromBlocklist(h);
+    if (r.clinic) await removeFromBlocklist(r.clinic.toLowerCase());
     await removeRegisterRequest(id);
     return NextResponse.json({ ok: true, handle: h });
   }

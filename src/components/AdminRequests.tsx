@@ -23,11 +23,24 @@ interface Approved {
 const igUrl = (s: string) =>
   s.startsWith("http") ? s : `https://instagram.com/${s.replace(/^@/, "")}`;
 
+const parseHandle = (s: string) => {
+  let h = (s || "").trim();
+  if (h.startsWith("http")) {
+    try {
+      h = new URL(h).pathname.split("/").filter(Boolean)[0] ?? "";
+    } catch {
+      /* keep */
+    }
+  }
+  return h.replace(/^@/, "").trim().toLowerCase();
+};
+
 export function AdminRequests({ adminKey }: { adminKey: string }) {
   const [reqs, setReqs] = useState<Req[] | null>(null);
   const [approved, setApproved] = useState<Approved[]>([]);
   const [open, setOpen] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [blockSet, setBlockSet] = useState<Set<string>>(new Set());
 
   const load = useCallback(() => {
     fetch(`/api/register-request?key=${encodeURIComponent(adminKey)}`)
@@ -38,6 +51,12 @@ export function AdminRequests({ adminKey }: { adminKey: string }) {
       .then((r) => r.json())
       .then((d) => setApproved(Array.isArray(d.approved) ? d.approved : []))
       .catch(() => setApproved([]));
+    fetch(`/api/block?key=${encodeURIComponent(adminKey)}`)
+      .then((r) => r.json())
+      .then((d) =>
+        setBlockSet(new Set(Array.isArray(d.blocklist) ? d.blocklist.map((x: string) => x.toLowerCase()) : []))
+      )
+      .catch(() => setBlockSet(new Set()));
   }, [adminKey]);
 
   useEffect(() => {
@@ -79,6 +98,11 @@ export function AdminRequests({ adminKey }: { adminKey: string }) {
                     <p className="truncate text-[13px] font-bold text-foreground">
                       {r.clinic}
                       {r.area ? <span className="ml-1 text-[11px] text-muted">· {r.area}</span> : null}
+                      {blockSet.has(parseHandle(r.instagram)) || blockSet.has(r.clinic.toLowerCase()) ? (
+                        <span className="ml-2 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-500">
+                          차단됨
+                        </span>
+                      ) : null}
                       <span className="ml-2 text-[11px] font-medium text-muted">
                         {new Date(r.createdAt).toLocaleDateString("ko-KR")}
                       </span>
