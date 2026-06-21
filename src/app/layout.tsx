@@ -21,7 +21,7 @@ const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
   "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에. 어떤 시술·콘텐츠가 뜨는지 한국어·일본어·중국어·영어로 확인하세요.";
 const OG_IMAGE =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_033423_bbed649f-e6e5-4be1-a477-f48be87e1d65.png";
+  "https://d8j0ntlcm91z4.cloudfront.net/user_3FDm7Jme3gywkEGkRnH7TQ3XFzh/hf_20260621_072446_c4228c56-221c-4c92-958f-c9e0ab5b2987.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://forus-advertising.up.railway.app"),
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     description: SITE_DESC,
     siteName: "DermaRadar",
     type: "website",
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: SITE_TITLE }],
+    images: [{ url: OG_IMAGE, width: 1200, height: 675, alt: SITE_TITLE }],
   },
   twitter: {
     card: "summary_large_image",
