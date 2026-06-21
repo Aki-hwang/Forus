@@ -55,23 +55,23 @@ export function AdCard({
 
       <div className="space-y-1.5 p-3">
         <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
-          <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold">
+          <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold leading-none">
             📍 {ad.area}
           </span>
           <span
             title={isOrganic ? "오가닉(자연 게시물)" : "유료 광고"}
-            className={`whitespace-nowrap rounded-md px-1.5 py-0.5 font-bold ${
+            className={`whitespace-nowrap rounded-md px-1.5 py-0.5 font-bold leading-none ${
               isOrganic ? "bg-accent/15 text-foreground" : "bg-background text-muted"
             }`}
           >
-            {isOrganic ? "📷" : "💰"}
+            {isOrganic ? "오가닉" : "광고"}
           </span>
           {ad.featured ? (
             <span
               title={ad.note ? `등록 클리닉 · ${ad.note}` : "등록 클리닉"}
-              className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-bold text-primary-ink"
+              className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-bold leading-none text-primary-ink"
             >
-              ⭐
+              ⭐ 등록
             </span>
           ) : null}
           <span className="ml-auto flex items-center gap-2 whitespace-nowrap">
