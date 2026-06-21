@@ -14,6 +14,7 @@ export function CreativeCard({
   lang,
   badge,
   imageUrl,
+  kind,
 }: {
   palette: [string, string];
   headline: string;
@@ -23,6 +24,7 @@ export function CreativeCard({
   lang: Lang;
   badge?: string;
   imageUrl?: string;
+  kind?: "ad" | "organic";
 }) {
   const [imgOk, setImgOk] = useState(true);
   const showImage = Boolean(imageUrl) && imgOk;
@@ -91,8 +93,14 @@ export function CreativeCard({
         <span className="text-[11px] font-bold text-white/95 drop-shadow">
           {clinicName}
         </span>
-        <span className="rounded bg-white/85 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-foreground/70">
-          AD
+        <span
+          className={`rounded px-1.5 py-0.5 text-[9px] font-bold tracking-wider ${
+            kind === "organic"
+              ? "bg-accent/90 text-white"
+              : "bg-white/85 text-foreground/70"
+          }`}
+        >
+          {kind === "organic" ? "오가닉" : "AD"}
         </span>
       </div>
     </div>

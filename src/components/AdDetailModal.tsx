@@ -40,6 +40,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
           treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
           lang={ad.lang}
           imageUrl={ad.imageUrl}
+          kind={ad.kind}
         />
 
         <div className="space-y-2 p-5 text-[13px]">
