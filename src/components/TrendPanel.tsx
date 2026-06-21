@@ -32,7 +32,7 @@ function Stat({
 }) {
   const inner = (
     <>
-      <p className="text-[13px] font-bold text-foreground">{label}</p>
+      <p className="text-center text-[13px] font-bold text-foreground">{label}</p>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <p className="text-2xl font-black tracking-tight text-foreground">{value}</p>
         {hint ? <p className="mt-0.5 max-w-full truncate text-[11px] text-muted">{hint}</p> : null}
@@ -71,8 +71,6 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
     </div>
   );
 }
-
-const STYLE_KEYS = ["프로모션", "비포애프터", "정보형", "감성", "미니멀"];
 
 export function TrendPanel({
   trends,
@@ -124,9 +122,12 @@ export function TrendPanel({
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
   // 콘텐츠 유형 — 광고 스타일 분포
   const topStyles = useMemo(() => {
-    const m = new Map<string, number>(STYLE_KEYS.map((k) => [k, 0]));
+    const m = new Map<string, number>();
     for (const a of ads) m.set(a.style, (m.get(a.style) ?? 0) + 1);
-    return [...m.entries()].sort((x, y) => y[1] - x[1]).slice(0, 5);
+    return [...m.entries()]
+      .filter(([, c]) => c > 0)
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 5);
   }, [ads]);
   const maxStyle = Math.max(1, ...topStyles.map(([, c]) => c));
   const kwCounts = useMemo(() => {
