@@ -18,7 +18,7 @@ const notoJP = Noto_Sans_JP({
   display: "swap",
 });
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-N9L6K0TTJW";
 
 const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
