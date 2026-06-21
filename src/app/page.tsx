@@ -211,7 +211,7 @@ export default function Home() {
             ) : null}
           </div>
 
-          <div className="inline-flex rounded-xl border border-border bg-surface p-1">
+          <div className="flex max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-1">
             {([
               ["전체", "전체"],
               ["KR", "🇰🇷 한국어"],
@@ -222,7 +222,7 @@ export default function Home() {
               <button
                 key={key}
                 onClick={() => setLang(key)}
-                className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition ${
+                className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-bold transition ${
                   lang === key
                     ? "bg-gradient-to-r from-primary to-accent text-white shadow-sm"
                     : "text-muted hover:text-foreground"

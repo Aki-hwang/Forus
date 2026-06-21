@@ -41,14 +41,14 @@ function Stat({
     return (
       <button
         onClick={onClick}
-        className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+        className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-surface p-4 text-center transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
       </button>
     );
   }
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4">
+    <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-border bg-surface p-4 text-center">
       {inner}
     </div>
   );
