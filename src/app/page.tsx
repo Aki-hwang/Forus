@@ -240,7 +240,7 @@ export default function Home() {
             <span className="text-[13px] font-bold">데이터 불러오는 중…</span>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
           <TrendPanel
             trends={trends}
             ads={base}
