@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchAdsViaApify, enrichAdsWithViews } from "@/lib/apify";
 import { fetchOrganicViaApify } from "@/lib/organic";
-import { writeSnapshot, mergeSnapshot, warmImageCache } from "@/lib/snapshot";
+import { writeSnapshot, mergeSnapshot, warmImageCache, readSnapshot } from "@/lib/snapshot";
 
 // 실제 수집(=Apify 과금)이 일어나는 유일한 엔드포인트. COLLECT_KEY 로 보호.
 // 시간제한(5분)을 넘기지 않도록 광고/오가닉을 따로 호출할 수 있게 part 지원.
@@ -44,6 +44,26 @@ export async function GET(req: Request) {
   const doMerge = url.searchParams.get("merge") !== "0";
 
   const result: Record<string, unknown> = { startedAt: new Date().toISOString(), full, part: part ?? "both", enrich, merge: doMerge };
+
+  // 시뮬레이션(무료): Apify 호출 없이 현재 스냅샷으로 저장·병합·이미지캐시 파이프라인만 검증
+  if (url.searchParams.get("simulate") === "1") {
+    const sim: Record<string, unknown> = { simulated: true, startedAt: result.startedAt };
+    for (const kind of ["ads", "organic"] as const) {
+      if (kind === "ads" && !doAds) continue;
+      if (kind === "organic" && !doOrganic) continue;
+      try {
+        const snap = await readSnapshot(kind);
+        const cur = snap?.ads ?? [];
+        const m = await mergeSnapshot(kind, cur); // 동일 데이터 재병합(멱등) → 쓰기/병합 검증
+        const cached = await warmImageCache(cur.slice(0, 8)); // 샘플만 캐시 점검
+        sim[kind] = { existing: cur.length, total: m.total, updated: m.updated, added: m.added, imgCached: cached };
+      } catch (e) {
+        sim[`${kind}Error`] = String(e);
+      }
+    }
+    sim.finishedAt = new Date().toISOString();
+    return NextResponse.json(sim);
+  }
 
   if (doAds) {
     try {

@@ -7,6 +7,7 @@ import { TrendPanel } from "@/components/TrendPanel";
 import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
 import { AdminRequests } from "@/components/AdminRequests";
 import { AdminInquiries } from "@/components/AdminInquiries";
+import { AdminCollect } from "@/components/AdminCollect";
 import { AdminGate } from "@/components/AdminGate";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
@@ -268,6 +269,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-4">
+          {manageKey ? <AdminCollect adminKey={manageKey} /> : null}
           {manageKey ? <AdminRequests adminKey={manageKey} /> : null}
           {manageKey ? <AdminInquiries adminKey={manageKey} /> : null}
           <TrendPanel
