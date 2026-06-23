@@ -12,7 +12,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-5">
         <Link
           href="/"
