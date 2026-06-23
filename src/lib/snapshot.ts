@@ -326,3 +326,44 @@ export async function removeAdById(id: string): Promise<boolean> {
   }
   return removed;
 }
+
+
+// ---------- 문의 (공개 폼 → 서버 저장, 관리자 조회) ----------
+const INQUIRY_FILE = "forus-inquiries.json";
+
+export interface Inquiry {
+  id: string;
+  name: string;
+  contact: string;
+  message: string;
+  createdAt: string;
+}
+
+export async function readInquiries(): Promise<Inquiry[]> {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    try {
+      const raw = await fs.readFile(path.join(dir, INQUIRY_FILE), "utf8");
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return arr as Inquiry[];
+    } catch {
+      /* 다음 후보 */
+    }
+  }
+  return [];
+}
+
+export async function addInquiry(r: Omit<Inquiry, "id" | "createdAt">): Promise<Inquiry> {
+  const list = await readInquiries();
+  const entry: Inquiry = { ...r, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+  list.unshift(entry);
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, INQUIRY_FILE), JSON.stringify(list), "utf8");
+  return entry;
+}
+
+export async function removeInquiry(id: string): Promise<void> {
+  const list = await readInquiries();
+  const next = list.filter((r) => r.id !== id);
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, INQUIRY_FILE), JSON.stringify(next), "utf8");
+}

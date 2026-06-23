@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { RegisterClinic } from "./RegisterClinic";
+import { InquiryButton } from "./InquiryButton";
 
 export function Header({ onReset }: { onReset?: () => void }) {
   const { data: session } = useSession();
@@ -12,7 +13,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-5">
         <Link
           href="/"
           // 이미 홈이면 라우팅 대신 맨 위로 스크롤 + 필터/선택 초기화
@@ -27,14 +28,15 @@ export function Header({ onReset }: { onReset?: () => void }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="DermaRadar" className="h-7 w-7" />
           <div className="leading-tight">
-            <p className="text-[24px] font-black tracking-tight text-foreground">
+            <p className="text-[20px] font-black tracking-tight text-foreground sm:text-[24px]">
               DermaRadar
             </p>
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <RegisterClinic />
+          <InquiryButton />
 
           {session?.user ? (
             <UserMenu
