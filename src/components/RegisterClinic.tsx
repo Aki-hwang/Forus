@@ -66,7 +66,7 @@ export function RegisterClinic() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="whitespace-nowrap rounded-lg bg-gradient-to-r from-primary to-accent px-3 py-2 text-[12px] font-bold text-white shadow-sm transition hover:opacity-90 sm:px-3.5 sm:text-[13px]"
+        className="whitespace-nowrap rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-[12px] font-bold text-primary-ink transition hover:bg-primary/15 sm:px-3.5 sm:text-[13px]"
       >
         <span className="sm:hidden">{t("registerShort")}</span>
         <span className="hidden sm:inline">{t("register")}</span>
