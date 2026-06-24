@@ -61,7 +61,7 @@ function Bar({ label, count, max }: { label: string; count: number; max: number 
   const pct = max ? Math.round((count / max) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-12 shrink-0 text-[12px] font-medium text-foreground">{label}</span>
+      <span className="w-24 shrink-0 truncate whitespace-nowrap text-[12px] font-medium text-foreground">{label}</span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-background">
         <div
           className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
