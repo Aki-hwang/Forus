@@ -19,7 +19,7 @@ export function AdCard({
   onExclude?: (ad: Ad) => void;
   onBlock?: (ad: Ad) => void;
 }) {
-  const { t, tArea, tTreatment } = useUiLang();
+  const { t, tArea, tTreatment, tClinic } = useUiLang();
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
 
@@ -59,7 +59,7 @@ export function AdCard({
             palette={ad.palette}
             headline={ad.headline}
             sub={ad.sub}
-            clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
+            clinicName={tClinic(ad.clinic, ad.igUsername)}
             treatmentLabel={tTreatment(ad.treatment)}
             lang={ad.lang}
             imageUrl={ad.imageUrl}
@@ -75,7 +75,7 @@ export function AdCard({
 
       <div className="space-y-1.5 p-3">
         <p className="truncate text-[13px] font-bold text-foreground">
-          {ad.clinic.replace(/\s*\(.*\)$/, "")}
+          {tClinic(ad.clinic, ad.igUsername)}
         </p>
         <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
           <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold leading-none">

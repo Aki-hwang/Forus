@@ -137,7 +137,7 @@ export function TrendPanel({
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
 }) {
-  const { t: tt, tArea, tContentType, tTreatment, lang } = useUiLang();
+  const { t: tt, tArea, tContentType, tTreatment, tClinic, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const [kwOpen, setKwOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
@@ -150,7 +150,6 @@ export function TrendPanel({
     const day = String(d.getDate()).padStart(2, "0");
     return `${y}.${m}.${day} ${tt("collectedSuffix")}`;
   })();
-  const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
   const isLikelyClinic = (a: Ad) =>
     a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
@@ -258,7 +257,7 @@ export function TrendPanel({
           <Stat
             label={tt("statTop")}
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
-            hint={cleanClinic(topAd?.clinic)}
+            hint={tClinic(topAd?.clinic ?? "", topAd?.igUsername)}
             onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
           />
         </div>
@@ -337,7 +336,7 @@ export function TrendPanel({
                 : undefined;
               const rowClass =
                 "flex items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-background";
-              const name = c.clinic.replace(/\s*\(.*\)$/, "");
+              const name = tClinic(c.clinic, c.igUsername);
               const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
               const inner = (
                 <>
@@ -379,7 +378,7 @@ export function TrendPanel({
               <p className="py-3 text-[12px] text-muted">{tt("emptyPosts")}</p>
             ) : null}
             {topPosts.map((a, i) => {
-              const name = a.clinic.replace(/\s*\(.*\)$/, "");
+              const name = tClinic(a.clinic, a.igUsername);
               const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
               const reach = a.views ?? a.likes;
               return (

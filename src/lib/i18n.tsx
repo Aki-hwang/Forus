@@ -133,6 +133,7 @@ const LangCtx = createContext<{
   tArea: (a: string) => string;
   tContentType: (c: string) => string;
   tTreatment: (k: string) => string;
+  tClinic: (clinic: string, handle?: string) => string;
 }>({
   lang: "ko",
   setLang: () => {},
@@ -140,6 +141,7 @@ const LangCtx = createContext<{
   tArea: (a) => a,
   tContentType: (c) => c,
   tTreatment: (k) => k,
+  tClinic: (clinic) => clinic,
 });
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
@@ -166,8 +168,11 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   const tContentType = (c: string) => CONTENT_TYPE[c]?.[lang] ?? c;
   const TFIELD: Record<UiLang, "ko" | "jp" | "zh" | "en"> = { ko: "ko", ja: "jp", zh: "zh", en: "en" };
   const tTreatment = (k: string) => TREATMENT_LABEL[k as TreatmentKey]?.[TFIELD[lang]] ?? k;
+  // 비한국어 UI: 병원명(고유명사) 대신 인스타 핸들 표시
+  const tClinic = (clinic: string, handle?: string) =>
+    lang !== "ko" && handle ? handle : (clinic ?? "").replace(/\s*\(.*\)$/, "");
   return (
-    <LangCtx.Provider value={{ lang, setLang, t, tArea, tContentType, tTreatment }}>{children}</LangCtx.Provider>
+    <LangCtx.Provider value={{ lang, setLang, t, tArea, tContentType, tTreatment, tClinic }}>{children}</LangCtx.Provider>
   );
 }
 
