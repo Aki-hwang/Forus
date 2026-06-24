@@ -38,7 +38,9 @@ export function Header({ onReset }: { onReset?: () => void }) {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <LangSwitcher />
           <RegisterClinic />
-          <InquiryButton />
+          <div className="hidden sm:block">
+            <InquiryButton />
+          </div>
 
           {session?.user ? (
             <UserMenu
