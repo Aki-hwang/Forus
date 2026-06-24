@@ -18,7 +18,7 @@ type Source = "sample" | "apify";
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
-  const [sort, setSort] = useState<SortKey>("recent");
+  const [sort, setSort] = useState<SortKey>("views");
   const [kind, setKind] = useState<KindKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
   // 카드/게시물 상세 열기 + GA 클릭 이벤트(인기 클릭 추적)
