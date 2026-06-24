@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
@@ -191,7 +191,17 @@ export default function Home() {
   // 배지 상태: 실시간(apify) / 수집 진행중(collecting) / 폴백(미연결)
   const live = source === "apify" || organicAds.length > 0;
   const isCollecting = collecting && !live;
-  const { t } = useUiLang();
+  const { t, lang: uiLang } = useUiLang();
+  // 지구본(UI 언어) 변경 시 아래 콘텐츠 언어 필터도 동기화(이후 탭으로 수동 변경 가능)
+  const firstSync = useRef(true);
+  useEffect(() => {
+    if (firstSync.current) {
+      firstSync.current = false;
+      return;
+    }
+    const map = { ko: "KR", ja: "JP", zh: "CN", en: "EN" } as const;
+    setLang(map[uiLang]);
+  }, [uiLang]);
 
   return (
     <div className="min-h-full">
