@@ -2,6 +2,7 @@
 
 import { Ad, TREATMENT_LABEL } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
+import { useUiLang } from "@/lib/i18n";
 
 function fmt(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
@@ -18,6 +19,7 @@ export function AdCard({
   onExclude?: (ad: Ad) => void;
   onBlock?: (ad: Ad) => void;
 }) {
+  const { t, tArea } = useUiLang();
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
 
@@ -32,10 +34,10 @@ export function AdCard({
                   e.stopPropagation();
                   onExclude(ad);
                 }}
-                title="이 게시물만 이번 수집에서 제외 (다음 수집 때 다시 보임)"
+                title={t("excludeTip")}
                 className="inline-flex h-6 items-center rounded-full bg-black/60 px-2.5 text-[11px] font-bold leading-none text-white shadow transition hover:bg-black/80"
               >
-                제외
+                {t("exclude")}
               </button>
             ) : null}
             {onBlock ? (
@@ -44,10 +46,10 @@ export function AdCard({
                   e.stopPropagation();
                   onBlock(ad);
                 }}
-                title="이 계정 자체를 차단 (재수집해도 안 보임)"
+                title={t("blockTip")}
                 className="inline-flex h-6 items-center rounded-full bg-black/60 px-2.5 text-[11px] font-bold leading-none text-white shadow transition hover:bg-red-500"
               >
-                🚫 차단
+                {t("block")}
               </button>
             ) : null}
           </div>
@@ -65,7 +67,7 @@ export function AdCard({
           />
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/40 to-transparent opacity-0 transition group-hover:opacity-100">
             <span className="mb-4 rounded-full bg-white px-4 py-2 text-[12.5px] font-bold text-foreground shadow-lg">
-              상세 보기
+              {t("detailView")}
             </span>
           </div>
         </button>
@@ -77,14 +79,14 @@ export function AdCard({
         </p>
         <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
           <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold leading-none">
-            📍 {ad.area}
+            📍 {tArea(ad.area)}
           </span>
           {ad.featured ? (
             <span
               title={ad.note ? `등록 클리닉 · ${ad.note}` : "등록 클리닉"}
               className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-bold leading-none text-primary-ink"
             >
-              ⭐ 등록
+              {t("registered")}
             </span>
           ) : null}
           <span className="ml-auto flex items-center gap-2 whitespace-nowrap">
@@ -100,7 +102,7 @@ export function AdCard({
                 ) : ad.likes > 0 ? (
                   <span title="팔로워">👥 {fmt(ad.likes)}</span>
                 ) : null}
-                <span title="집행 일수">📅 {ad.activeDays ?? 0}일</span>
+                <span title="집행 일수">📅 {ad.activeDays ?? 0}{t("dayUnit")}</span>
               </>
             ) : (
               <>

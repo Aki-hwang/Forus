@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { Lang } from "@/lib/ads";
+import { useUiLang } from "@/lib/i18n";
 
 export function CreativeCard({
   palette,
@@ -26,6 +27,7 @@ export function CreativeCard({
   imageUrl?: string;
   kind?: "ad" | "organic";
 }) {
+  const { t } = useUiLang();
   const [imgOk, setImgOk] = useState(true);
   // 인스타/Meta CDN 이미지는 핫링크 차단되므로 서버 프록시 경유로 로드
   const proxied = imageUrl
@@ -98,7 +100,7 @@ export function CreativeCard({
           kind === "organic" ? "bg-accent/90 text-white" : "bg-white/85 text-foreground/70"
         }`}
       >
-        {kind === "organic" ? "무료" : "유료"}
+        {kind === "organic" ? t("free") : t("paid")}
       </span>
     </div>
   );

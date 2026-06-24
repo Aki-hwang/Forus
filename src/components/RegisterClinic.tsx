@@ -4,10 +4,12 @@
 // 제출 → POST /api/register-request → /data 에 저장(관리자가 ?key= 로 조회).
 
 import { useState } from "react";
+import { useUiLang } from "@/lib/i18n";
 
 const AREAS = ["강남", "명동", "홍대", "기타"];
 
 export function RegisterClinic() {
+  const { t, tArea } = useUiLang();
   const [open, setOpen] = useState(false);
   const [clinic, setClinic] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -35,7 +37,7 @@ export function RegisterClinic() {
 
   const submit = async () => {
     if (!clinic.trim() || !instagram.trim()) {
-      setErr("병원명과 인스타그램은 필수예요.");
+      setErr(t("errReqReg"));
       return;
     }
     setState("sending");
@@ -66,8 +68,8 @@ export function RegisterClinic() {
         onClick={() => setOpen(true)}
         className="whitespace-nowrap rounded-lg bg-gradient-to-r from-primary to-accent px-3 py-2 text-[12px] font-bold text-white shadow-sm transition hover:opacity-90 sm:px-3.5 sm:text-[13px]"
       >
-        <span className="sm:hidden">인스타 등록</span>
-        <span className="hidden sm:inline">병원 인스타그램 등록</span>
+        <span className="sm:hidden">{t("registerShort")}</span>
+        <span className="hidden sm:inline">{t("register")}</span>
       </button>
 
       {open ? (
@@ -81,9 +83,9 @@ export function RegisterClinic() {
           >
             <div className="mb-3 flex items-start justify-between gap-2">
               <div>
-                <p className="text-[16px] font-black text-foreground">병원 인스타그램 등록 요청</p>
+                <p className="text-[16px] font-black text-foreground">{t("regTitle")}</p>
                 <p className="mt-0.5 text-[12px] text-muted">
-                  등록되면 트렌드 대시보드에 우리 병원 게시물이 함께 수집돼요.
+                  {t("regSub")}
                 </p>
               </div>
               <button
@@ -98,43 +100,43 @@ export function RegisterClinic() {
             {state === "done" ? (
               <div className="py-8 text-center">
                 <p className="text-[32px]">✅</p>
-                <p className="mt-2 text-[15px] font-bold text-foreground">요청이 접수됐어요!</p>
+                <p className="mt-2 text-[15px] font-bold text-foreground">{t("regDoneTitle")}</p>
                 <p className="mt-1 text-[13px] text-muted">
-                  검토 후 다음 수집 때 반영해 드릴게요. 감사합니다.
+                  {t("regDoneDesc")}
                 </p>
                 <button
                   onClick={close}
                   className="mt-5 rounded-lg bg-foreground px-4 py-2 text-[13px] font-bold text-white transition hover:opacity-90"
                 >
-                  닫기
+                  {t("close")}
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 <div>
                   <label className="mb-1 block text-[12px] font-bold text-foreground">
-                    병원명 <span className="text-accent">*</span>
+                    {t("fName")} <span className="text-accent">*</span>
                   </label>
                   <input
                     value={clinic}
                     onChange={(e) => setClinic(e.target.value)}
-                    placeholder="예: 유앤아이의원"
+                    placeholder={t("fNamePh")}
                     className={inputCls}
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-[12px] font-bold text-foreground">
-                    인스타그램 핸들 / URL <span className="text-accent">*</span>
+                    {t("fIg")} <span className="text-accent">*</span>
                   </label>
                   <input
                     value={instagram}
                     onChange={(e) => setInstagram(e.target.value)}
-                    placeholder="@clinic_official 또는 https://instagram.com/..."
+                    placeholder={t("fIgPh")}
                     className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[12px] font-bold text-foreground">지역</label>
+                  <label className="mb-1 block text-[12px] font-bold text-foreground">{t("fArea")}</label>
                   <div className="flex flex-wrap gap-1.5">
                     {AREAS.map((a) => (
                       <button
@@ -147,14 +149,14 @@ export function RegisterClinic() {
                             : "border-border text-muted hover:text-foreground"
                         }`}
                       >
-                        {a}
+                        {tArea(a)}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
                   <label className="mb-1 block text-[12px] font-bold text-foreground">
-                    연락처 <span className="font-medium text-muted">(선택)</span>
+                    {t("fContact")} <span className="font-medium text-muted">{t("optional")}</span>
                   </label>
                   <input
                     value={contact}
@@ -165,13 +167,13 @@ export function RegisterClinic() {
                 </div>
                 <div>
                   <label className="mb-1 block text-[12px] font-bold text-foreground">
-                    한마디 <span className="font-medium text-muted">(선택)</span>
+                    {t("fOneLine")} <span className="font-medium text-muted">{t("optional")}</span>
                   </label>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     rows={3}
-                    placeholder="요청 사항이 있다면 적어주세요."
+                    placeholder={t("fOneLinePh")}
                     className={`${inputCls} resize-none`}
                   />
                 </div>
@@ -183,10 +185,10 @@ export function RegisterClinic() {
                   disabled={state === "sending"}
                   className="w-full rounded-lg bg-gradient-to-r from-primary to-accent py-2.5 text-[14px] font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-60"
                 >
-                  {state === "sending" ? "제출 중…" : "등록 요청 보내기"}
+                  {state === "sending" ? t("sending") : t("regSend")}
                 </button>
                 <p className="text-center text-[11px] text-muted">
-                  제출하신 정보는 등록 검토 용도로만 사용돼요.
+                  {t("regPrivacy")}
                 </p>
               </div>
             )}

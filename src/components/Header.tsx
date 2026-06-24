@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { RegisterClinic } from "./RegisterClinic";
 import { InquiryButton } from "./InquiryButton";
+import { LangSwitcher } from "./LangSwitcher";
 
 export function Header({ onReset }: { onReset?: () => void }) {
   const { data: session } = useSession();
@@ -35,6 +36,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <LangSwitcher />
           <RegisterClinic />
           <InquiryButton />
 

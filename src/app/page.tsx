@@ -8,6 +8,7 @@ import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
 import { AdminRequests } from "@/components/AdminRequests";
 import { AdminInquiries } from "@/components/AdminInquiries";
 import { AdminCollect } from "@/components/AdminCollect";
+import { useUiLang } from "@/lib/i18n";
 import { AdminGate } from "@/components/AdminGate";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
@@ -190,6 +191,7 @@ export default function Home() {
   // 배지 상태: 실시간(apify) / 수집 진행중(collecting) / 폴백(미연결)
   const live = source === "apify" || organicAds.length > 0;
   const isCollecting = collecting && !live;
+  const { t } = useUiLang();
 
   return (
     <div className="min-h-full">
@@ -200,10 +202,9 @@ export default function Home() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="pl-2 text-left">
             <h1 className="text-[19px] font-black leading-tight tracking-tight text-foreground sm:text-[25px]">
-              강남·명동·홍대 피부과 마케팅 트렌드를
+              {t("titlePre")}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                {" "}
-                한눈에
+                {t("titleHi")}
               </span>
             </h1>
             {manageKey ? (
@@ -241,12 +242,12 @@ export default function Home() {
 
           <div className="flex max-w-full overflow-x-auto rounded-xl border border-border bg-surface p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {([
-              ["전체", "전체"],
-              ["KR", "🇰🇷 한국어"],
-              ["JP", "🇯🇵 일본어"],
-              ["CN", "🇨🇳 중국어"],
-              ["EN", "🇬🇧 영어"],
-            ] as [Lang | "전체", string][]).map(([key, label]) => (
+              ["전체", "", "all"],
+              ["KR", "🇰🇷", "langKo"],
+              ["JP", "🇯🇵", "langJa"],
+              ["CN", "🇨🇳", "langZh"],
+              ["EN", "🇬🇧", "langEn"],
+            ] as [Lang | "전체", string, "all" | "langKo" | "langJa" | "langZh" | "langEn"][]).map(([key, flag, tk]) => (
               <button
                 key={key}
                 onClick={() => setLang(key)}
@@ -256,7 +257,8 @@ export default function Home() {
                     : "text-muted hover:text-foreground"
                 }`}
               >
-                {label}
+                {flag ? `${flag} ` : ""}
+                {t(tk)}
               </button>
             ))}
           </div>

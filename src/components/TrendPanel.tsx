@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Ad, Lang, TreatmentKey, TREATMENT_LABEL, TrendSummary } from "@/lib/ads";
 import { classifyTreatment } from "@/lib/treatments";
+import { useUiLang } from "@/lib/i18n";
 import { hasClinicSignal } from "@/lib/clinics";
 
 function fmt(n: number): string {
@@ -136,17 +137,18 @@ export function TrendPanel({
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
 }) {
+  const { t: tt, tArea, tContentType, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const [kwOpen, setKwOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const collectedLabel = (() => {
-    if (!collectedAt) return "강남·명동·홍대";
+    if (!collectedAt) return tt("hintRegions");
     const d = new Date(collectedAt);
-    if (Number.isNaN(d.getTime())) return "강남·명동·홍대";
+    if (Number.isNaN(d.getTime())) return tt("hintRegions");
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
     const day = String(d.getDate()).padStart(2, "0");
-    return `${y}.${m}.${day} 수집`;
+    return `${y}.${m}.${day} ${tt("collectedSuffix")}`;
   })();
   const cleanClinic = (s?: string) => (s ?? "").replace(/\s*\(.*\)$/, "");
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
@@ -251,10 +253,10 @@ export function TrendPanel({
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
         <div className="grid grid-cols-3 gap-3 md:col-span-4">
-          <Stat label="수집된 광고" value={`${trends.total}건`} hint={collectedLabel} />
-          <Stat label="🆕 신규 광고" value={`${newAds7}건`} hint="최근 7일 시작" />
+          <Stat label={tt("statCollected")} value={`${trends.total}${tt("unit")}`} hint={collectedLabel} />
+          <Stat label={tt("statNew")} value={`${newAds7}${tt("unit")}`} hint={tt("hintNew7")} />
           <Stat
-            label="🔥 최다 조회"
+            label={tt("statTop")}
             value={topAd?.views != null ? fmt(topAd.views) : "-"}
             hint={cleanClinic(topAd?.clinic)}
             onClick={topAd && onSelectAd ? () => onSelectAd(topAd) : undefined}
@@ -262,10 +264,10 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
-          <p className="mb-3 text-[13px] font-bold text-foreground">지역별 광고 분포</p>
+          <p className="mb-3 text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
           <div className="space-y-2.5">
             {trends.byArea.map((a) => (
-              <Bar key={a.area} label={a.area} count={a.count} max={maxArea} />
+              <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} />
             ))}
           </div>
         </div>
@@ -273,22 +275,25 @@ export function TrendPanel({
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
-              <p className="text-[13px] font-bold text-foreground">인기 키워드</p>
+              <p className="text-[13px] font-bold text-foreground">{tt("popKeywords")}</p>
               <button
                 onClick={() => setKwOpen(true)}
                 className="rounded-md px-1.5 py-0.5 text-[10px] font-bold text-primary-ink transition hover:bg-background"
               >
-                더보기
+                {tt("more")}
               </button>
             </div>
             <div className="inline-flex shrink-0 rounded-lg border border-border bg-background p-0.5">
-              {([
-                ["전체", "전체"],
-                ["KR", "한"],
-                ["JP", "일"],
-                ["CN", "중"],
-                ["EN", "영"],
-              ] as [Lang | "전체", string][]).map(([k, l]) => (
+              {(() => {
+                const sc = ({ ko: ["한", "일", "중", "영"], ja: ["韓", "日", "中", "英"], zh: ["韩", "日", "中", "英"], en: ["KO", "JA", "ZH", "EN"] } as Record<string, string[]>)[lang];
+                return [
+                  ["전체", tt("all")],
+                  ["KR", sc[0]],
+                  ["JP", sc[1]],
+                  ["CN", sc[2]],
+                  ["EN", sc[3]],
+                ] as [Lang | "전체", string][];
+              })().map(([k, l]) => (
                 <button
                   key={k}
                   onClick={() => setKwLang(k)}
@@ -313,7 +318,7 @@ export function TrendPanel({
               ))}
             </div>
           ) : (
-            <p className="text-[12px] text-muted">키워드 없음</p>
+            <p className="text-[12px] text-muted">{tt("noKeyword")}</p>
           )}
         </div>
       </section>
@@ -321,10 +326,10 @@ export function TrendPanel({
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 클리닉</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("topClinics")}</p>
           <div className="space-y-2.5">
             {ranked.length === 0 ? (
-              <p className="py-3 text-[12px] text-muted">이 기간에 집행된 광고가 없어요.</p>
+              <p className="py-3 text-[12px] text-muted">{tt("emptyPeriodAds")}</p>
             ) : null}
             {ranked.slice(0, 5).map((c, i) => {
               const href = c.igUsername
@@ -341,7 +346,7 @@ export function TrendPanel({
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
                     {shortName}
-                    <span className="ml-1 text-[11px] font-medium text-muted">· {c.area}</span>
+                    <span className="ml-1 text-[11px] font-medium text-muted">· {tArea(c.area)}</span>
                   </span>
                   <span className="shrink-0 text-[12px] font-bold text-primary-ink">
                     {c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
@@ -368,10 +373,10 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">조회수 TOP 게시물</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("topPosts")}</p>
           <div className="space-y-2.5">
             {topPosts.length === 0 ? (
-              <p className="py-3 text-[12px] text-muted">집행된 게시물이 없어요.</p>
+              <p className="py-3 text-[12px] text-muted">{tt("emptyPosts")}</p>
             ) : null}
             {topPosts.map((a, i) => {
               const name = a.clinic.replace(/\s*\(.*\)$/, "");
@@ -399,17 +404,17 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">인기 시술</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("popTreatments")}</p>
           <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
-              <p className="text-[12px] text-muted">분류된 시술이 없어요.</p>
+              <p className="text-[12px] text-muted">{tt("emptyTreatments")}</p>
             ) : null}
-            {topTreatments.map((t) => {
-              const pct = Math.max(8, Math.round((t.count / maxTreatment) * 100));
+            {topTreatments.map((tr) => {
+              const pct = Math.max(8, Math.round((tr.count / maxTreatment) * 100));
               return (
-                <div key={t.key} className="flex items-center gap-2 px-1.5">
+                <div key={tr.key} className="flex items-center gap-2 px-1.5">
                   <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
-                    {t.label}
+                    {tr.label}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
                     <div
@@ -418,7 +423,7 @@ export function TrendPanel({
                     />
                   </div>
                   <span className="w-7 shrink-0 text-right text-[12.5px] font-bold text-muted">
-                    {t.count}
+                    {tr.count}
                   </span>
                 </div>
               );
@@ -427,17 +432,17 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">콘텐츠 유형</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("contentTypes")}</p>
           <div className="space-y-2.5">
             {topStyles.length === 0 ? (
-              <p className="text-[12px] text-muted">분류된 콘텐츠가 없어요.</p>
+              <p className="text-[12px] text-muted">{tt("emptyContent")}</p>
             ) : null}
             {topStyles.map(([key, count]) => {
               const pct = Math.max(8, Math.round((count / maxStyle) * 100));
               return (
                 <div key={key} className="flex items-center gap-2 px-1.5">
                   <span className="w-20 shrink-0 truncate text-[12.5px] font-medium text-foreground">
-                    {key}
+                    {tContentType(key)}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
                     <div
@@ -466,8 +471,8 @@ export function TrendPanel({
           >
             <div className="mb-3 flex items-center justify-between">
               <p className="text-[15px] font-bold text-foreground">
-                인기 키워드 전체{" "}
-                <span className="text-[12px] font-medium text-muted">({kwCounts.length}개)</span>
+                {tt("kwModalTitle")}{" "}
+                <span className="text-[12px] font-medium text-muted">({kwCounts.length}{tt("countSuffix")})</span>
               </p>
               <button
                 onClick={() => setKwOpen(false)}
@@ -488,7 +493,7 @@ export function TrendPanel({
                 ))}
               </div>
             ) : (
-              <p className="text-[13px] text-muted">키워드가 없어요.</p>
+              <p className="text-[13px] text-muted">{tt("noKeyword")}</p>
             )}
           </div>
         </div>
