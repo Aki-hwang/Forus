@@ -86,14 +86,14 @@ export const TREATMENTS: TreatmentKey[] = [
   "스킨부스터",
 ];
 
-export const TREATMENT_LABEL: Record<TreatmentKey, { ko: string; jp: string }> = {
-  물광주사: { ko: "물광주사", jp: "水光注射" },
-  리프팅: { ko: "리프팅", jp: "リフティング" },
-  보톡스: { ko: "보톡스", jp: "ボトックス" },
-  필러: { ko: "필러", jp: "フィラー" },
-  미백토닝: { ko: "미백·토닝", jp: "美白・トーニング" },
-  모공여드름: { ko: "모공·여드름", jp: "毛穴・ニキビケア" },
-  스킨부스터: { ko: "스킨부스터", jp: "スキンブースター" },
+export const TREATMENT_LABEL: Record<TreatmentKey, { ko: string; jp: string; zh: string; en: string }> = {
+  물광주사: { ko: "물광주사", jp: "水光注射", zh: "水光针", en: "Water glow" },
+  리프팅: { ko: "리프팅", jp: "リフティング", zh: "提升", en: "Lifting" },
+  보톡스: { ko: "보톡스", jp: "ボトックス", zh: "肉毒", en: "Botox" },
+  필러: { ko: "필러", jp: "フィラー", zh: "填充", en: "Filler" },
+  미백토닝: { ko: "미백·토닝", jp: "美白・トーニング", zh: "美白·调理", en: "Brightening" },
+  모공여드름: { ko: "모공·여드름", jp: "毛穴・ニキビケア", zh: "毛孔·痘痘", en: "Pores·Acne" },
+  스킨부스터: { ko: "스킨부스터", jp: "スキンブースター", zh: "皮肤管理", en: "Skin booster" },
 };
 
 export const STYLE_LABEL: Record<StyleKey, string> = {

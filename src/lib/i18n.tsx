@@ -2,6 +2,7 @@
 
 // 사이트 UI 다국어(i18n). 콘텐츠(캡션 등)는 원문 유지, 인터페이스 문구만 번역.
 import { createContext, useContext, useEffect, useState } from "react";
+import { TREATMENT_LABEL, type TreatmentKey } from "@/lib/ads";
 
 export type UiLang = "ko" | "ja" | "zh" | "en";
 
@@ -131,12 +132,14 @@ const LangCtx = createContext<{
   t: (k: keyof typeof STRINGS, vars?: Record<string, string | number>) => string;
   tArea: (a: string) => string;
   tContentType: (c: string) => string;
+  tTreatment: (k: string) => string;
 }>({
   lang: "ko",
   setLang: () => {},
   t: (k) => String(k),
   tArea: (a) => a,
   tContentType: (c) => c,
+  tTreatment: (k) => k,
 });
 
 export function LangProvider({ children }: { children: React.ReactNode }) {
@@ -161,8 +164,10 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   };
   const tArea = (a: string) => AREA[a]?.[lang] ?? a;
   const tContentType = (c: string) => CONTENT_TYPE[c]?.[lang] ?? c;
+  const TFIELD: Record<UiLang, "ko" | "jp" | "zh" | "en"> = { ko: "ko", ja: "jp", zh: "zh", en: "en" };
+  const tTreatment = (k: string) => TREATMENT_LABEL[k as TreatmentKey]?.[TFIELD[lang]] ?? k;
   return (
-    <LangCtx.Provider value={{ lang, setLang, t, tArea, tContentType }}>{children}</LangCtx.Provider>
+    <LangCtx.Provider value={{ lang, setLang, t, tArea, tContentType, tTreatment }}>{children}</LangCtx.Provider>
   );
 }
 

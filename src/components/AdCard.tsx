@@ -1,6 +1,6 @@
 "use client";
 
-import { Ad, TREATMENT_LABEL } from "@/lib/ads";
+import { Ad } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
 import { useUiLang } from "@/lib/i18n";
 
@@ -19,7 +19,7 @@ export function AdCard({
   onExclude?: (ad: Ad) => void;
   onBlock?: (ad: Ad) => void;
 }) {
-  const { t, tArea } = useUiLang();
+  const { t, tArea, tTreatment } = useUiLang();
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
 
@@ -60,7 +60,7 @@ export function AdCard({
             headline={ad.headline}
             sub={ad.sub}
             clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
-            treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
+            treatmentLabel={tTreatment(ad.treatment)}
             lang={ad.lang}
             imageUrl={ad.imageUrl}
             kind={ad.kind}

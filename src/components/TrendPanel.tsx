@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ad, Lang, TreatmentKey, TREATMENT_LABEL, TrendSummary } from "@/lib/ads";
+import { Ad, Lang, TreatmentKey, TrendSummary } from "@/lib/ads";
 import { classifyTreatment } from "@/lib/treatments";
 import { useUiLang } from "@/lib/i18n";
 import { hasClinicSignal } from "@/lib/clinics";
@@ -137,7 +137,7 @@ export function TrendPanel({
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
 }) {
-  const { t: tt, tArea, tContentType, lang } = useUiLang();
+  const { t: tt, tArea, tContentType, tTreatment, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const [kwOpen, setKwOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
@@ -189,7 +189,7 @@ export function TrendPanel({
     return [...m.entries()]
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5)
-      .map(([key, count]) => ({ key, label: TREATMENT_LABEL[key].ko, count }));
+      .map(([key, count]) => ({ key, count }));
   }, [ads]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
   // 콘텐츠 유형 — 광고 스타일 분포
@@ -414,7 +414,7 @@ export function TrendPanel({
               return (
                 <div key={tr.key} className="flex items-center gap-2 px-1.5">
                   <span className="w-16 shrink-0 truncate text-[12.5px] font-medium text-foreground">
-                    {tr.label}
+                    {tTreatment(tr.key)}
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-background">
                     <div
