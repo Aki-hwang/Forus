@@ -3,11 +3,12 @@
 import { Area, AREAS } from "@/lib/ads";
 import { useUiLang } from "@/lib/i18n";
 
-export type SortKey = "views" | "followers" | "recent" | "activeDays";
+export type SortKey = "trending" | "views" | "followers" | "recent" | "activeDays";
 export type KindKey = "전체" | "ad" | "organic";
 
-type TKey = "all" | "paid" | "free" | "sortRecent" | "sortViews" | "sortFollowers";
+type TKey = "all" | "paid" | "free" | "sortTrending" | "sortRecent" | "sortViews" | "sortFollowers";
 const SORTS: [SortKey, TKey][] = [
+  ["trending", "sortTrending"],
   ["recent", "sortRecent"],
   ["views", "sortViews"],
   ["followers", "sortFollowers"],

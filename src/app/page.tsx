@@ -19,7 +19,7 @@ type Source = "sample" | "apify";
 export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
-  const [sort, setSort] = useState<SortKey>("views");
+  const [sort, setSort] = useState<SortKey>("trending");
   const [kind, setKind] = useState<KindKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
   // 카드/게시물 상세 열기 + GA 클릭 이벤트(인기 클릭 추적)
@@ -169,7 +169,21 @@ export default function Home() {
     // 조회수순 — 조회수 없으면(유료 광고) 팔로워 수를 대용으로 써서 오가닉과 섞이게 한다.
     const reach = (a: Ad) => a.views ?? a.likes ?? 0;
     const byViews = (a: Ad, b: Ad) => reach(b) - reach(a);
+    // 인기(trending): 최근 7일(달력일 기준) 게시물 우선 → 그 안/밖 각각 조회수순. 매일 자정 자동 재배치.
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const cutoff = todayStart.getTime() - 7 * 86_400_000;
+    const isRecent = (a: Ad) => {
+      const ts = new Date((a.date ?? "").replace(" ", "T")).getTime();
+      return !Number.isNaN(ts) && ts >= cutoff;
+    };
     const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
+      trending: (a, b) => {
+        const ra = isRecent(a);
+        const rb = isRecent(b);
+        if (ra !== rb) return ra ? -1 : 1;
+        return reach(b) - reach(a);
+      },
       views: byViews,
       followers: (a, b) => b.likes - a.likes,
       recent: (a, b) => b.date.localeCompare(a.date),

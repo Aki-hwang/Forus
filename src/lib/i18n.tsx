@@ -40,6 +40,7 @@ const STRINGS: Record<string, Str> = {
   all: S("전체", "すべて", "全部", "All"),
   paid: S("유료", "有料", "付费", "Paid"),
   free: S("무료", "無料", "免费", "Free"),
+  sortTrending: S("인기", "人気", "热门", "Trending"),
   sortRecent: S("최신순", "新着順", "最新", "Latest"),
   sortViews: S("조회수순", "再生数順", "播放量", "Views"),
   sortFollowers: S("팔로워순", "フォロワー順", "粉丝数", "Followers"),
