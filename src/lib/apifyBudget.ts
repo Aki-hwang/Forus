@@ -14,10 +14,11 @@
 //   APIFY_AD_COST_PER_1K  (선택) 광고 액터 1,000건당 단가($), 기본 0.75.
 //   APIFY_IG_COST_PER_1K  (선택) 인스타 액터 1,000건당 단가($), 기본 2.70.
 // 이상적 풀수집 목표치(예산이 넉넉하면 이 값까지 수집, 부족하면 비례 축소):
-//   APIFY_TARGET_QUERIES(70) APIFY_TARGET_PER_QUERY(40)            — 광고
-//   APIFY_TARGET_VIEW_PROFILES(20) APIFY_TARGET_VIEW_POSTS(5)      — 조회수 보강
-//   APIFY_TARGET_ORG_PROFILES(80) APIFY_TARGET_ORG_POSTS(6)        — 무료: 워치리스트
-//   APIFY_TARGET_ORG_TAGS(12) APIFY_TARGET_ORG_TAG_POSTS(20)       — 무료: 해시태그 발굴
+//   기본 목표치 예상비용 ≈ $6.36 (광고 $3.15 + 무료 $2.81 + 조회수 $0.41) → $7 예산 안.
+//   APIFY_TARGET_QUERIES(70) APIFY_TARGET_PER_QUERY(60)            — 광고
+//   APIFY_TARGET_VIEW_PROFILES(25) APIFY_TARGET_VIEW_POSTS(6)      — 조회수 보강
+//   APIFY_TARGET_ORG_PROFILES(80) APIFY_TARGET_ORG_POSTS(7)        — 무료: 워치리스트
+//   APIFY_TARGET_ORG_TAGS(16) APIFY_TARGET_ORG_TAG_POSTS(30)       — 무료: 해시태그 발굴(신규 병원)
 
 function envNum(key: string, def: number, min = 0): number {
   const v = Number(process.env[key]);
@@ -57,13 +58,13 @@ export function planCollection(): CollectionPlan {
   const igPer1k = envNum("APIFY_IG_COST_PER_1K", 2.7, 0);
 
   let adQ = envInt("APIFY_TARGET_QUERIES", 70, 1);
-  let adPQ = envInt("APIFY_TARGET_PER_QUERY", 40, 10);
-  let vP = envInt("APIFY_TARGET_VIEW_PROFILES", 20, 1);
-  let vPosts = envInt("APIFY_TARGET_VIEW_POSTS", 5, 3);
+  let adPQ = envInt("APIFY_TARGET_PER_QUERY", 60, 10);
+  let vP = envInt("APIFY_TARGET_VIEW_PROFILES", 25, 1);
+  let vPosts = envInt("APIFY_TARGET_VIEW_POSTS", 6, 3);
   let oPC = envInt("APIFY_TARGET_ORG_PROFILES", 80, 1);
-  let oPPP = envInt("APIFY_TARGET_ORG_POSTS", 6, 3);
-  let oHC = envInt("APIFY_TARGET_ORG_TAGS", 12, 1);
-  let oPPT = envInt("APIFY_TARGET_ORG_TAG_POSTS", 20, 3);
+  let oPPP = envInt("APIFY_TARGET_ORG_POSTS", 7, 3);
+  let oHC = envInt("APIFY_TARGET_ORG_TAGS", 16, 1);
+  let oPPT = envInt("APIFY_TARGET_ORG_TAG_POSTS", 30, 3);
 
   const cost = () => {
     const ads = (adQ * adPQ * adPer1k) / 1000;
