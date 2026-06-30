@@ -4,21 +4,24 @@
 // 결과 1건당 과금(pay-per-result)이라, 요청 건수 상한 = 비용 상한이다. 이 모듈은 "이상적 풀수집"
 // 목표치의 예상비용을 계산해, 예산(APIFY_BUDGET_USD)을 넘으면 수집량을 자동 축소해 맞춘다.
 //
-// 액터 단가(2026 기준, env 로 덮어쓰기 가능):
-//   curious_coder/facebook-ads-library-scraper  ≈ $0.75 / 1,000건  (광고)
-//   apify/instagram-scraper                      ≈ $2.70 / 1,000건  (무료 게시물·조회수)
-// 인스타가 광고보다 건당 3배 이상 비싸 IG(무료+조회수)부터 깎인다.
+// 액터 단가($/1,000건, env 로 덮어쓰기 가능) — 실측 청구액에 맞춰 보정한 값:
+//   curious_coder/facebook-ads-library-scraper  ≈ $0.35 / 1,000건  (광고)
+//   apify/instagram-scraper                      ≈ $1.27 / 1,000건  (무료 게시물·조회수)
+//   (1차 수집 실측: 구 추정 $6.36 → 실제 청구 ≈ $3. 단가를 ×0.47로 보정해 추정=실제에 근접시킴.
+//    실측이 또 어긋나면 APIFY_*_COST_PER_1K 로 재보정.) 인스타가 광고보다 비싸 IG부터 깎인다.
 //
 // 환경변수:
 //   APIFY_BUDGET_USD      (선택) 수집 1회 비용 상한($), 기본 7. 이 금액 안에서 수집량 자동 산정.
-//   APIFY_AD_COST_PER_1K  (선택) 광고 액터 1,000건당 단가($), 기본 0.75.
-//   APIFY_IG_COST_PER_1K  (선택) 인스타 액터 1,000건당 단가($), 기본 2.70.
+//   APIFY_AD_COST_PER_1K  (선택) 광고 액터 1,000건당 단가($), 기본 0.35.
+//   APIFY_IG_COST_PER_1K  (선택) 인스타 액터 1,000건당 단가($), 기본 1.27.
 // 이상적 풀수집 목표치(예산이 넉넉하면 이 값까지 수집, 부족하면 비례 축소):
-//   기본 목표치 예상비용 ≈ $6.36 (광고 $3.15 + 무료 $2.81 + 조회수 $0.41) → $7 예산 안.
-//   APIFY_TARGET_QUERIES(70) APIFY_TARGET_PER_QUERY(60)            — 광고
-//   APIFY_TARGET_VIEW_PROFILES(25) APIFY_TARGET_VIEW_POSTS(6)      — 조회수 보강
-//   APIFY_TARGET_ORG_PROFILES(80) APIFY_TARGET_ORG_POSTS(7)        — 무료: 워치리스트
-//   APIFY_TARGET_ORG_TAGS(16) APIFY_TARGET_ORG_TAG_POSTS(30)       — 무료: 해시태그 발굴(신규 병원)
+//   기본 목표치 예상비용 ≈ $6.04 (광고 $2.94 + 무료 $2.72 + 조회수 $0.38) → $7 예산 안.
+//   1차 수집(~$3) 대비 약 2배로 상향(실측 여유 반영). 광고 쿼리는 70개가 전부라 깊이(perQuery)로,
+//   해시태그는 17개가 전부라 태그당 건수로 키움.
+//   APIFY_TARGET_QUERIES(70) APIFY_TARGET_PER_QUERY(120)           — 광고
+//   APIFY_TARGET_VIEW_PROFILES(50) APIFY_TARGET_VIEW_POSTS(6)      — 조회수 보강
+//   APIFY_TARGET_ORG_PROFILES(80) APIFY_TARGET_ORG_POSTS(14)       — 무료: 워치리스트
+//   APIFY_TARGET_ORG_TAGS(17) APIFY_TARGET_ORG_TAG_POSTS(60)       — 무료: 해시태그 발굴(신규 병원)
 
 function envNum(key: string, def: number, min = 0): number {
   const v = Number(process.env[key]);
@@ -54,17 +57,17 @@ function round(n: number): number {
  */
 export function planCollection(): CollectionPlan {
   const budget = envNum("APIFY_BUDGET_USD", 7, 0.5);
-  const adPer1k = envNum("APIFY_AD_COST_PER_1K", 0.75, 0);
-  const igPer1k = envNum("APIFY_IG_COST_PER_1K", 2.7, 0);
+  const adPer1k = envNum("APIFY_AD_COST_PER_1K", 0.35, 0);
+  const igPer1k = envNum("APIFY_IG_COST_PER_1K", 1.27, 0);
 
   let adQ = envInt("APIFY_TARGET_QUERIES", 70, 1);
-  let adPQ = envInt("APIFY_TARGET_PER_QUERY", 60, 10);
-  let vP = envInt("APIFY_TARGET_VIEW_PROFILES", 25, 1);
+  let adPQ = envInt("APIFY_TARGET_PER_QUERY", 120, 10);
+  let vP = envInt("APIFY_TARGET_VIEW_PROFILES", 50, 1);
   let vPosts = envInt("APIFY_TARGET_VIEW_POSTS", 6, 3);
   let oPC = envInt("APIFY_TARGET_ORG_PROFILES", 80, 1);
-  let oPPP = envInt("APIFY_TARGET_ORG_POSTS", 7, 3);
-  let oHC = envInt("APIFY_TARGET_ORG_TAGS", 16, 1);
-  let oPPT = envInt("APIFY_TARGET_ORG_TAG_POSTS", 30, 3);
+  let oPPP = envInt("APIFY_TARGET_ORG_POSTS", 14, 3);
+  let oHC = envInt("APIFY_TARGET_ORG_TAGS", 17, 1);
+  let oPPT = envInt("APIFY_TARGET_ORG_TAG_POSTS", 60, 3);
 
   const cost = () => {
     const ads = (adQ * adPQ * adPer1k) / 1000;
