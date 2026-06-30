@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchAdsViaApify, enrichAdsWithViews } from "@/lib/apify";
 import { fetchOrganicViaApify } from "@/lib/organic";
+import { planCollection } from "@/lib/apifyBudget";
 import { writeSnapshot, mergeSnapshot, warmImageCache, readSnapshot } from "@/lib/snapshot";
 
 // 실제 수집(=Apify 과금)이 일어나는 유일한 엔드포인트. COLLECT_KEY 로 보호.
@@ -43,7 +44,19 @@ export async function GET(req: Request) {
   // 기본: 90일 누적 병합. ?merge=0 이면 기존 데이터 무시하고 덮어쓰기.
   const doMerge = url.searchParams.get("merge") !== "0";
 
-  const result: Record<string, unknown> = { startedAt: new Date().toISOString(), full, part: part ?? "both", enrich, merge: doMerge };
+  // 예산 플래너 — full 수집은 이 계획대로 돌아 1회 비용이 APIFY_BUDGET_USD($5 기본) 안에 묶인다.
+  // (요청 건수 = 과금 단위라, 건수 상한이 비용 상한. est 는 상한 추정으로 실제는 보통 더 적다.)
+  const plan = planCollection();
+  let estCostUsd = 0;
+
+  const result: Record<string, unknown> = {
+    startedAt: new Date().toISOString(),
+    full,
+    part: part ?? "both",
+    enrich,
+    merge: doMerge,
+    budgetUsd: plan.budgetUsd,
+  };
 
   // 시뮬레이션(무료): Apify 호출 없이 현재 스냅샷으로 저장·병합·이미지캐시 파이프라인만 검증
   if (url.searchParams.get("simulate") === "1") {
@@ -67,9 +80,10 @@ export async function GET(req: Request) {
 
   if (doAds) {
     try {
-      const ads = await fetchAdsViaApify(true, full ? { maxQueries: 70, perQuery: 40 } : {});
+      const ads = await fetchAdsViaApify(true, full ? plan.ad : {});
+      if (full) estCostUsd += plan.est.ads + (enrich ? plan.est.views : 0);
       if (ads && ads.length > 0) {
-        const finalAds = enrich ? await enrichAdsWithViews(ads) : ads;
+        const finalAds = enrich ? await enrichAdsWithViews(ads, full ? plan.views : {}) : ads;
         if (doMerge) {
           const m = await mergeSnapshot("ads", finalAds);
           result.ads = m.total;
@@ -90,10 +104,8 @@ export async function GET(req: Request) {
 
   if (doOrganic) {
     try {
-      const organic = await fetchOrganicViaApify(
-        true,
-        full ? { profileCap: 80, postsPerProfile: 6, hashtagCap: 12, postsPerTag: 20 } : {}
-      );
+      const organic = await fetchOrganicViaApify(true, full ? plan.organic : {});
+      if (full) estCostUsd += plan.est.organic;
       if (organic && organic.length > 0) {
         if (doMerge) {
           const m = await mergeSnapshot("organic", organic);
@@ -113,6 +125,8 @@ export async function GET(req: Request) {
     }
   }
 
+  // 이번 요청의 예상비용(건수 기준 상한). full 수집만 의미 있음(비full은 소량 빠른 테스트).
+  if (full) result.estCostUsd = Math.round(estCostUsd * 100) / 100;
   result.finishedAt = new Date().toISOString();
   return NextResponse.json(result);
 }

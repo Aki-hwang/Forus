@@ -483,7 +483,8 @@ let viewsCache: { at: number; map: Record<string, HandleStats> } | null = null;
  * 토큰 없거나 실패 시 빈 객체. TTL 캐시.
  */
 export async function fetchViewsForHandles(
-  handles: string[]
+  handles: string[],
+  opts: { profilesCap?: number; posts?: number } = {}
 ): Promise<Record<string, HandleStats>> {
   const token = process.env.APIFY_TOKEN?.trim();
   if (!token) return {};
@@ -497,8 +498,9 @@ export async function fetchViewsForHandles(
     if (uniq.every((h) => h in viewsCache!.map)) return viewsCache.map;
   }
 
-  const cap = Math.max(1, Number(process.env.APIFY_IG_PROFILES_CAP) || 20);
-  const postsPer = Math.max(3, Number(process.env.APIFY_IG_POSTS) || 5);
+  // 캡: 예산 플래너가 넘긴 값(opts) 우선 → env → 기본. 비용 상한과 직결되는 값.
+  const cap = Math.max(1, opts.profilesCap || Number(process.env.APIFY_IG_PROFILES_CAP) || 20);
+  const postsPer = Math.max(3, opts.posts || Number(process.env.APIFY_IG_POSTS) || 5);
   const targets = uniq.slice(0, cap);
 
   const controller = new AbortController();
@@ -553,11 +555,14 @@ export async function fetchViewsForHandles(
   }
 }
 
-/** 광고 목록에 IG 조회수/좋아요를 병합 */
-export async function enrichAdsWithViews(ads: Ad[]): Promise<Ad[]> {
+/** 광고 목록에 IG 조회수/좋아요를 병합 (opts 로 비용 캡 전달) */
+export async function enrichAdsWithViews(
+  ads: Ad[],
+  opts: { profilesCap?: number; posts?: number } = {}
+): Promise<Ad[]> {
   const handles = ads.map((a) => a.igUsername).filter((h): h is string => Boolean(h));
   if (handles.length === 0) return ads;
-  const stats = await fetchViewsForHandles(handles);
+  const stats = await fetchViewsForHandles(handles, opts);
   return ads.map((a) => {
     const s = a.igUsername ? stats[a.igUsername.toLowerCase()] : undefined;
     if (!s) return a;
