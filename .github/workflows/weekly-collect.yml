@@ -1,0 +1,57 @@
+name: weekly-collect
+
+# 매주 자동 수집 — 배포된 앱의 /api/collect 를 호출(광고 → 무료 순서).
+# 비용은 예산 노브(APIFY_BUDGET_USD, 기본 $7) 안으로 자동 조절됩니다.
+#
+# 필요 설정 (GitHub → Settings → Secrets and variables → Actions):
+#   - secret  COLLECT_KEY      : 배포 환경의 COLLECT_KEY 와 동일 값 (필수)
+#   - variable COLLECT_BASE_URL: 배포 주소 (선택, 기본 https://forus-advertising.up.railway.app)
+#
+# 수동 실행: Actions 탭 → weekly-collect → Run workflow
+
+on:
+  schedule:
+    # 06:00 KST 매주 월요일 = 21:00 UTC 일요일 (cron 은 UTC 기준)
+    - cron: "0 21 * * 0"
+  workflow_dispatch: {}
+
+# 동시 실행 방지 (스케줄과 수동이 겹쳐도 1개만)
+concurrency:
+  group: weekly-collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Trigger collection
+        env:
+          BASE_URL: ${{ vars.COLLECT_BASE_URL || 'https://forus-advertising.up.railway.app' }}
+          COLLECT_KEY: ${{ secrets.COLLECT_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COLLECT_KEY:-}" ]; then
+            echo "::error::COLLECT_KEY secret 이 설정돼 있지 않습니다. (Settings → Secrets → Actions)"
+            exit 1
+          fi
+
+          collect () {
+            part="$1"
+            echo "── ${part} 수집 시작 ──"
+            # 키는 URL 로 전달하되 로그엔 출력하지 않음(시크릿은 Actions 가 자동 마스킹).
+            code=$(curl -sS --max-time 480 -o "resp_${part}.json" -w '%{http_code}' \
+              "${BASE_URL}/api/collect?key=${COLLECT_KEY}&full=1&part=${part}") \
+              || { echo "::error::${part} 요청 실패(네트워크/타임아웃)"; return 1; }
+            echo "[${part}] HTTP ${code}"
+            cat "resp_${part}.json" 2>/dev/null || true
+            echo
+            if [ "${code}" != "200" ]; then
+              echo "::error::${part} 수집 실패 (HTTP ${code})"
+              return 1
+            fi
+          }
+
+          collect ads
+          collect organic
+          echo "✅ 주간 수집 완료"
