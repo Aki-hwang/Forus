@@ -55,7 +55,7 @@ export function AdminCollect({ adminKey }: { adminKey: string }) {
   const collect = async () => {
     if (
       !confirm(
-        "실제 수집은 Apify 크레딧을 사용합니다. (광고 → 무료 순서로 진행)\n계속할까요?"
+        "실제 수집은 Apify 크레딧을 사용합니다. (광고 → 무료 순서로 진행)\n수집 1회 비용은 예산 한도(APIFY_BUDGET_USD·기본 $7) 안으로 자동 조절됩니다.\n계속할까요?"
       )
     )
       return;
@@ -65,7 +65,13 @@ export function AdminCollect({ adminKey }: { adminKey: string }) {
       const a = await fetch(`/api/collect?key=${k}&full=1&part=ads`).then((x) => x.json());
       setLog(`광고: ${JSON.stringify(a)}\n② 무료 게시물 수집 중…`);
       const o = await fetch(`/api/collect?key=${k}&full=1&part=organic`).then((x) => x.json());
-      setLog(`완료 ✅\n광고: ${JSON.stringify(a)}\n무료: ${JSON.stringify(o)}`);
+      // 두 요청의 예상비용 합계 vs 예산 — 한눈에 보이게 상단에 요약
+      const est = (Number(a?.estCostUsd) || 0) + (Number(o?.estCostUsd) || 0);
+      const budget = Number(o?.budgetUsd ?? a?.budgetUsd);
+      const cost = `💰 이번 수집 예상비용 ≈ $${est.toFixed(2)}${
+        Number.isFinite(budget) ? ` / 예산 $${budget.toFixed(2)}` : ""
+      } (상한 추정·실제는 보통 더 적음)`;
+      setLog(`완료 ✅\n${cost}\n광고: ${JSON.stringify(a)}\n무료: ${JSON.stringify(o)}`);
       loadStatus();
     } catch (e) {
       setLog("수집 실패: " + String(e));
