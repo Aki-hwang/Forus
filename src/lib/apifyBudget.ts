@@ -11,12 +11,13 @@
 //    실측이 또 어긋나면 APIFY_*_COST_PER_1K 로 재보정.) 인스타가 광고보다 비싸 IG부터 깎인다.
 //
 // 환경변수:
-//   APIFY_BUDGET_USD      (선택) 수집 1회 비용 상한($), 기본 7. 이 금액 안에서 수집량 자동 산정.
+//   APIFY_BUDGET_USD      (선택) 수집 1회 비용 상한($), 기본 3. 이 금액 안에서 수집량 자동 산정.
+//     운영: 월·금 주2회 자동수집(GitHub Actions) × ~$3 ≈ 월 $26 ($29 플랜 안). 깊게보다 자주.
 //   APIFY_AD_COST_PER_1K  (선택) 광고 액터 1,000건당 단가($), 기본 0.35.
 //   APIFY_IG_COST_PER_1K  (선택) 인스타 액터 1,000건당 단가($), 기본 1.27.
-// 이상적 풀수집 목표치(예산이 넉넉하면 이 값까지 수집, 부족하면 비례 축소):
-//   기본 목표치 예상비용 ≈ $6.04 (광고 $2.94 + 무료 $2.72 + 조회수 $0.38) → $7 예산 안.
-//   1차 수집(~$3) 대비 약 2배로 상향(실측 여유 반영). 광고 쿼리는 70개가 전부라 깊이(perQuery)로,
+// 이상적 풀수집 목표치(예산이 넉넉하면 이 값까지, 부족하면 비례 축소):
+//   목표치 자체 예상비용은 ≈ $6.04지만, 기본 예산 $3 이라 플래너가 절반 수준으로 자동 축소해 수집.
+//   (예산을 올리면 이 목표치까지 더 깊게 수집.) 광고 쿼리는 70개가 전부라 깊이(perQuery)로,
 //   해시태그는 17개가 전부라 태그당 건수로 키움.
 //   APIFY_TARGET_QUERIES(70) APIFY_TARGET_PER_QUERY(120)           — 광고
 //   APIFY_TARGET_VIEW_PROFILES(50) APIFY_TARGET_VIEW_POSTS(6)      — 조회수 보강
@@ -56,7 +57,7 @@ function round(n: number): number {
  *   (깊이부터 줄여 검색 "다양성"=커버리지를 최대한 보존 — JP/권역 누락 방지)
  */
 export function planCollection(): CollectionPlan {
-  const budget = envNum("APIFY_BUDGET_USD", 7, 0.5);
+  const budget = envNum("APIFY_BUDGET_USD", 3, 0.5);
   const adPer1k = envNum("APIFY_AD_COST_PER_1K", 0.35, 0);
   const igPer1k = envNum("APIFY_IG_COST_PER_1K", 1.27, 0);
 
