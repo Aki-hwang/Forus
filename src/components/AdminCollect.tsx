@@ -55,7 +55,7 @@ export function AdminCollect({ adminKey }: { adminKey: string }) {
   const collect = async () => {
     if (
       !confirm(
-        "실제 수집은 Apify 크레딧을 사용합니다. (광고 → 무료 순서로 진행)\n수집 1회 비용은 예산 한도(APIFY_BUDGET_USD·기본 $7) 안으로 자동 조절됩니다.\n계속할까요?"
+        "실제 수집은 Apify 크레딧을 사용합니다. (광고 → 무료 순서로 진행)\n수집 1회 비용은 예산 한도(APIFY_BUDGET_USD·기본 $3) 안으로 자동 조절됩니다.\n계속할까요?"
       )
     )
       return;

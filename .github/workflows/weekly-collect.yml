@@ -1,7 +1,7 @@
 name: weekly-collect
 
-# 매주 자동 수집 — 배포된 앱의 /api/collect 를 호출(광고 → 무료 순서).
-# 비용은 예산 노브(APIFY_BUDGET_USD, 기본 $7) 안으로 자동 조절됩니다.
+# 자동 수집(월·금 주2회) — 배포된 앱의 /api/collect 를 호출(광고 → 무료 순서).
+# 비용은 예산 노브(APIFY_BUDGET_USD, 기본 $3) 안으로 자동 조절됩니다. 주2회 × ~$3 ≈ 월 $26.
 #
 # 필요 설정 (GitHub → Settings → Secrets and variables → Actions):
 #   - secret  COLLECT_KEY      : 배포 환경의 COLLECT_KEY 와 동일 값 (필수)
@@ -11,8 +11,9 @@ name: weekly-collect
 
 on:
   schedule:
-    # 06:00 KST 매주 월요일 = 21:00 UTC 일요일 (cron 은 UTC 기준)
-    - cron: "0 21 * * 0"
+    # 06:00 KST = 21:00 UTC 전날 (cron 은 UTC 기준). 월·금 주2회.
+    - cron: "0 21 * * 0" # 일 21:00 UTC = 월 06:00 KST
+    - cron: "0 21 * * 4" # 목 21:00 UTC = 금 06:00 KST
   workflow_dispatch: {}
 
 # 동시 실행 방지 (스케줄과 수동이 겹쳐도 1개만)
