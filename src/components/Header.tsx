@@ -36,6 +36,12 @@ export function Header({ onReset }: { onReset?: () => void }) {
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <Link
+            href="/jp"
+            className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
+          >
+            🇯🇵 旅行者ガイド
+          </Link>
           <LangSwitcher />
           <RegisterClinic />
           <div className="hidden sm:block">

@@ -67,6 +67,8 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "닥터스피부과 신사점", handle: "doctors_jp", areas: ["강남"], followers: "", note: "신사역/가로수길, 일본어 계정" },
   { name: "밴스클리닉 신사점", handle: "vands_sinsa.jp", areas: ["강남"], followers: "", note: "신사역, 일본어 계정" },
   { name: "VS라인클리닉 압구정", handle: "vslineclinic", areas: ["강남"], followers: "", note: "압구정, 일본어 단서" },
+  // 김포 권역 (3개 지역 외 — areas 빈 배열, 워치리스트 수집 대상)
+  { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정" },
 ];
 
 const BY_HANDLE = new Map(KNOWN_CLINICS.map((c) => [c.handle.toLowerCase(), c]));
