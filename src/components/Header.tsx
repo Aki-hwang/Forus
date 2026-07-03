@@ -7,10 +7,14 @@ import { useSession, signOut } from "next-auth/react";
 import { RegisterClinic } from "./RegisterClinic";
 import { InquiryButton } from "./InquiryButton";
 import { LangSwitcher } from "./LangSwitcher";
+import { useUiLang } from "@/lib/i18n";
 
 export function Header({ onReset }: { onReset?: () => void }) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const { lang, t } = useUiLang();
+  // 소비자 가이드: UI 언어에 맞는 버전으로 연결 (한국어 → /ko, 그 외 → /jp)
+  const guideHref = lang === "ko" ? "/ko" : "/jp";
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
@@ -37,16 +41,10 @@ export function Header({ onReset }: { onReset?: () => void }) {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Link
-            href="/ko"
+            href={guideHref}
             className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
           >
-            시술 가이드
-          </Link>
-          <Link
-            href="/jp"
-            className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
-          >
-            🇯🇵 旅行者ガイド
+            {t("consumerGuide")}
           </Link>
           <LangSwitcher />
           <RegisterClinic />
