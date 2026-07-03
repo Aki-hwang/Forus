@@ -234,7 +234,7 @@ export async function ConsumerTreatmentPage({
   const posts = filterPosts(data.posts, g.key);
   const promos = filterPosts(data.ads, g.key).slice(0, 4);
   const stats = statsFor(data, g.key);
-  const clinics = (await clinicsFor(data.posts, undefined, g.key)).slice(0, 12);
+  const clinics = (await clinicsFor(locale, data.posts, undefined, g.key)).slice(0, 12);
 
   return (
     <div className="space-y-10">
@@ -376,7 +376,7 @@ export async function ConsumerTreatmentAreaPage({
   const posts = filterPosts(data.posts, g.key, a.key);
   const promos = filterPosts(data.ads, g.key, a.key).slice(0, 4);
   const stats = statsFor(data, g.key, a.key);
-  const clinics = (await clinicsFor(data.posts, a.key, g.key)).slice(0, 12);
+  const clinics = (await clinicsFor(locale, data.posts, a.key, g.key)).slice(0, 12);
 
   return (
     <div className="space-y-10">

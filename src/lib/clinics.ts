@@ -71,6 +71,28 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정" },
 ];
 
+// ---------- 한국인 타깃 클리닉 (소비자 /ko 페이지 전용) ----------
+// 수집 워치리스트(KNOWN_CLINICS)와 분리 — 여기 추가해도 Apify 수집 대상·비용은 변하지 않는다.
+// 출처: 해시태그 발굴로 수집된 한국어 게시물 상위 계정 (2026-07-03 스냅샷, 병원 신호 확인분)
+export const KR_CONSUMER_CLINICS: KnownClinic[] = [
+  { name: "리나인의원", handle: "renine_clinic", areas: ["명동"], followers: "", note: "한국인 타깃" },
+  { name: "커브라인의원", handle: "curve.line_clinic", areas: ["명동"], followers: "", note: "한국인 타깃" },
+  { name: "오블리주의원 홍대", handle: "ohvelyjoo_hongdae", areas: ["홍대"], followers: "", note: "한국인 타깃 (한국어 계정)" },
+  { name: "닥터에버스의원 홍대점", handle: "dr.evers_hongdae_kr", areas: ["홍대"], followers: "", note: "한국인 타깃 (한국어 계정)" },
+  { name: "도브의원", handle: "doveclinic", areas: ["강남"], followers: "", note: "한국인 타깃" },
+  { name: "BLS클리닉 명동", handle: "md_blsclinic", areas: ["명동"], followers: "", note: "한국인 타깃 (한국어 계정), 리프팅 기기 다수" },
+  { name: "디온의원 홍대점", handle: "theon_hongdae", areas: ["홍대"], followers: "", note: "한국인 타깃" },
+  { name: "MJ올피부과 명동", handle: "mjall__dermatology", areas: ["명동"], followers: "", note: "한국인 타깃, 피부과 전문의" },
+  { name: "명동아이디의원", handle: "idclinic_md_kor", areas: ["명동"], followers: "", note: "한국인 타깃 (한국어 계정)" },
+  { name: "리앤스타의원 압구정", handle: "leenstar_apgujeong", areas: ["강남"], followers: "", note: "한국인 타깃" },
+  { name: "에이포의원 압구정", handle: "aforclinic.ko", areas: ["강남"], followers: "", note: "한국인 타깃" },
+  { name: "청담루비의원", handle: "rubyclinic_cheongdam", areas: ["강남"], followers: "", note: "한국인 타깃" },
+  { name: "UH CELL의원 강남점", handle: "uhcell_gangnam", areas: ["강남"], followers: "", note: "한국인 타깃 (한국어 계정)" },
+  { name: "타임리스피부과 마포본점", handle: "timeless_mapo", areas: ["홍대"], followers: "", note: "한국인 타깃, 마포/홍대 권역" },
+  { name: "파인드피부과 압구정", handle: "pind.derma", areas: ["강남"], followers: "", note: "한국인 타깃, 피부과 전문의" },
+  { name: "슬림영의원", handle: "slimyoung_clinic", areas: ["명동"], followers: "", note: "한국인 타깃" },
+];
+
 const BY_HANDLE = new Map(KNOWN_CLINICS.map((c) => [c.handle.toLowerCase(), c]));
 
 /** 인스타 핸들로 등록 클리닉 조회 (@/대소문자 무시) */

@@ -10,7 +10,7 @@
 //        정면 경쟁하지 않는 데이터 각도)
 
 import { Ad, Area, TreatmentKey, TREATMENTS } from "./ads";
-import { KNOWN_CLINICS, KnownClinic } from "./clinics";
+import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
 import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
 
 export type ConsumerLocale = "jp" | "ko";
@@ -580,13 +580,17 @@ function deriveBadges(c: { handle: string; note?: string }): ClinicBadge[] {
 }
 
 export async function clinicsFor(
+  locale: ConsumerLocale,
   posts: Ad[],
   area?: Area,
   treatment?: TreatmentKey
 ): Promise<ConsumerClinic[]> {
   const approved = await readApprovedClinics();
+  // ko 로케일은 한국인 타깃 명단을 앞에 합친다 (수집 워치리스트와 무관, 표시 전용)
+  const baseList: KnownClinic[] =
+    locale === "ko" ? [...KR_CONSUMER_CLINICS, ...KNOWN_CLINICS] : KNOWN_CLINICS;
   const all: { name: string; handle: string; areas: Area[]; note?: string }[] = [
-    ...KNOWN_CLINICS.map((c: KnownClinic) => ({
+    ...baseList.map((c: KnownClinic) => ({
       name: c.name,
       handle: c.handle,
       areas: c.areas,
