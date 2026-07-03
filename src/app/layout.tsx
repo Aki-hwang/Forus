@@ -20,6 +20,10 @@ const notoJP = Noto_Sans_JP({
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-N9L6K0TTJW";
 
+// 네이버 서치어드바이저 사이트 인증 코드 — Railway 환경변수에 넣으면 메타태그가 붙는다.
+// (searchadvisor.naver.com → 사이트 등록 → HTML 태그 방식의 content 값)
+const NAVER_VERIFICATION = process.env.NAVER_SITE_VERIFICATION?.trim();
+
 const SITE_TITLE = "DermaRadar — 피부과 광고 트렌드 레이더";
 const SITE_DESC =
   "강남·명동·홍대 피부과의 광고·인스타 마케팅 트렌드를 한눈에 확인하세요.";
@@ -53,6 +57,9 @@ export const metadata: Metadata = {
     title: "DermaRadar",
     statusBarStyle: "default",
   },
+  ...(NAVER_VERIFICATION
+    ? { verification: { other: { "naver-site-verification": NAVER_VERIFICATION } } }
+    : {}),
 };
 
 export const viewport: Viewport = {

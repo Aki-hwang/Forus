@@ -1,4 +1,4 @@
-// /jp/[treatment] — 시술 가이드 (본체: ConsumerTreatmentPage)
+// /ko/[treatment] — 시술 가이드 (본체: ConsumerTreatmentPage)
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 type Params = { treatment: string };
 
 export function generateStaticParams(): Params[] {
-  return TREATMENT_GUIDES.jp.map((g) => ({ treatment: g.slug }));
+  return TREATMENT_GUIDES.ko.map((g) => ({ treatment: g.slug }));
 }
 
 export async function generateMetadata({
@@ -22,13 +22,13 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { treatment } = await params;
-  const g = guideBySlug("jp", treatment);
-  return g ? treatmentMetadata("jp", g) : {};
+  const g = guideBySlug("ko", treatment);
+  return g ? treatmentMetadata("ko", g) : {};
 }
 
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { treatment } = await params;
-  const g = guideBySlug("jp", treatment);
+  const g = guideBySlug("ko", treatment);
   if (!g) notFound();
-  return <ConsumerTreatmentPage locale="jp" g={g} />;
+  return <ConsumerTreatmentPage locale="ko" g={g} />;
 }
