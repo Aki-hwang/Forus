@@ -428,7 +428,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
     brandTag: "피부과 시술 가이드",
     navTreatments: "시술로 찾기",
     navAreas: "지역으로 찾기",
-    navOwner: "병원 운영자용",
+    navOwner: "마케팅 대시보드",
     heroPre: "요즘 피부과가 미는 시술을, ",
     heroHi: "데이터로",
     heroDesc: "강남·명동·홍대 피부과의 실제 인스타 게시물과 광고를 매주 수집합니다. 후기 몇 개가 아니라 ",
