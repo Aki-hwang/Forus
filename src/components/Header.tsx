@@ -37,6 +37,12 @@ export function Header({ onReset }: { onReset?: () => void }) {
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Link
+            href="/ko"
+            className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
+          >
+            시술 가이드
+          </Link>
+          <Link
             href="/jp"
             className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
           >

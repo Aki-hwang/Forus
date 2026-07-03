@@ -1,4 +1,4 @@
-// /jp/[treatment]/[area] — 시술×지역 가이드 (본체: ConsumerTreatmentAreaPage)
+// /ko/[treatment]/[area] — 시술×지역 가이드 (본체: ConsumerTreatmentAreaPage)
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
 type Params = { treatment: string; area: string };
 
 export function generateStaticParams(): Params[] {
-  return TREATMENT_GUIDES.jp.flatMap((g) =>
-    AREA_GUIDES.jp.map((a) => ({ treatment: g.slug, area: a.slug }))
+  return TREATMENT_GUIDES.ko.flatMap((g) =>
+    AREA_GUIDES.ko.map((a) => ({ treatment: g.slug, area: a.slug }))
   );
 }
 
@@ -29,15 +29,15 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { treatment, area } = await params;
-  const g = guideBySlug("jp", treatment);
-  const a = areaBySlug("jp", area);
-  return g && a ? comboMetadata("jp", g, a) : {};
+  const g = guideBySlug("ko", treatment);
+  const a = areaBySlug("ko", area);
+  return g && a ? comboMetadata("ko", g, a) : {};
 }
 
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { treatment, area } = await params;
-  const g = guideBySlug("jp", treatment);
-  const a = areaBySlug("jp", area);
+  const g = guideBySlug("ko", treatment);
+  const a = areaBySlug("ko", area);
   if (!g || !a) notFound();
-  return <ConsumerTreatmentAreaPage locale="jp" g={g} a={a} />;
+  return <ConsumerTreatmentAreaPage locale="ko" g={g} a={a} />;
 }

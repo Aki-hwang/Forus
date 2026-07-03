@@ -2,7 +2,7 @@
 
 import { FaqItem } from "@/lib/consumer";
 
-export function JpFaq({ items, title = "よくある質問" }: { items: FaqItem[]; title?: string }) {
+export function ConsumerFaq({ items, title }: { items: FaqItem[]; title: string }) {
   return (
     <section className="space-y-3">
       <h2 className="text-[18px] font-black text-foreground">{title}</h2>
