@@ -8,7 +8,8 @@ export function JpHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-5">
-        <Link href="/jp" className="flex items-center gap-2.5">
+        {/* 로고 → 서비스 메인(대시보드). 가이드 홈은 우측 내비로 이동 */}
+        <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="DermaRadar" className="h-7 w-7" />
           <div className="leading-tight">
