@@ -14,7 +14,7 @@
 
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { searchQueries, areaFromText, SearchQuery } from "./adQueries";
-import { findClinicByHandle, isExcludedAd, isMedicalCategory } from "./clinics";
+import { findClinicByHandle, classifyAdvertiser, isMedicalCategory } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 import { classifyTreatment, DEFAULT_TREATMENT } from "./treatments";
 
@@ -227,8 +227,9 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
   const igUsername = pageInfo?.ig_username?.trim() || undefined;
   const pageCategory = pageInfo?.page_category?.trim() || s.page_categories?.[0] || undefined;
 
-  // 클리닉 아닌 광고(제품/인플루언서/대행사/여행 등) 제외 (허용 클리닉/의료 카테고리는 항상 유지)
-  if (isExcludedAd(igUsername, fb.page_name, blob, pageCategory)) return null;
+  // 광고주 분류: 병원/인플루언서는 라벨로 보존, 잡광고(제품/대행사/여행)는 제외
+  const advertiserType = classifyAdvertiser(igUsername, fb.page_name, blob, pageCategory);
+  if (advertiserType === null) return null;
 
   const known = findClinicByHandle(igUsername);
 
@@ -278,6 +279,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     area,
     treatment,
     treatmentSure: Boolean(confident),
+    advertiserType,
     headline,
     sub,
     caption: (body || title).slice(0, 200),
@@ -466,11 +468,15 @@ export async function fetchAdsViaApify(
  */
 async function applyMedicalGate(ads: Ad[]): Promise<Ad[]> {
   if (!hasClinicVerifyKeys()) return ads;
-  // 등록 클리닉·Meta 의료 카테고리는 검증 없이 통과 → 애매한 광고주만 지도 검증(속도↑·호출↓)
-  const ambiguous = ads.filter((a) => !a.featured && !isMedicalCategory(a.pageCategory));
+  // 등록 클리닉·Meta 의료 카테고리·인플루언서(당연히 병원 아님)는 검증 없이 통과
+  // → 애매한 clinic 광고주만 지도 검증(속도↑·호출↓)
+  const ambiguous = ads.filter(
+    (a) => a.advertiserType !== "influencer" && !a.featured && !isMedicalCategory(a.pageCategory)
+  );
   const names = Array.from(new Set(ambiguous.map((a) => a.clinic)));
   const verdicts = await verifyAdvertisers(names);
   const kept = ads.filter((a) => {
+    if (a.advertiserType === "influencer") return true; // 인플루언서 라벨은 게이트 비대상
     if (a.featured) return true; // 등록 클리닉(allowlist)
     if (isMedicalCategory(a.pageCategory)) return true; // Meta 의료 카테고리
     return Boolean(verdicts.get(a.clinic)?.medical); // 지도에서 병원/의원 확인

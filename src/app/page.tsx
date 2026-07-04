@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
-import { FilterBar, type SortKey, type KindKey } from "@/components/FilterBar";
+import { FilterBar, type SortKey, type AdvKey } from "@/components/FilterBar";
 import { AdminRequests } from "@/components/AdminRequests";
 import { AdminInquiries } from "@/components/AdminInquiries";
 import { AdminCollect } from "@/components/AdminCollect";
@@ -20,7 +20,7 @@ export default function Home() {
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
   const [sort, setSort] = useState<SortKey>("trending");
-  const [kind, setKind] = useState<KindKey>("전체");
+  const [adv, setAdv] = useState<AdvKey>("전체");
   const [selected, setSelected] = useState<Ad | null>(null);
   // 카드/게시물 상세 열기 + GA 클릭 이벤트(인기 클릭 추적)
   const openAd = (ad: Ad) => {
@@ -140,10 +140,10 @@ export default function Home() {
   // 첫 로드: 광고+무료 둘 다 도착 전엔 로딩 표시(숫자 점프 방지)
   const loading = collecting || !organicDone;
 
-  // 키워드 언어탭용 — kind(유료/무료)만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
-  const kindPool = useMemo(
-    () => merged.filter((a) => kind === "전체" || (a.kind ?? "ad") === kind),
-    [merged, kind]
+  // 키워드 언어탭용 — 광고주 유형만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
+  const advPool = useMemo(
+    () => merged.filter((a) => adv === "전체" || (a.advertiserType ?? "clinic") === adv),
+    [merged, adv]
   );
 
   const base = useMemo(
@@ -151,9 +151,9 @@ export default function Home() {
       merged.filter(
         (a) =>
           (lang === "전체" || a.lang === lang) &&
-          (kind === "전체" || (a.kind ?? "ad") === kind)
+          (adv === "전체" || (a.advertiserType ?? "clinic") === adv)
       ),
-    [merged, lang, kind]
+    [merged, lang, adv]
   );
 
   const filtered = useMemo(() => {
@@ -199,7 +199,7 @@ export default function Home() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE);
-  }, [area, lang, kind, sort]);
+  }, [area, lang, adv, sort]);
 
   // 목록 끝 센티널이 화면에 들어오면 다음 페이지 렌더 (무한 스크롤)
   useEffect(() => {
@@ -301,7 +301,7 @@ export default function Home() {
           <TrendPanel
             trends={trends}
             ads={base}
-            keywordAds={kindPool}
+            keywordAds={advPool}
             onSelectAd={openAd}
             collectedAt={collectedAt}
           />
@@ -311,8 +311,8 @@ export default function Home() {
             onArea={setArea}
             sort={sort}
             onSort={setSort}
-            kind={kind}
-            onKind={setKind}
+            adv={adv}
+            onAdv={setAdv}
             resultCount={filtered.length}
           />
 

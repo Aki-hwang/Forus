@@ -23,6 +23,8 @@ export interface Ad {
   /** 시술 분류가 키워드로 확신된 것인지(false=기본값 폴백). 수집 시 원문 전체(캡션+태그)로
    *  판정해 저장. 없으면(레거시) 렌더 때 캡션+원본 태그로 재판정 (treatments.confidentTreatment). */
   treatmentSure?: boolean;
+  /** 광고주 유형 — clinic(병원) | influencer(협찬·크리에이터). 없으면(레거시) clinic 취급. */
+  advertiserType?: "clinic" | "influencer";
   /** 크리에이티브에 들어가는 메인 카피 (타겟 언어) */
   headline: string;
   sub: string;
