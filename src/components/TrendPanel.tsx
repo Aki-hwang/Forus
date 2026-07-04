@@ -154,14 +154,24 @@ export function TrendPanel({
   const isLikelyClinic = (a: Ad) =>
     a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
   const [now] = useState(() => Date.now());
-  const clinicAds = useMemo(() => ads.filter(isLikelyClinic), [ads]);
-  // 최다 조회 광고 — 클리닉만 기준 (클릭 시 모달)
+  // 최근 7일(게시물 날짜/광고 시작일 기준) — 90일 누적 스냅샷 전체로 랭킹하면
+  // 항상 같은 클리닉·게시물이 고정되므로, TOP 지표는 최신 7일만 본다.
+  const within7d = (a: Ad) => {
+    const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
+    return !Number.isNaN(t) && now - t <= 7 * 86_400_000;
+  };
+  const clinicAds = useMemo(
+    () => ads.filter((a) => isLikelyClinic(a) && within7d(a)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ads, now]
+  );
+  // 최다 조회 광고 — 최근 7일 클리닉만 기준 (클릭 시 모달)
   const topAd = useMemo(() => {
     const v = clinicAds.filter((a) => typeof a.views === "number");
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
-  // 조회수 TOP 게시물 — 개별 게시물(클릭 시 모달)
+  // 조회수 TOP 게시물 — 최근 7일 개별 게시물(클릭 시 모달)
   const topPosts = useMemo(
     () =>
       [...clinicAds]
@@ -224,8 +234,8 @@ export function TrendPanel({
   }, [keywordAds, kwLang]);
   const topKeywords = useMemo(() => kwCounts.slice(0, 20).map(([tag]) => tag), [kwCounts]);
 
-  // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
-  const period = 30;
+  // TOP 클리닉: 최근 7일(집행 시작일 기준) → 광고주 단위 조회수(없으면 팔로워) 랭킹
+  const period = 7;
   const ranked = useMemo(() => {
     const inRange = ads.filter((a) => {
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
