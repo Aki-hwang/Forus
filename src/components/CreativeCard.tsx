@@ -49,6 +49,7 @@ export function CreativeCard({
             src={proxied}
             alt={clinicName}
             loading="lazy"
+            decoding="async"
             onError={() => setImgOk(false)}
             className="absolute inset-0 h-full w-full object-cover"
           />

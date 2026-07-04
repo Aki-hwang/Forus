@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ad, Area, Lang, summarizeTrends } from "@/lib/ads";
 import { Header } from "@/components/Header";
 import { TrendPanel } from "@/components/TrendPanel";
@@ -39,8 +39,11 @@ export default function Home() {
   const [organicAds, setOrganicAds] = useState<Ad[]>([]);
   // 관리 모드: URL ?key= 가 있으면 카드에 "제외" 버튼 표시 (저장본 편집용)
   const [manageKey, setManageKey] = useState<string | null>(null);
-  // 2단계: 조회수 보강 상태 (loading → 진행중, done → 반영됨)
-  const [viewState, setViewState] = useState<"idle" | "loading" | "done">("idle");
+  // 카드 점진 렌더 — 900+ 카드를 한 번에 그리면 DOM·이미지 요청 폭주로 로딩이 느려진다.
+  // 처음 PAGE_SIZE 개만 그리고, 목록 끝 센티널이 보이면 자동으로 더 그린다.
+  const PAGE_SIZE = 60;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const moreRef = useRef<HTMLDivElement | null>(null);
   // 1단계 수집 진행중 여부 (true → /api/ads 응답 대기, 최대 2~4분). 끝나면 source 로 판별.
   const [collecting, setCollecting] = useState(true);
   const [organicDone, setOrganicDone] = useState(false);
@@ -48,7 +51,9 @@ export default function Home() {
 
   useEffect(() => {
     let alive = true;
-    // 1단계: 빠르게 광고 목록 (팔로워순)
+    // 광고 목록 — 조회수는 수집 때 이미 스냅샷에 반영돼 있어 한 번이면 충분하다.
+    // (과거 2단계 /api/ads/views 재요청은 같은 전체 목록을 통째로 다시 받는 중복 +
+    //  차단목록 미적용 응답으로 덮어쓰는 문제가 있어 제거)
     fetch("/api/ads")
       .then((r) => r.json())
       .then((data: { source?: Source; ads?: Ad[]; collectedAt?: string }) => {
@@ -58,19 +63,6 @@ export default function Home() {
         setAllAds(data.ads);
         setSource(data.source ?? "sample");
         if (data.collectedAt) setCollectedAt(data.collectedAt);
-
-        // 2단계: 조회수 보강 (느림 → 끝나면 재정렬)
-        if (data.source === "apify") {
-          setViewState("loading");
-          fetch("/api/ads/views")
-            .then((r) => r.json())
-            .then((v: { ads?: Ad[] }) => {
-              if (!alive || !v?.ads?.length) return;
-              setAllAds(v.ads);
-              setViewState("done");
-            })
-            .catch(() => alive && setViewState("idle"));
-        }
       })
       .catch(() => {
         /* 네트워크 실패 시 목업 유지 */
@@ -203,6 +195,28 @@ export default function Home() {
   // 아래 지역 탭은 갤러리 그리드에만 적용됨.
   const trends = useMemo(() => summarizeTrends(base), [base]);
 
+  // 필터·정렬이 바뀌면 첫 페이지부터 다시 (스크롤 위치 기준 재계산 방지)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setVisibleCount(PAGE_SIZE);
+  }, [area, lang, kind, sort]);
+
+  // 목록 끝 센티널이 화면에 들어오면 다음 페이지 렌더 (무한 스크롤)
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((c) => (c < filtered.length ? c + PAGE_SIZE : c));
+        }
+      },
+      { rootMargin: "600px" } // 끝에 닿기 전에 미리 로드
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [filtered.length, visibleCount]);
+
   // 로고 클릭 시 첫 화면 상태로 복귀 (맨 위 스크롤 + 필터/선택 초기화)
   const resetView = () => {
     // 로고 클릭 = 새로고침 (스냅샷 재요청, 필터 초기화)
@@ -246,17 +260,6 @@ export default function Home() {
                   ? "데이터 불러오는 중…"
                   : "샘플 데이터 (아직 수집 전)"}
               </span>
-              {viewState === "loading" ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-border/60 px-2.5 py-0.5 text-[11px] font-bold text-muted">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-muted/40 border-t-muted" />
-                  조회수 불러오는 중…
-                </span>
-              ) : null}
-              {viewState === "done" ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary-ink">
-                  ▶ 조회수 반영됨
-                </span>
-              ) : null}
             </div>
             ) : null}
           </div>
@@ -318,17 +321,24 @@ export default function Home() {
               조건에 맞는 광고가 없어요. 필터를 바꿔보세요.
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {filtered.map((ad) => (
-                <AdCard
-                  key={ad.id}
-                  ad={ad}
-                  onSelect={openAd}
-                  onExclude={manageKey ? excludeAd : undefined}
-                  onBlock={manageKey ? blockAccount : undefined}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {filtered.slice(0, visibleCount).map((ad) => (
+                  <AdCard
+                    key={ad.id}
+                    ad={ad}
+                    onSelect={openAd}
+                    onExclude={manageKey ? excludeAd : undefined}
+                    onBlock={manageKey ? blockAccount : undefined}
+                  />
+                ))}
+              </div>
+              {visibleCount < filtered.length ? (
+                <div ref={moreRef} className="py-6 text-center text-[12px] text-muted">
+                  {visibleCount}/{filtered.length} — 스크롤하면 더 보여요
+                </div>
+              ) : null}
+            </>
           )}
           </div>
         )}
