@@ -62,7 +62,7 @@ function Stat({
 function Bar({ label, count, max, labelClass = "w-24" }: { label: string; count: number; max: number; labelClass?: string }) {
   const pct = max ? Math.round((count / max) * 100) : 0;
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       <span className={`${labelClass} shrink-0 truncate whitespace-nowrap text-[12px] font-medium text-foreground`}>{label}</span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-background">
         <div
@@ -287,7 +287,7 @@ export function TrendPanel({
           <div className="space-y-2.5">
             {/* 라벨 폭: 영어(Myeongdong)만 넓게, CJK(강남·明洞)는 2자라 좁게 — 막대 길이 확보 */}
             {trends.byArea.map((a) => (
-              <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} labelClass={lang === "en" ? "w-24" : "w-12"} />
+              <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} labelClass={lang === "en" ? "w-24" : "w-8"} />
             ))}
           </div>
         </div>
