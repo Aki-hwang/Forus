@@ -19,7 +19,7 @@ const S = (ko: string, ja: string, zh: string, en: string): Str => ({ ko, ja, zh
 const STRINGS: Record<string, Str> = {
   // 헤더
   // 소비자 가이드 링크 — UI 언어에 따라 라벨·목적지(/ko·/jp)가 바뀐다 (Header 참고)
-  consumerGuide: S("시술 가이드", "🇯🇵 旅行者ガイド", "🇯🇵 旅行者指南", "🇯🇵 Visitor guide"),
+  consumerGuide: S("피부과 여행 가이드", "🇯🇵 旅行者ガイド", "🇯🇵 旅行者指南", "🇯🇵 Visitor guide"),
   register: S("병원 인스타그램 등록", "クリニックInstagram登録", "诊所Instagram登记", "Register clinic Instagram"),
   registerShort: S("인스타 등록", "登録", "登记", "Register"),
   inquiry: S("문의하기", "お問い合わせ", "咨询", "Contact"),
