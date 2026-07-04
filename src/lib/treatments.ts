@@ -16,11 +16,22 @@ export const DEFAULT_TREATMENT: TreatmentKey = "물광주사";
 /**
  * "확신 분류" — 저장된 treatment 는 키워드가 안 잡히면 기본값(물광주사)이 박히므로,
  * 카드 배지·소비자 시술별 목록처럼 "진짜 그 시술"이어야 하는 곳은 이걸로 재확인한다.
- * 캡션(원문)만 본다: headline·hashtags 는 미분류 시 기본값에서 파생된 문구(#물광 등)가
- * 섞여 들어가 판정 근거로 쓰면 오분류가 다시 확신으로 둔갑한다.
+ *  ① 수집 때 저장한 treatmentSure 플래그가 있으면 그대로 신뢰(원문 전체+원본 태그로 판정된 값).
+ *  ② 레거시(플래그 없음)는 캡션 + "주입분(기본값 파생 태그)을 뺀" 원본 해시태그로 재판정.
+ *     주입 태그(#물광 등)를 그대로 보면 오분류가 다시 확신으로 둔갑하므로 반드시 제외.
  */
-export function confidentTreatment(a: { caption?: string | null }): TreatmentKey | null {
-  return classifyTreatment(a.caption ?? "");
+export function confidentTreatment(a: {
+  caption?: string | null;
+  treatment?: TreatmentKey;
+  treatmentSure?: boolean;
+  hashtags?: string[];
+  tags?: string[];
+}): TreatmentKey | null {
+  if (a.treatmentSure === true && a.treatment) return a.treatment;
+  if (a.treatmentSure === false) return null;
+  const derived = new Set(["#韓国美容", ...(a.tags ?? []).map((t) => `#${t}`)]);
+  const original = (a.hashtags ?? []).filter((h) => !derived.has(h)).join(" ");
+  return classifyTreatment(`${a.caption ?? ""} ${original}`);
 }
 
 /**
@@ -30,6 +41,8 @@ export function confidentTreatment(a: { caption?: string | null }): TreatmentKey
  */
 export function displayHashtags(a: {
   caption?: string | null;
+  treatment?: TreatmentKey;
+  treatmentSure?: boolean;
   hashtags?: string[];
   tags?: string[];
 }): string[] {
