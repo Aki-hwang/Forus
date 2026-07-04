@@ -10,6 +10,7 @@
 //        정면 경쟁하지 않는 데이터 각도)
 
 import { Ad, Area, TreatmentKey, TREATMENTS } from "./ads";
+import { confidentTreatment } from "./treatments";
 import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
 import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
 
@@ -548,8 +549,11 @@ export function engagement(a: Ad): number {
 }
 
 export function filterPosts(list: Ad[], treatment?: TreatmentKey, area?: Area): Ad[] {
+  // 시술 필터는 확신 분류만 통과 — 저장된 treatment 는 미분류 시 기본값(물광주사)이라,
+  // 그대로 쓰면 물광 가이드 페이지에 무관한 게시물이 섞인다.
   return list.filter(
-    (a) => (!treatment || a.treatment === treatment) && (!area || a.area === area)
+    (a) =>
+      (!treatment || confidentTreatment(a) === treatment) && (!area || a.area === area)
   );
 }
 
@@ -625,7 +629,7 @@ export async function clinicsFor(
   return scoped
     .map((c) => {
       const own = byHandle.get(c.handle.toLowerCase()) ?? [];
-      const rel = treatment ? own.filter((p) => p.treatment === treatment) : own;
+      const rel = treatment ? own.filter((p) => confidentTreatment(p) === treatment) : own;
       return {
         name: c.name,
         handle: c.handle,
@@ -660,11 +664,14 @@ export function statsFor(
   return { postCount: posts.length, clinicCount: handles.size, adCount: ads.length };
 }
 
-/** 시술별 게시물 수 (랜딩 카드용) */
+/** 시술별 게시물 수 (랜딩 카드용) — 확신 분류만 집계(미분류의 물광 쏠림 방지) */
 export function treatmentCounts(data: ConsumerData): Map<TreatmentKey, number> {
   const m = new Map<TreatmentKey, number>();
   for (const t of TREATMENTS) m.set(t, 0);
-  for (const p of data.posts) m.set(p.treatment, (m.get(p.treatment) ?? 0) + 1);
+  for (const p of data.posts) {
+    const t = confidentTreatment(p);
+    if (t) m.set(t, (m.get(t) ?? 0) + 1);
+  }
   return m;
 }
 
