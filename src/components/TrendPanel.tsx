@@ -33,7 +33,8 @@ function Stat({
 }) {
   const inner = (
     <>
-      <p className="text-center text-[13px] font-bold text-foreground">{label}</p>
+      {/* 라벨은 한 줄 고정 — "최다 조회(7일)"처럼 길어도 줄바꿈되지 않게 */}
+      <p className="whitespace-nowrap text-center text-[11.5px] font-bold text-foreground sm:text-[12.5px]">{label}</p>
       <div className="flex flex-1 flex-col items-center justify-center text-center">
         <p className="text-2xl font-black tracking-tight text-foreground">{value}</p>
         {hint ? <p className="mt-0.5 max-w-full truncate text-[11px] text-muted">{hint}</p> : null}
@@ -267,7 +268,8 @@ export function TrendPanel({
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        <div className="grid grid-cols-3 gap-3 md:col-span-4">
+        {/* 지표 3칸이 좁아 라벨이 줄바꿈되던 문제 — 막대 위주라 폭이 남는 지역별 분포에서 1칸 가져옴(5:3:4) */}
+        <div className="grid grid-cols-3 gap-3 md:col-span-5">
           <Stat label={tt("statCollected")} value={`${trends.total}${tt("unit")}`} hint={collectedLabel} />
           <Stat label={tt("statNew")} value={`${newAds7}${tt("unit")}`} hint={tt("hintNew7")} />
           <Stat
@@ -278,7 +280,7 @@ export function TrendPanel({
           />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
           <p className="mb-3 text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
           <div className="space-y-2.5">
             {trends.byArea.map((a) => (
