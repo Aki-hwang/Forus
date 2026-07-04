@@ -277,6 +277,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     clinic: fb.page_name?.trim() || "광고주 미상",
     area,
     treatment,
+    treatmentSure: Boolean(confident),
     headline,
     sub,
     caption: (body || title).slice(0, 200),

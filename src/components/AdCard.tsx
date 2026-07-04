@@ -23,6 +23,8 @@ export function AdCard({
   const { t, tArea, tTreatment, tClinic } = useUiLang();
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
+  // 배지는 재판정된 시술을 표시 — 레거시 데이터는 저장값(기본값 폴백)과 다를 수 있다
+  const sureTreatment = confidentTreatment(ad);
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
@@ -61,7 +63,7 @@ export function AdCard({
             headline={ad.headline}
             sub={ad.sub}
             clinicName={tClinic(ad.clinic, ad.igUsername)}
-            treatmentLabel={confidentTreatment(ad) ? tTreatment(ad.treatment) : ""}
+            treatmentLabel={sureTreatment ? tTreatment(sureTreatment) : ""}
             lang={ad.lang}
             imageUrl={ad.imageUrl}
             kind={ad.kind}

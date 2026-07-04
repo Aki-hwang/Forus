@@ -6,6 +6,8 @@ import { CreativeCard } from "./CreativeCard";
 import { confidentTreatment, displayHashtags } from "@/lib/treatments";
 
 export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
+  // 배지는 재판정된 시술을 표시 — 레거시 데이터는 저장값(기본값 폴백)과 다를 수 있다
+  const sureTreatment = confidentTreatment(ad);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -38,7 +40,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
           headline={ad.headline}
           sub={ad.sub}
           clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
-          treatmentLabel={confidentTreatment(ad) ? TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"] : ""}
+          treatmentLabel={sureTreatment ? TREATMENT_LABEL[sureTreatment][ad.lang === "JP" ? "jp" : "ko"] : ""}
           lang={ad.lang}
           imageUrl={ad.imageUrl}
           kind={ad.kind}

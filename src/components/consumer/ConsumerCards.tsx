@@ -25,10 +25,9 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
     : null;
   const e = engagement(post);
   const isViews = typeof post.views === "number" && post.views > 0;
-  // 시술 배지는 확신 분류일 때만 — 미분류는 기본값(물광주사)이 박혀 있어 오표기가 된다
-  const treatmentName = confidentTreatment(post)
-    ? guideByKey(locale, post.treatment).name
-    : null;
+  // 시술 배지는 확신 분류일 때만, 재판정된 값으로 — 저장값은 기본값 폴백일 수 있다
+  const sureTreatment = confidentTreatment(post);
+  const treatmentName = sureTreatment ? guideByKey(locale, sureTreatment).name : null;
 
   return (
     <a
@@ -87,6 +86,7 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
 export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: Ad }) {
   const ui = CONSUMER_UI[locale];
   const proxied = ad.imageUrl ? `/api/img?u=${encodeURIComponent(ad.imageUrl)}` : null;
+  const sureTreatment = confidentTreatment(ad);
   return (
     <a
       href={ad.sourceUrl ?? ad.adLibraryUrl ?? `https://www.instagram.com/${ad.igUsername ?? ""}/`}
@@ -111,7 +111,7 @@ export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: 
         <p className="truncate text-[13px] font-bold text-foreground">{ad.headline}</p>
         <p className="mt-0.5 truncate text-[11.5px] text-muted">
           {ad.clinic}
-          {confidentTreatment(ad) ? ` · ${guideByKey(locale, ad.treatment).name}` : ""}
+          {sureTreatment ? ` · ${guideByKey(locale, sureTreatment).name}` : ""}
         </p>
         <p className="mt-0.5 text-[10.5px] font-bold text-primary-ink">
           {ui.promoDay(ad.activeDays ?? 0)}

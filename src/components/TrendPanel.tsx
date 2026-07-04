@@ -41,28 +41,29 @@ function Stat({
       </div>
     </>
   );
+  // 좌우 패딩은 다른 패널(p-4)보다 좁게 — 카드가 작아 p-4 는 비율상 여백이 커 보인다
   if (onClick) {
     return (
       <button
         onClick={onClick}
-        className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left transition hover:border-primary/40 hover:shadow-sm"
+        className="flex h-full flex-col rounded-2xl border border-border bg-surface px-2.5 py-4 text-left transition hover:border-primary/40 hover:shadow-sm"
       >
         {inner}
       </button>
     );
   }
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 text-left">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-surface px-2.5 py-4 text-left">
       {inner}
     </div>
   );
 }
 
-function Bar({ label, count, max }: { label: string; count: number; max: number }) {
+function Bar({ label, count, max, labelClass = "w-24" }: { label: string; count: number; max: number; labelClass?: string }) {
   const pct = max ? Math.round((count / max) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span className="w-24 shrink-0 truncate whitespace-nowrap text-[12px] font-medium text-foreground">{label}</span>
+      <span className={`${labelClass} shrink-0 truncate whitespace-nowrap text-[12px] font-medium text-foreground`}>{label}</span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-background">
         <div
           className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
@@ -284,8 +285,9 @@ export function TrendPanel({
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
           <div className="space-y-2.5">
+            {/* 라벨 폭: 영어(Myeongdong)만 넓게, CJK(강남·明洞)는 2자라 좁게 — 막대 길이 확보 */}
             {trends.byArea.map((a) => (
-              <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} />
+              <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} labelClass={lang === "en" ? "w-24" : "w-12"} />
             ))}
           </div>
         </div>
