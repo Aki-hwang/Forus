@@ -42,6 +42,7 @@ export async function writeSnapshot(kind: "ads" | "organic", ads: Ad[]): Promise
   const dir = await writableDir();
   const snap: Snapshot = { collectedAt: new Date().toISOString(), source: "apify", ads };
   await fs.writeFile(path.join(dir, fileName(kind)), JSON.stringify(snap), "utf8");
+  invalidateSnapshotCache(kind);
 }
 
 // ---------- 누적 병합 (90일 보관) ----------
@@ -88,6 +89,7 @@ export async function mergeSnapshot(
   const dir = await writableDir();
   const snap: Snapshot = { collectedAt: nowIso, source: "apify", ads: merged };
   await fs.writeFile(path.join(dir, fileName(kind)), JSON.stringify(snap), "utf8");
+  invalidateSnapshotCache(kind);
   return { total: merged.length, added, updated };
 }
 
@@ -199,20 +201,38 @@ export async function stripDeadImages(
     JSON.stringify({ ...snap, ads }),
     "utf8"
   );
+  invalidateSnapshotCache(kind);
   return stripped;
 }
 
+// 파싱 캐시 — 스냅샷(850KB)을 매 요청마다 읽고 JSON.parse 하지 않도록 mtime 으로 무효화.
+// 파일이 바뀌면(수집·이미지정리) mtimeMs 가 달라져 자동 재파싱. 쓰기는 같은 프로세스가
+// 하므로 여기서 캐시를 비워 즉시 반영한다(invalidateSnapshotCache).
+const snapCache = new Map<string, { mtimeMs: number; snap: Snapshot }>();
+
 export async function readSnapshot(kind: "ads" | "organic"): Promise<Snapshot | null> {
   for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    const file = path.join(dir, fileName(kind));
     try {
-      const raw = await fs.readFile(path.join(dir, fileName(kind)), "utf8");
+      const st = await fs.stat(file);
+      const cached = snapCache.get(file);
+      if (cached && cached.mtimeMs === st.mtimeMs) return cached.snap;
+      const raw = await fs.readFile(file, "utf8");
       const snap = JSON.parse(raw) as Snapshot;
-      if (snap && Array.isArray(snap.ads)) return snap;
+      if (snap && Array.isArray(snap.ads)) {
+        snapCache.set(file, { mtimeMs: st.mtimeMs, snap });
+        return snap;
+      }
     } catch {
       /* 다음 후보 디렉터리 시도 */
     }
   }
   return null;
+}
+
+/** 스냅샷 쓰기 후 파싱 캐시 무효화 (같은 프로세스 내 즉시 반영) */
+function invalidateSnapshotCache(kind: "ads" | "organic"): void {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) snapCache.delete(path.join(dir, fileName(kind)));
 }
 
 
