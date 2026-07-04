@@ -19,6 +19,7 @@ interface LangQueries {
   jp: string[];
   kr: string[];
   cn: string[];
+  en: string[];
 }
 
 // 지역(권역)별 검색어 — 권역 내 동/역명을 언어별로 분산 배치해 넓게 커버
@@ -27,16 +28,19 @@ const AREA_QUERIES: Record<Area, LangQueries> = {
     jp: ["江南 皮膚科", "狎鴎亭 皮膚科", "新沙 美容クリニック", "清潭 クリニック", "カンナム 皮膚科", "江南 日本語"],
     kr: ["강남 피부과", "역삼 피부과", "강남 리프팅", "압구정 피부과", "신사 피부과", "청담 피부과", "강남 보톡스"],
     cn: ["江南 皮肤科", "清潭 医美"],
+    en: ["gangnam dermatology", "gangnam skin clinic", "apgujeong skin clinic"],
   },
   명동: {
     jp: ["明洞 皮膚科", "明洞 美容皮膚科", "乙支路 皮膚科", "ミョンドン 皮膚科", "明洞 日本語"],
     kr: ["명동 피부과", "충무로 피부과", "명동 보톡스", "명동 리프팅", "중구 피부과"],
     cn: ["明洞 皮肤科", "明洞 医美", "明洞 注射美容"],
+    en: ["myeongdong skin clinic", "myeongdong dermatology"],
   },
   홍대: {
     jp: ["弘大 皮膚科", "ホンデ 美容クリニック", "合井 皮膚科", "ホンデ 皮膚科", "ホンデ 美容皮膚科", "弘大 日本語"],
     kr: ["홍대 피부과", "연남 피부과", "합정 피부과", "홍대 보톡스", "상수 피부과"],
     cn: ["弘大 皮肤科", "弘大 医美"],
+    en: ["hongdae skin clinic", "hongdae dermatology"],
   },
 };
 
@@ -50,17 +54,24 @@ const GENERAL_QUERIES: LangQueries = {
   ],
   kr: ["서울 피부과 이벤트", "피부과 보톡스 이벤트", "피부과 리프팅 할인"],
   cn: ["韩国 皮肤管理 中文", "韩国 医美 中文", "韩国 水光针"],
+  en: [
+    "korean skin clinic english",
+    "seoul dermatology foreigner",
+    "korea botox filler",
+  ],
 };
 
 // 언어별 광고 "송출 국가" — 한국 클리닉의 외국인 타겟 광고는 현지(타겟국) 송출이 많다.
 //   일본인 타겟: 한국(방한 일본인) + 일본(방한 전 일본 거주자에게 노출) → KR·JP 둘 다 검색
 //   중국인 타겟: 한국 + 대만(번체 중화권·Meta 사용) → KR·TW   ※ 중국 본토는 Meta 미사용
+//   영어권 타겟: 한국(방한 외국인·주한 외국인) + 싱가포르(영어권 의료관광 주요 소스·Meta 강세)
 //   한국인 타겟: 한국만
 // country=KR 만 검색하면 "일본에서 송출되는" 한국 클리닉의 일본어 광고를 통째로 놓친다.
 const LANG_COUNTRIES: Record<keyof LangQueries, string[]> = {
   jp: ["KR", "JP"],
   kr: ["KR"],
   cn: ["KR", "TW"],
+  en: ["KR", "SG"],
 };
 
 /** 지역 판별용 표기 (검색 URL/본문 모두에서 탐지) — 권역 동/역명, JP한자·CN간체 포함 */
@@ -140,7 +151,7 @@ export interface SearchQuery {
  */
 export function searchQueries(): SearchQuery[] {
   const areas = Object.keys(AREA_QUERIES) as Area[];
-  const langs: (keyof LangQueries)[] = ["jp", "kr", "cn"];
+  const langs: (keyof LangQueries)[] = ["jp", "kr", "cn", "en"];
 
   // (언어 × 송출국가 × 권역) + (언어 × 송출국가 × 일반) 스트림. 라운드로빈으로 앞쪽부터 골고루.
   type Stream = { area?: Area; country: string; lang: keyof LangQueries; words: string[] };

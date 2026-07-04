@@ -69,13 +69,17 @@ const CN_ONLY_CHARS =
 
 // 언어 추론 — "있는지"가 아니라 "어느 문자가 더 많은지"(우세 문자)로 판별한다.
 //   중국어 광고에 한글 해시태그(#강남 #부산)가 몇 개 섞였다고 한국어로 분류되면 안 된다.
-//   hint = 검색어 언어(jp/kr/cn) — 한자만 있는 모호한 경우의 최종 타이브레이커.
-// 우선순위: 가나(일본어 고유) > 중국어 전용문자 > 한글vs한자 우세 비교 > 한자만이면 hint.
-export function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
+//   hint = 검색어 언어(jp/kr/cn/en) — 문자 정보가 모호한 경우의 최종 타이브레이커.
+// 우선순위: 가나(일본어 고유) > 라틴 압도 우세 > 중국어 전용문자 > 한글vs한자 우세 > hint.
+export function inferLang(text: string, hint?: "jp" | "kr" | "cn" | "en"): Lang {
   // 가나(히라가나·가타카나)는 일본어에만 있음 → 1자라도 있으면 일본어
   if (/[぀-ヿ]/.test(text)) return "JP";
   const hangul = (text.match(/[가-힣]/g) || []).length;
   const han = (text.match(/[㐀-鿿]/g) || []).length; // 한자(중국어·번체 포함)
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  // 라틴이 CJK를 압도(2배 초과)하면 영어 — 한국 클리닉의 영어 광고는 #강남 해시태그나
+  // 한국 주소가 거의 항상 섞여 있어, "한글 1자라도 있으면 KR" 규칙이 영어를 다 흡수했다.
+  if (latin >= 4 && latin > (hangul + han) * 2) return "EN";
   // 한자가 한글보다 많으면 한자권 광고 — 중국어 전용문자가 있으면 CN 확정(본문 증거 > 힌트).
   //   다지점 클리닉(리엔장 등)은 일본 타겟 검색에도 중국어 광고가 걸려, hint=jp 만 믿으면
   //   중국어 본문이 日本語로 오분류된다. 가나 없는 순수 일본어 문장은 사실상 없어 안전.
@@ -86,14 +90,17 @@ export function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
   }
   if (hangul > 0) return "KR"; // 한글 우세 → 한국어
   // 한자·한글·가나 없고 라틴문자 우세 → 영어
-  if ((text.match(/[A-Za-z]/g) || []).length >= 4) return "EN";
-  // 문자 정보가 거의 없으면 검색어 언어로 결정 (cn→CN, 그 외 JP)
-  return hint === "cn" ? "CN" : "JP";
+  if (latin >= 4) return "EN";
+  // 문자 정보가 거의 없으면 검색어 언어로 결정 (cn→CN, en→EN, 그 외 JP)
+  return hint === "cn" ? "CN" : hint === "en" ? "EN" : "JP";
 }
 
-export function extractHashtags(text: string, treatment: TreatmentKey): string[] {
+/** 해시태그 추출 — 부족하면(3개 미만) 시술 파생 태그로 보충.
+ *  treatment 는 "확신 분류"만 받는다(null=미분류). 미분류에 기본값 태그(#물광 등)를
+ *  채우면 원본에 없던 시술이 있는 것처럼 보이므로, 실제 태그만 그대로 둔다. */
+export function extractHashtags(text: string, treatment: TreatmentKey | null): string[] {
   const found = (text.match(/#[^\s#.,!?，。！？]+/g) ?? []).slice(0, 6);
-  if (found.length >= 3) return Array.from(new Set(found)).slice(0, 5);
+  if (found.length >= 3 || !treatment) return Array.from(new Set(found)).slice(0, 5);
   const fallback = ["#韓国美容", ...TAGS_BY_TREATMENT[treatment].map((t) => `#${t}`)];
   return Array.from(new Set([...found, ...fallback])).slice(0, 5);
 }
@@ -202,7 +209,7 @@ function bodyText(s?: FbSnapshot): string {
   return typeof s.body === "string" ? s.body : s.body.text ?? "";
 }
 
-function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn"): Ad | null {
+function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn" | "en"): Ad | null {
   const s = fb.snapshot ?? {};
   const body = bodyText(s).trim();
   const title = (s.title ?? "").trim();
@@ -210,6 +217,8 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
 
   const blob = `${title}\n${body}`;
   const treatment = inferTreatment(blob);
+  // 파생 태그 보충용 확신 분류(미분류=null) — treatment 는 미분류 시 기본값이라 못 쓴다
+  const confident = classifyTreatment(blob);
   const style = inferStyle(blob);
   const lang = inferLang(blob, langHint);
 
@@ -271,7 +280,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     headline,
     sub,
     caption: (body || title).slice(0, 200),
-    hashtags: extractHashtags(body, treatment),
+    hashtags: extractHashtags(body, confident),
     tags: TAGS_BY_TREATMENT[treatment],
     style,
     palette: PALETTE_BY_TREATMENT[treatment],

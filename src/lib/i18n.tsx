@@ -19,7 +19,7 @@ const S = (ko: string, ja: string, zh: string, en: string): Str => ({ ko, ja, zh
 const STRINGS: Record<string, Str> = {
   // 헤더
   // 소비자 가이드 링크 — UI 언어에 따라 라벨·목적지(/ko·/jp)가 바뀐다 (Header 참고)
-  consumerGuide: S("시술 가이드", "🇯🇵 旅行者ガイド", "🇯🇵 旅行者指南", "🇯🇵 Visitor guide"),
+  consumerGuide: S("피부과 여행 가이드", "🇯🇵 旅行者ガイド", "🇯🇵 旅行者指南", "🇯🇵 Visitor guide"),
   register: S("병원 인스타그램 등록", "クリニックInstagram登録", "诊所Instagram登记", "Register clinic Instagram"),
   registerShort: S("인스타 등록", "登録", "登记", "Register"),
   inquiry: S("문의하기", "お問い合わせ", "咨询", "Contact"),
@@ -62,7 +62,7 @@ const STRINGS: Record<string, Str> = {
   contentTypes: S("콘텐츠 유형 (7일)", "コンテンツ種類(7日)", "内容类型(7天)", "Content types (7d)"),
   statCollected: S("수집된 광고", "収集した広告", "已收集广告", "Ads collected"),
   statNew: S("🆕 신규 광고", "🆕 新規広告", "🆕 新增广告", "🆕 New ads"),
-  statTop: S("🔥 최다 조회 (7일)", "🔥 最多再生(7日)", "🔥 最高播放(7天)", "🔥 Most viewed (7d)"),
+  statTop: S("🔥 최다 조회(7일)", "🔥 最多再生(7日)", "🔥 最高播放(7天)", "🔥 Top views (7d)"),
   hintNew7: S("최근 7일 시작", "直近7日に開始", "近7天新增", "Started in last 7 days"),
   hintRegions: S("강남·명동·홍대", "江南·明洞·弘大", "江南·明洞·弘大", "Gangnam·Myeongdong·Hongdae"),
   collectedSuffix: S("수집", "収集", "收集", "collected"),

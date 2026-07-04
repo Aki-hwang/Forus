@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { Ad, TREATMENT_LABEL } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
-import { confidentTreatment } from "@/lib/treatments";
+import { confidentTreatment, displayHashtags } from "@/lib/treatments";
 
 export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
   useEffect(() => {
@@ -49,9 +49,9 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
           {ad.caption ? (
             <p className="leading-relaxed text-muted">{ad.caption}</p>
           ) : null}
-          {ad.hashtags.length > 0 ? (
+          {displayHashtags(ad).length > 0 ? (
             <div className="flex flex-wrap gap-1 pt-1">
-              {ad.hashtags.map((h) => (
+              {displayHashtags(ad).map((h) => (
                 <span key={h} className="text-[12px] text-primary-ink">
                   {h}
                 </span>

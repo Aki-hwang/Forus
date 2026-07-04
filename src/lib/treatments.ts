@@ -23,6 +23,24 @@ export function confidentTreatment(a: { caption?: string | null }): TreatmentKey
   return classifyTreatment(a.caption ?? "");
 }
 
+/**
+ * 화면에 보여줄 해시태그 — 미분류 게시물은 수집 때 주입된 파생 태그(#韓国美容·#물광 등,
+ * 기본값 시술에서 파생 = a.tags)를 걸러 원본 태그만 남긴다. 확신 분류면 저장분 그대로.
+ * (기존 저장 데이터 정리용 — 신규 수집분은 애초에 미분류에 파생 태그를 넣지 않는다)
+ */
+export function displayHashtags(a: {
+  caption?: string | null;
+  hashtags?: string[];
+  tags?: string[];
+}): string[] {
+  const stored = a.hashtags ?? [];
+  if (confidentTreatment(a)) {
+    return stored.length ? stored : (a.tags ?? []).map((t) => `#${t}`);
+  }
+  const derived = new Set(["#韓国美容", ...(a.tags ?? []).map((t) => `#${t}`)]);
+  return stored.filter((h) => !derived.has(h));
+}
+
 /** 시술 분류 — 키워드 매칭. 안 잡히면 null(미분류). */
 export function classifyTreatment(text: string): TreatmentKey | null {
   const lower = (text || "").toLowerCase();
