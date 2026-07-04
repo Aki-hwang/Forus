@@ -13,6 +13,16 @@ export const TREATMENT_KEYWORDS: Record<TreatmentKey, string[]> = {
 
 export const DEFAULT_TREATMENT: TreatmentKey = "물광주사";
 
+/**
+ * "확신 분류" — 저장된 treatment 는 키워드가 안 잡히면 기본값(물광주사)이 박히므로,
+ * 카드 배지·소비자 시술별 목록처럼 "진짜 그 시술"이어야 하는 곳은 이걸로 재확인한다.
+ * 캡션(원문)만 본다: headline·hashtags 는 미분류 시 기본값에서 파생된 문구(#물광 등)가
+ * 섞여 들어가 판정 근거로 쓰면 오분류가 다시 확신으로 둔갑한다.
+ */
+export function confidentTreatment(a: { caption?: string | null }): TreatmentKey | null {
+  return classifyTreatment(a.caption ?? "");
+}
+
 /** 시술 분류 — 키워드 매칭. 안 잡히면 null(미분류). */
 export function classifyTreatment(text: string): TreatmentKey | null {
   const lower = (text || "").toLowerCase();

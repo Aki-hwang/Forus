@@ -111,15 +111,23 @@ function imgCacheFile(u: string): string | null {
   }
 }
 
-export async function warmImageCache(ads: Ad[]): Promise<number> {
+export interface WarmResult {
+  /** 이번에 새로 저장한 이미지 수 */
+  cached: number;
+  /** 영구 사망 링크(403/404/410 = 서명 만료·삭제) — imageUrl 제거 대상 */
+  dead: string[];
+}
+
+export async function warmImageCache(ads: Ad[]): Promise<WarmResult> {
   const urls = Array.from(
     new Set(ads.map((a) => a.imageUrl).filter((x): x is string => Boolean(x)))
   );
   let saved = 0;
+  const dead: string[] = [];
   try {
     await fs.mkdir(IMG_CACHE_DIR, { recursive: true });
   } catch {
-    return 0;
+    return { cached: 0, dead };
   }
   const BATCH = 6;
   for (let i = 0; i < urls.length; i += BATCH) {
@@ -142,7 +150,12 @@ export async function warmImageCache(ads: Ad[]): Promise<number> {
             },
             cache: "no-store",
           });
-          if (!r.ok) return;
+          if (!r.ok) {
+            // 서명 만료/삭제로 다시 살아나지 않는 링크만 dead 처리.
+            // (일시 오류·네트워크 실패는 다음 수집 때 재시도되도록 남겨둔다)
+            if ([403, 404, 410].includes(r.status)) dead.push(u);
+            return;
+          }
           const buf = Buffer.from(await r.arrayBuffer());
           if (buf.length > 0) {
             await fs.writeFile(file, buf);
@@ -154,7 +167,39 @@ export async function warmImageCache(ads: Ad[]): Promise<number> {
       })
     );
   }
-  return saved;
+  return { cached: saved, dead };
+}
+
+/**
+ * 죽은 이미지 링크(dead)를 가진 항목의 imageUrl 을 스냅샷에서 제거한다.
+ * 카드 정렬은 imageUrl 유무로 폴백을 뒤로 미루는데, "URL은 있지만 로드가 죽은" 카드가
+ * 이미지 있는 것처럼 앞에 배치되는 문제를 없앤다(렌더도 처음부터 폴백으로 일관).
+ * 같은 광고가 재수집되면 병합 때 새 URL로 채워져 자연 복구된다. collectedAt 은 유지.
+ */
+export async function stripDeadImages(
+  kind: "ads" | "organic",
+  dead: string[]
+): Promise<number> {
+  if (dead.length === 0) return 0;
+  const snap = await readSnapshot(kind);
+  if (!snap) return 0;
+  const deadSet = new Set(dead);
+  let stripped = 0;
+  const ads = snap.ads.map((a) => {
+    if (a.imageUrl && deadSet.has(a.imageUrl)) {
+      stripped++;
+      return { ...a, imageUrl: undefined };
+    }
+    return a;
+  });
+  if (stripped === 0) return 0;
+  const dir = await writableDir();
+  await fs.writeFile(
+    path.join(dir, fileName(kind)),
+    JSON.stringify({ ...snap, ads }),
+    "utf8"
+  );
+  return stripped;
 }
 
 export async function readSnapshot(kind: "ads" | "organic"): Promise<Snapshot | null> {

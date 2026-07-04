@@ -2,6 +2,7 @@
 
 import { Ad } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
+import { confidentTreatment } from "@/lib/treatments";
 import { useUiLang } from "@/lib/i18n";
 
 function fmt(n: number): string {
@@ -60,7 +61,7 @@ export function AdCard({
             headline={ad.headline}
             sub={ad.sub}
             clinicName={tClinic(ad.clinic, ad.igUsername)}
-            treatmentLabel={tTreatment(ad.treatment)}
+            treatmentLabel={confidentTreatment(ad) ? tTreatment(ad.treatment) : ""}
             lang={ad.lang}
             imageUrl={ad.imageUrl}
             kind={ad.kind}

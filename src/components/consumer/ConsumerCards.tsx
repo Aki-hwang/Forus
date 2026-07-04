@@ -2,6 +2,7 @@
 // CreativeCard(클라이언트·onError 폴백)와 달리 JS 없이 렌더되도록 단순 <img> 사용.
 
 import { Ad } from "@/lib/ads";
+import { confidentTreatment } from "@/lib/treatments";
 import {
   ConsumerLocale,
   CONSUMER_UI,
@@ -24,7 +25,10 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
     : null;
   const e = engagement(post);
   const isViews = typeof post.views === "number" && post.views > 0;
-  const treatmentName = guideByKey(locale, post.treatment).name;
+  // 시술 배지는 확신 분류일 때만 — 미분류는 기본값(물광주사)이 박혀 있어 오표기가 된다
+  const treatmentName = confidentTreatment(post)
+    ? guideByKey(locale, post.treatment).name
+    : null;
 
   return (
     <a
@@ -47,7 +51,7 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={proxied}
-            alt={`${post.clinic} — ${treatmentName}`}
+            alt={treatmentName ? `${post.clinic} — ${treatmentName}` : post.clinic}
             loading="lazy"
             className="h-full w-full object-cover transition group-hover:scale-[1.02]"
           />
@@ -58,9 +62,11 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
             </p>
           </div>
         )}
-        <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10.5px] font-bold text-white">
-          {treatmentName}
-        </span>
+        {treatmentName ? (
+          <span className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-0.5 text-[10.5px] font-bold text-white">
+            {treatmentName}
+          </span>
+        ) : null}
       </div>
       <div className="space-y-1 p-3">
         <p className="truncate text-[12.5px] font-bold text-foreground">
@@ -104,7 +110,8 @@ export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: 
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] font-bold text-foreground">{ad.headline}</p>
         <p className="mt-0.5 truncate text-[11.5px] text-muted">
-          {ad.clinic} · {guideByKey(locale, ad.treatment).name}
+          {ad.clinic}
+          {confidentTreatment(ad) ? ` · ${guideByKey(locale, ad.treatment).name}` : ""}
         </p>
         <p className="mt-0.5 text-[10.5px] font-bold text-primary-ink">
           {ui.promoDay(ad.activeDays ?? 0)}

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { Ad, TREATMENT_LABEL } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
+import { confidentTreatment } from "@/lib/treatments";
 
 export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) {
   useEffect(() => {
@@ -37,7 +38,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
           headline={ad.headline}
           sub={ad.sub}
           clinicName={ad.clinic.replace(/\s*\(.*\)$/, "")}
-          treatmentLabel={TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"]}
+          treatmentLabel={confidentTreatment(ad) ? TREATMENT_LABEL[ad.treatment][ad.lang === "JP" ? "jp" : "ko"] : ""}
           lang={ad.lang}
           imageUrl={ad.imageUrl}
           kind={ad.kind}

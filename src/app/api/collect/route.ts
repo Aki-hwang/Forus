@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { fetchAdsViaApify, enrichAdsWithViews } from "@/lib/apify";
 import { fetchOrganicViaApify } from "@/lib/organic";
 import { planCollection } from "@/lib/apifyBudget";
-import { writeSnapshot, mergeSnapshot, warmImageCache, readSnapshot } from "@/lib/snapshot";
+import { writeSnapshot, mergeSnapshot, warmImageCache, stripDeadImages, readSnapshot } from "@/lib/snapshot";
 
 // 실제 수집(=Apify 과금)이 일어나는 유일한 엔드포인트. COLLECT_KEY 로 보호.
 // 시간제한(5분)을 넘기지 않도록 광고/오가닉을 따로 호출할 수 있게 part 지원.
@@ -68,8 +68,8 @@ export async function GET(req: Request) {
         const snap = await readSnapshot(kind);
         const cur = snap?.ads ?? [];
         const m = await mergeSnapshot(kind, cur); // 동일 데이터 재병합(멱등) → 쓰기/병합 검증
-        const cached = await warmImageCache(cur.slice(0, 8)); // 샘플만 캐시 점검
-        sim[kind] = { existing: cur.length, total: m.total, updated: m.updated, added: m.added, imgCached: cached };
+        const w = await warmImageCache(cur.slice(0, 8)); // 샘플만 캐시 점검
+        sim[kind] = { existing: cur.length, total: m.total, updated: m.updated, added: m.added, imgCached: w.cached, imgDead: w.dead.length };
       } catch (e) {
         sim[`${kind}Error`] = String(e);
       }
@@ -93,7 +93,13 @@ export async function GET(req: Request) {
           await writeSnapshot("ads", finalAds);
           result.ads = finalAds.length;
         }
-        result.adsImgCached = await warmImageCache(finalAds);
+        // 이미지 캐시: 새 수집분만이 아니라 병합된 전체 스냅샷을 대상으로 —
+        // 이전 수집 때 실패했던 이미지를 링크가 살아있는 동안 재시도한다(캐시된 건 스킵, 비용 0).
+        const allAds = (await readSnapshot("ads"))?.ads ?? finalAds;
+        const w = await warmImageCache(allAds);
+        result.adsImgCached = w.cached;
+        // 영구 사망 링크(만료·삭제)는 imageUrl 제거 → 폴백 카드가 정렬에서 정직하게 뒤로 감
+        result.adsImgDead = await stripDeadImages("ads", w.dead);
       } else {
         result.ads = 0;
       }
@@ -116,7 +122,10 @@ export async function GET(req: Request) {
           await writeSnapshot("organic", organic);
           result.organic = organic.length;
         }
-        result.organicImgCached = await warmImageCache(organic);
+        const allOrganic = (await readSnapshot("organic"))?.ads ?? organic;
+        const w = await warmImageCache(allOrganic);
+        result.organicImgCached = w.cached;
+        result.organicImgDead = await stripDeadImages("organic", w.dead);
       } else {
         result.organic = 0;
       }

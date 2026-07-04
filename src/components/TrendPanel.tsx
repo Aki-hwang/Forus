@@ -154,14 +154,24 @@ export function TrendPanel({
   const isLikelyClinic = (a: Ad) =>
     a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
   const [now] = useState(() => Date.now());
-  const clinicAds = useMemo(() => ads.filter(isLikelyClinic), [ads]);
-  // 최다 조회 광고 — 클리닉만 기준 (클릭 시 모달)
+  // 최근 7일(게시물 날짜/광고 시작일 기준) — 90일 누적 스냅샷 전체로 랭킹하면
+  // 항상 같은 클리닉·게시물이 고정되므로, TOP 지표는 최신 7일만 본다.
+  const within7d = (a: Ad) => {
+    const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
+    return !Number.isNaN(t) && now - t <= 7 * 86_400_000;
+  };
+  const clinicAds = useMemo(
+    () => ads.filter((a) => isLikelyClinic(a) && within7d(a)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ads, now]
+  );
+  // 최다 조회 광고 — 최근 7일 클리닉만 기준 (클릭 시 모달)
   const topAd = useMemo(() => {
     const v = clinicAds.filter((a) => typeof a.views === "number");
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
     return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
   }, [clinicAds]);
-  // 조회수 TOP 게시물 — 개별 게시물(클릭 시 모달)
+  // 조회수 TOP 게시물 — 최근 7일 개별 게시물(클릭 시 모달)
   const topPosts = useMemo(
     () =>
       [...clinicAds]
@@ -178,10 +188,16 @@ export function TrendPanel({
       }).length,
     [ads, now]
   );
-  // 인기 시술 — 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
+  // 최근 7일 전체(클리닉 필터 없이) — 인기 시술·콘텐츠 유형 분포용
+  const ads7 = useMemo(
+    () => ads.filter(within7d),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ads, now]
+  );
+  // 인기 시술 — 최근 7일, 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
   const topTreatments = useMemo(() => {
     const m = new Map<TreatmentKey, number>();
-    for (const a of ads) {
+    for (const a of ads7) {
       const t = classifyTreatment(`${a.headline ?? ""} ${a.caption ?? ""}`);
       if (t) m.set(t, (m.get(t) ?? 0) + 1);
     }
@@ -189,12 +205,12 @@ export function TrendPanel({
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5)
       .map(([key, count]) => ({ key, count }));
-  }, [ads]);
+  }, [ads7]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
-  // 콘텐츠 유형 — 광고 스타일 분포
+  // 콘텐츠 유형 — 최근 7일 광고 스타일 분포
   const topStyles = useMemo(() => {
     const m = new Map<string, number>();
-    for (const a of ads) {
+    for (const a of ads7) {
       const t = classifyContentType(`${a.headline ?? ""} ${a.caption ?? ""}`);
       m.set(t, (m.get(t) ?? 0) + 1);
     }
@@ -202,7 +218,7 @@ export function TrendPanel({
       .filter(([, c]) => c > 0)
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5);
-  }, [ads]);
+  }, [ads7]);
   const maxStyle = Math.max(1, ...topStyles.map(([, c]) => c));
   const kwCounts = useMemo(() => {
     const m = new Map<string, number>();
@@ -224,8 +240,8 @@ export function TrendPanel({
   }, [keywordAds, kwLang]);
   const topKeywords = useMemo(() => kwCounts.slice(0, 20).map(([tag]) => tag), [kwCounts]);
 
-  // TOP 클리닉: 기간(집행 시작일 기준) 선택 → 광고주 단위 조회수(없으면 팔로워) 랭킹
-  const period = 30;
+  // TOP 클리닉: 최근 7일(집행 시작일 기준) → 광고주 단위 조회수(없으면 팔로워) 랭킹
+  const period = 7;
   const ranked = useMemo(() => {
     const inRange = ads.filter((a) => {
       const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
