@@ -188,10 +188,16 @@ export function TrendPanel({
       }).length,
     [ads, now]
   );
-  // 인기 시술 — 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
+  // 최근 7일 전체(클리닉 필터 없이) — 인기 시술·콘텐츠 유형 분포용
+  const ads7 = useMemo(
+    () => ads.filter(within7d),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ads, now]
+  );
+  // 인기 시술 — 최근 7일, 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
   const topTreatments = useMemo(() => {
     const m = new Map<TreatmentKey, number>();
-    for (const a of ads) {
+    for (const a of ads7) {
       const t = classifyTreatment(`${a.headline ?? ""} ${a.caption ?? ""}`);
       if (t) m.set(t, (m.get(t) ?? 0) + 1);
     }
@@ -199,12 +205,12 @@ export function TrendPanel({
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5)
       .map(([key, count]) => ({ key, count }));
-  }, [ads]);
+  }, [ads7]);
   const maxTreatment = Math.max(1, ...topTreatments.map((t) => t.count));
-  // 콘텐츠 유형 — 광고 스타일 분포
+  // 콘텐츠 유형 — 최근 7일 광고 스타일 분포
   const topStyles = useMemo(() => {
     const m = new Map<string, number>();
-    for (const a of ads) {
+    for (const a of ads7) {
       const t = classifyContentType(`${a.headline ?? ""} ${a.caption ?? ""}`);
       m.set(t, (m.get(t) ?? 0) + 1);
     }
@@ -212,7 +218,7 @@ export function TrendPanel({
       .filter(([, c]) => c > 0)
       .sort((x, y) => y[1] - x[1])
       .slice(0, 5);
-  }, [ads]);
+  }, [ads7]);
   const maxStyle = Math.max(1, ...topStyles.map(([, c]) => c));
   const kwCounts = useMemo(() => {
     const m = new Map<string, number>();
