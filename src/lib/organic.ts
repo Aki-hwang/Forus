@@ -19,7 +19,7 @@
 
 import { Ad, Area } from "./ads";
 import { classifyTreatment } from "./treatments";
-import { KNOWN_CLINICS, findClinicByHandle, isExcludedAd, hasClinicSignal } from "./clinics";
+import { KNOWN_CLINICS, findClinicByHandle, classifyAdvertiser, hasClinicSignal } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 import { readApprovedClinics } from "./snapshot";
 import { areaFromText } from "./adQueries";
@@ -110,8 +110,11 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
   if (!caption && !p.displayUrl) return null;
 
   const known = lookupClinic(username);
-  // 등록 클리닉이면 무조건 유지, 아니면 비클리닉 신호로 거른다.
-  if (!known && isExcludedAd(username, p.ownerFullName, caption, undefined)) return null;
+  // 등록 클리닉이면 무조건 clinic, 아니면 분류(병원/인플루언서/잡계정 제외)
+  const advertiserType = known
+    ? ("clinic" as const)
+    : classifyAdvertiser(username, p.ownerFullName, caption, undefined);
+  if (advertiserType === null) return null;
 
   const blob = `${p.ownerFullName ?? ""}\n${caption}`;
   const treatment = inferTreatment(blob);
@@ -134,6 +137,7 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
     area,
     treatment,
     treatmentSure: Boolean(confident),
+    advertiserType,
     headline: clip(headline || "韓国美容ケア", 30),
     sub: clip(sub || "", 28),
     caption: (caption || "").slice(0, 200),
@@ -215,6 +219,7 @@ async function applyOrganicGate(ads: Ad[]): Promise<Ad[]> {
   const needVerify: Ad[] = [];
   for (const a of ads) {
     if (
+      a.advertiserType === "influencer" || // 인플루언서 라벨은 게이트 비대상(당연히 병원 아님)
       a.featured ||
       hasClinicSignal(a.clinic) ||
       hasClinicSignal(a.igUsername) ||

@@ -65,6 +65,7 @@ export function AdCard({
             clinicName={tClinic(ad.clinic, ad.igUsername)}
             treatmentLabel={sureTreatment ? tTreatment(sureTreatment) : ""}
             lang={ad.lang}
+            badge={ad.advertiserType === "influencer" ? t("influencer") : undefined}
             imageUrl={ad.imageUrl}
             kind={ad.kind}
           />

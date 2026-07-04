@@ -6,6 +6,7 @@
 //  - (추후) 2단계 인스타 조회수 수집의 시드로 사용
 
 import { Area } from "./ads";
+import { classifyTreatment } from "./treatments";
 
 export interface KnownClinic {
   name: string;
@@ -187,9 +188,6 @@ const NON_CLINIC_SIGNALS = [
   "팩트", "코스메틱", "cosmetic", "스킨케어세트", "기초세트", "본품", "구성", "용량",
   "더마코스메틱", "코스메슈티컬", "cosmeceutical", "마스크시트", "시트마스크",
   "리들샷", "홈케어디바이스", "뷰티디바이스", "홈뷰티", "패치세트",
-  // 인플루언서/제휴/블로그
-  "꿀팁", "뷰티공간", "뷰티로그", "beautylog", "dailybeauty", "리뷰왕", "리뷰맨",
-  "내돈내산", "공구", "협찬", "정보 공유", "저장소", "연구소", "비결",
   // 마케팅 대행/미디어
   "마케팅", "상위노출", "대행", "미디어랩", "광고대행",
   // 여행/숙소
@@ -207,14 +205,27 @@ const MEDICAL_CATEGORIES = [
   "dermatolog", "surgeon", "plastic surgeon", "clinic",
   "의료", "병원", "의원", "피부과", "성형외과", "医療", "醫療", "皮膚科", "病院",
 ];
-const NON_CLINIC_CATEGORIES = [
+// 인플루언서(개인 크리에이터) 카테고리 — 시술 관련이면 제외 대신 "influencer" 로 분류
+const INFLUENCER_CATEGORIES = [
   "blogger", "personal blog", "blog", "video creator", "digital creator", "influencer",
+  "makeup artist", "public figure", "artist",
+  "블로그", "크리에이터",
+];
+
+// 인플루언서 텍스트 신호 (협찬·체험단 표기, 뷰티로그 계열)
+const INFLUENCER_SIGNALS = [
+  "협찬", "유료광고", "광고포함", "체험단", "제공받", "내돈내산", "공구",
+  "뷰티로그", "beautylog", "dailybeauty", "리뷰왕", "리뷰맨", "꿀팁", "비결",
+  "#ad", "#pr", "sponsored",
+];
+
+const NON_CLINIC_CATEGORIES = [
   "marketing agency", "advertising", "media", "product/service", "shopping",
   "retail", "e-commerce", "cosmetics", "health/beauty store", "travel",
   "personal goods", "brand", "clothing",
   "beauty, cosmetic & personal care", "beauty supply store", "cosmetics store",
-  "makeup artist", "perfume",
-  "블로그", "쇼핑", "마케팅", "화장품", "여행", "크리에이터",
+  "perfume",
+  "쇼핑", "마케팅", "화장품", "여행",
 ];
 
 function categoryMatch(cat: string | undefined, list: string[]): boolean {
@@ -236,23 +247,53 @@ export function isMedicalCategory(pageCategory?: string): boolean {
 }
 
 /** 광고를 피드에서 제외할지 (true = 제외). pageCategory(있으면) 우선. */
+export type AdvertiserType = "clinic" | "influencer";
+
+/**
+ * 광고주 분류 — 병원(clinic) / 인플루언서(influencer) / 제외(null).
+ * 기존엔 인플루언서를 잡광고와 함께 버렸지만, 시술 관련 인플루언서 광고는
+ * "어떤 병원이 누구에게 협찬을 도는지" 볼 수 있는 별도 데이터라 라벨로 보존한다.
+ *  - clinic: 허용 클리닉 / 의료 카테고리 / 클리닉 텍스트 신호 / 애매(기존 동작 유지)
+ *  - influencer: 크리에이터·블로거 카테고리 또는 협찬 신호 + "시술 관련"일 때만
+ *    (시술 키워드나 클리닉 언급이 없으면 그냥 잡광고 → 제외)
+ *  - null(제외): 차단목록, 제품·화장품·대행사·여행 등
+ */
+export function classifyAdvertiser(
+  igUsername?: string,
+  name?: string,
+  text?: string,
+  pageCategory?: string
+): AdvertiserType | null {
+  const id = `${igUsername ?? ""} ${name ?? ""}`.toLowerCase();
+  if (ALLOW_PARTS.some((p) => id.includes(p))) return "clinic"; // 허용 클리닉
+  if (isBlockedAdvertiser(igUsername, name)) return null; // 차단목록 → 제외
+
+  const t = `${name ?? ""} ${text ?? ""}`.toLowerCase();
+  const treatmentRelated =
+    classifyTreatment(t) !== null || CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+  const influencerText = INFLUENCER_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+
+  // ① Meta 카테고리 (가장 정확)
+  if (categoryMatch(pageCategory, MEDICAL_CATEGORIES)) return "clinic";
+  if (categoryMatch(pageCategory, INFLUENCER_CATEGORIES)) {
+    return treatmentRelated ? "influencer" : null;
+  }
+  if (categoryMatch(pageCategory, NON_CLINIC_CATEGORIES)) return null;
+
+  // ② 텍스트 신호 (카테고리가 없거나 'Health/beauty'처럼 애매할 때)
+  //    협찬 신호가 있으면 클리닉 신호보다 우선 — 병원을 언급하는 협찬글이 clinic 으로 새지 않게
+  if (influencerText) return treatmentRelated ? "influencer" : null;
+  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return "clinic";
+  if (NON_CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return null;
+  return "clinic"; // 애매 → 유지 (기존 동작과 동일, 이후 의료 게이트가 한 번 더 거름)
+}
+
+/** 광고를 피드에서 제외할지 (true = 제외) — classifyAdvertiser 의 하위호환 래퍼 */
 export function isExcludedAd(
   igUsername?: string,
   name?: string,
   text?: string,
   pageCategory?: string
 ): boolean {
-  const id = `${igUsername ?? ""} ${name ?? ""}`.toLowerCase();
-  if (ALLOW_PARTS.some((p) => id.includes(p))) return false; // 허용 클리닉 → 유지
-  if (isBlockedAdvertiser(igUsername, name)) return true; // 차단목록 → 제외
-
-  // ① Meta 카테고리 (가장 정확)
-  if (categoryMatch(pageCategory, MEDICAL_CATEGORIES)) return false; // 의료 → 유지
-  if (categoryMatch(pageCategory, NON_CLINIC_CATEGORIES)) return true; // 비클리닉 → 제외
-
-  // ② 텍스트 신호 (카테고리가 없거나 'Health/beauty'처럼 애매할 때)
-  const t = `${name ?? ""} ${text ?? ""}`.toLowerCase();
-  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return false; // 클리닉 신호 → 유지
-  if (NON_CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return true; // 잡광고 → 제외
-  return false; // 애매 → 유지
+  return classifyAdvertiser(igUsername, name, text, pageCategory) === null;
 }

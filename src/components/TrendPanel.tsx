@@ -153,8 +153,10 @@ export function TrendPanel({
     return `${y}.${m}.${day} ${tt("collectedSuffix")}`;
   })();
   // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
+  // advertiserType 라벨(신규 수집분)이 있으면 우선 — 트렌드 지표는 병원 기준 고정
   const isLikelyClinic = (a: Ad) =>
-    a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername);
+    a.advertiserType !== "influencer" &&
+    (a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername));
   const [now] = useState(() => Date.now());
   // 최근 7일(게시물 날짜/광고 시작일 기준) — 90일 누적 스냅샷 전체로 랭킹하면
   // 항상 같은 클리닉·게시물이 고정되므로, TOP 지표는 최신 7일만 본다.
@@ -190,9 +192,9 @@ export function TrendPanel({
       }).length,
     [ads, now]
   );
-  // 최근 7일 전체(클리닉 필터 없이) — 인기 시술·콘텐츠 유형 분포용
+  // 최근 7일, 병원만 — 인기 시술·콘텐츠 유형 분포용 (인플루언서 협찬글이 트렌드를 왜곡하지 않게)
   const ads7 = useMemo(
-    () => ads.filter(within7d),
+    () => ads.filter((a) => within7d(a) && a.advertiserType !== "influencer"),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ads, now]
   );

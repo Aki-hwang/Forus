@@ -4,19 +4,20 @@ import { Area, AREAS } from "@/lib/ads";
 import { useUiLang } from "@/lib/i18n";
 
 export type SortKey = "trending" | "views" | "followers" | "recent" | "activeDays";
-export type KindKey = "전체" | "ad" | "organic";
+/** 광고주 유형 필터 — 병원/인플루언서 (구 유료/무료 필터 대체) */
+export type AdvKey = "전체" | "clinic" | "influencer";
 
-type TKey = "all" | "paid" | "free" | "sortTrending" | "sortRecent" | "sortViews" | "sortFollowers";
+type TKey = "all" | "clinicTab" | "influencer" | "sortTrending" | "sortRecent" | "sortViews" | "sortFollowers";
 const SORTS: [SortKey, TKey][] = [
   ["trending", "sortTrending"],
   ["recent", "sortRecent"],
   ["views", "sortViews"],
   ["followers", "sortFollowers"],
 ];
-const KINDS: [KindKey, TKey][] = [
+const ADVS: [AdvKey, TKey][] = [
   ["전체", "all"],
-  ["ad", "paid"],
-  ["organic", "free"],
+  ["clinic", "clinicTab"],
+  ["influencer", "influencer"],
 ];
 
 export function FilterBar({
@@ -24,16 +25,16 @@ export function FilterBar({
   onArea,
   sort,
   onSort,
-  kind,
-  onKind,
+  adv,
+  onAdv,
   resultCount,
 }: {
   area: Area | "전체";
   onArea: (a: Area | "전체") => void;
   sort: SortKey;
   onSort: (s: SortKey) => void;
-  kind: KindKey;
-  onKind: (k: KindKey) => void;
+  adv: AdvKey;
+  onAdv: (k: AdvKey) => void;
   resultCount: number;
 }) {
   const { t, tArea } = useUiLang();
@@ -57,12 +58,12 @@ export function FilterBar({
         </div>
 
         <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface p-1">
-          {KINDS.map(([key, lk]) => (
+          {ADVS.map(([key, lk]) => (
             <button
               key={key}
-              onClick={() => onKind(key)}
+              onClick={() => onAdv(key)}
               className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[13px] font-bold transition ${
-                kind === key ? "bg-accent/15 text-foreground shadow-sm" : "text-muted hover:text-foreground"
+                adv === key ? "bg-accent/15 text-foreground shadow-sm" : "text-muted hover:text-foreground"
               }`}
             >
               {t(lk)}
