@@ -282,7 +282,7 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
-          <p className="mb-3 text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
           <div className="space-y-2.5">
             {trends.byArea.map((a) => (
               <Bar key={a.area} label={tArea(a.area)} count={a.count} max={maxArea} />
