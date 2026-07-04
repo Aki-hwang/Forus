@@ -2,7 +2,7 @@
 
 import { Ad } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
-import { confidentTreatment } from "@/lib/treatments";
+import { confidentTreatment, displayHashtags } from "@/lib/treatments";
 import { useUiLang } from "@/lib/i18n";
 
 function fmt(n: number): string {
@@ -114,7 +114,7 @@ export function AdCard({
           </span>
         </div>
         <div className="flex gap-1 overflow-hidden">
-          {(ad.hashtags && ad.hashtags.length ? ad.hashtags : ad.tags.map((t) => `#${t}`))
+          {displayHashtags(ad)
             .slice(0, 3)
             .map((t) => (
               <span

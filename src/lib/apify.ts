@@ -91,9 +91,12 @@ export function inferLang(text: string, hint?: "jp" | "kr" | "cn"): Lang {
   return hint === "cn" ? "CN" : "JP";
 }
 
-export function extractHashtags(text: string, treatment: TreatmentKey): string[] {
+/** 해시태그 추출 — 부족하면(3개 미만) 시술 파생 태그로 보충.
+ *  treatment 는 "확신 분류"만 받는다(null=미분류). 미분류에 기본값 태그(#물광 등)를
+ *  채우면 원본에 없던 시술이 있는 것처럼 보이므로, 실제 태그만 그대로 둔다. */
+export function extractHashtags(text: string, treatment: TreatmentKey | null): string[] {
   const found = (text.match(/#[^\s#.,!?，。！？]+/g) ?? []).slice(0, 6);
-  if (found.length >= 3) return Array.from(new Set(found)).slice(0, 5);
+  if (found.length >= 3 || !treatment) return Array.from(new Set(found)).slice(0, 5);
   const fallback = ["#韓国美容", ...TAGS_BY_TREATMENT[treatment].map((t) => `#${t}`)];
   return Array.from(new Set([...found, ...fallback])).slice(0, 5);
 }
@@ -210,6 +213,8 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
 
   const blob = `${title}\n${body}`;
   const treatment = inferTreatment(blob);
+  // 파생 태그 보충용 확신 분류(미분류=null) — treatment 는 미분류 시 기본값이라 못 쓴다
+  const confident = classifyTreatment(blob);
   const style = inferStyle(blob);
   const lang = inferLang(blob, langHint);
 
@@ -271,7 +276,7 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
     headline,
     sub,
     caption: (body || title).slice(0, 200),
-    hashtags: extractHashtags(body, treatment),
+    hashtags: extractHashtags(body, confident),
     tags: TAGS_BY_TREATMENT[treatment],
     style,
     palette: PALETTE_BY_TREATMENT[treatment],

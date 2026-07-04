@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Ad, Lang, TreatmentKey, TrendSummary } from "@/lib/ads";
-import { classifyTreatment } from "@/lib/treatments";
+import { classifyTreatment, displayHashtags } from "@/lib/treatments";
 import { useUiLang } from "@/lib/i18n";
 import { hasClinicSignal } from "@/lib/clinics";
 
@@ -224,7 +224,8 @@ export function TrendPanel({
   const kwCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of keywordAds) {
-      for (const h of a.hashtags ?? []) {
+      // displayHashtags: 미분류 게시물에 주입된 파생 태그(#물광 등)를 집계에서 제외
+      for (const h of displayHashtags(a)) {
         const k = h.trim();
         if (!k) continue;
         if (kwLang !== "전체") {

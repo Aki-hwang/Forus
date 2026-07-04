@@ -18,6 +18,7 @@
 //   ORGANIC_HASHTAGS           (선택) 쉼표구분 커스텀 해시태그(#·공백 제거 자동). 주면 내장 목록 대체.
 
 import { Ad, Area } from "./ads";
+import { classifyTreatment } from "./treatments";
 import { KNOWN_CLINICS, findClinicByHandle, isExcludedAd, hasClinicSignal } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 import { readApprovedClinics } from "./snapshot";
@@ -114,6 +115,8 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
 
   const blob = `${p.ownerFullName ?? ""}\n${caption}`;
   const treatment = inferTreatment(blob);
+  // 파생 태그 보충용 확신 분류(미분류=null) — treatment 는 미분류 시 기본값이라 못 쓴다
+  const confident = classifyTreatment(blob);
   const style = inferStyle(blob);
   const lang = inferLang(blob);
   const area: Area =
@@ -133,7 +136,7 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
     headline: clip(headline || "韓国美容ケア", 30),
     sub: clip(sub || "", 28),
     caption: (caption || "").slice(0, 200),
-    hashtags: extractHashtags(caption, treatment),
+    hashtags: extractHashtags(caption, confident),
     tags: TAGS_BY_TREATMENT[treatment],
     style,
     palette: PALETTE_BY_TREATMENT[treatment],
