@@ -38,9 +38,10 @@ export function Header({ onReset }: { onReset?: () => void }) {
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 모바일에서도 항상 표시 — 소비자 가이드는 핵심 진입점이라 숨기지 않는다 */}
           <Link
             href={guideHref}
-            className="hidden whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-[12px] font-bold text-foreground transition hover:bg-background sm:block sm:px-3.5 sm:text-[13px]"
+            className="whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-[12px] font-bold text-foreground transition hover:bg-background sm:px-3.5 sm:text-[13px]"
           >
             {t("consumerGuide")}
           </Link>
