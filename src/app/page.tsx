@@ -13,6 +13,7 @@ import { AdminGate } from "@/components/AdminGate";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
+import { dayNumber, dailyJitter, DAILY_QUALITY_WEIGHT } from "@/lib/dailyOrder";
 
 type Source = "sample" | "apify";
 
@@ -164,7 +165,7 @@ export default function Home() {
     // 썸네일 유무 — 일부 광고는 Meta가 크리에이티브 이미지를 안 줘 색배경 폴백으로 뜬다.
     // 인기 정렬에서 같은 최근그룹이면 이미지 있는 카드를 먼저 보여 첫 화면이 비주얼로 차게 한다.
     const hasImg = (a: Ad) => Boolean(a.imageUrl);
-    // 인기(trending): 최근 7일(달력일 기준) 게시물 우선 → 그 안/밖 각각 조회수순. 매일 자정 자동 재배치.
+    // 인기(trending): 최근 7일(달력일 기준) 게시물 우선 → 이미지 우선 → 그 안에서 "일별 셔플".
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const cutoff = todayStart.getTime() - 7 * 86_400_000;
@@ -172,16 +173,25 @@ export default function Home() {
       const ts = new Date((a.date ?? "").replace(" ", "T")).getTime();
       return !Number.isNaN(ts) && ts >= cutoff;
     };
+    // 일별 셔플 점수: 조회수 순위(quality) + 그날 지터를 blend. 인기 카드는 위에 남되
+    // 배치가 매일 회전한다. 하루 안에선 결정적(새로고침 안정), 로컬 자정마다 시드 변경.
+    const day = dayNumber();
+    const qRank = new Map<string, number>();
+    [...list].sort((a, b) => reach(b) - reach(a)).forEach((a, i) => qRank.set(a.id, i));
+    const n = list.length || 1;
+    const dailyScore = (a: Ad) =>
+      (qRank.get(a.id) ?? 0) * DAILY_QUALITY_WEIGHT +
+      dailyJitter(a.id, day) * n * (1 - DAILY_QUALITY_WEIGHT); // 낮을수록 앞
     const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
       trending: (a, b) => {
         const ra = isRecent(a);
         const rb = isRecent(b);
         if (ra !== rb) return ra ? -1 : 1;
-        // 같은 최근그룹: 이미지 있는 카드 우선(색배경 폴백을 뒤로) → 그다음 조회수순
+        // 같은 최근그룹: 이미지 있는 카드 우선(색배경 폴백을 뒤로) → 그다음 일별 셔플 점수
         const ia = hasImg(a);
         const ib = hasImg(b);
         if (ia !== ib) return ia ? -1 : 1;
-        return reach(b) - reach(a);
+        return dailyScore(a) - dailyScore(b);
       },
       views: byViews,
       followers: (a, b) => b.likes - a.likes,
