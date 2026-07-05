@@ -9,6 +9,7 @@ const LOCALE_LABEL: Record<ConsumerLocale, string> = {
   ko: "🇰🇷 한국어",
   jp: "🇯🇵 日本語",
   en: "🇬🇧 EN",
+  tw: "🇹🇼 繁體",
 };
 
 export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
