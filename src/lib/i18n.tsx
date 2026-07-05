@@ -44,7 +44,7 @@ const STRINGS: Record<string, Str> = {
   free: S("무료", "無料", "免费", "Free"),
   // 광고주 유형 필터·배지 (구 유료/무료 필터 대체 — 유료/무료는 카드 칩으로만 표시)
   clinicTab: S("병원", "クリニック", "医院", "Clinics"),
-  influencer: S("인플루언서", "インフルエンサー", "达人", "Influencer"),
+  influencer: S("시술후기", "施術レビュー", "体验分享", "Reviews"),
   sortTrending: S("인기", "人気", "热门", "Trending"),
   sortRecent: S("최신순", "新着順", "最新", "Latest"),
   sortViews: S("조회수순", "再生数順", "播放量", "Views"),
