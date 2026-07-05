@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { ConsumerLocale, CONSUMER_UI } from "@/lib/consumer";
-import { TopLink } from "./TopLink";
+import { SectionLink } from "./SectionLink";
 
 /** 반대 로케일 (헤더의 언어 전환 링크용) */
 const OTHER: Record<ConsumerLocale, { locale: ConsumerLocale; label: string }> = {
@@ -26,24 +26,24 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
             DermaRadar
           </p>
         </Link>
-        {/* 시술/지역 메뉴는 섹션 앵커(#treatments·#areas) 대신 가이드 홈 맨 위로 —
-            앵커 점프(특히 지역 섹션은 페이지 중간)가 새로고침처럼 상단으로 가길 기대하는
-            사용자에게 어색해서. 두 섹션 모두 첫 화면 바로 아래라 접근성은 동일. */}
-        {/* 모바일: 한 줄 유지(nowrap) + 넘치면 가로 스와이프 — 로고와 겹침/줄꺾임 방지.
-            데스크톱(sm+)은 대시보드 헤더 버튼과 같은 크기(13px, px-3 py-2). */}
+        {/* 시술로/지역으로 찾기 → 해당 섹션으로 "부드럽게" 스크롤(SectionLink).
+            같은 랜딩이면 smooth scroll(scroll-mt-20 이 sticky 헤더 보정), 하위 페이지면 랜딩+해시로 이동.
+            모바일: 한 줄 유지(nowrap)+가로 스와이프, 데스크톱은 대시보드 버튼과 같은 13px. */}
         <nav className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto text-[12px] font-bold sm:gap-2 sm:text-[13px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <TopLink
-            href={`/${locale}`}
+          <SectionLink
+            base={`/${locale}`}
+            hash="treatments"
             className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             {ui.navTreatments}
-          </TopLink>
-          <TopLink
-            href={`/${locale}`}
+          </SectionLink>
+          <SectionLink
+            base={`/${locale}`}
+            hash="areas"
             className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             {ui.navAreas}
-          </TopLink>
+          </SectionLink>
           <Link
             href={`/${other.locale}`}
             className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
