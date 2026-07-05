@@ -21,12 +21,10 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="DermaRadar" className="h-7 w-7" />
-          <div className="leading-tight">
-            <p className="text-[19px] font-black tracking-tight text-foreground sm:text-[22px]">
-              DermaRadar
-            </p>
-            <p className="text-[10.5px] font-bold text-muted">{ui.brandTag}</p>
-          </div>
+          {/* 대시보드 헤더와 통일 — 같은 크기, 부제('피부과 시술 가이드')는 제거 */}
+          <p className="text-[20px] font-black tracking-tight text-foreground sm:text-[24px]">
+            DermaRadar
+          </p>
         </Link>
         {/* 시술/지역 메뉴는 섹션 앵커(#treatments·#areas) 대신 가이드 홈 맨 위로 —
             앵커 점프(특히 지역 섹션은 페이지 중간)가 새로고침처럼 상단으로 가길 기대하는
