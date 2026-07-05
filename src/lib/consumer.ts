@@ -14,11 +14,11 @@ import { confidentTreatment } from "./treatments";
 import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
 import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
 
-export type ConsumerLocale = "jp" | "ko" | "en";
-export const CONSUMER_LOCALES: ConsumerLocale[] = ["jp", "ko", "en"];
+export type ConsumerLocale = "jp" | "ko" | "en" | "tw";
+export const CONSUMER_LOCALES: ConsumerLocale[] = ["jp", "ko", "en", "tw"];
 
-/** Ad.lang 매핑 — 로케일별로 보여줄 콘텐츠 언어 */
-const CONTENT_LANG: Record<ConsumerLocale, Ad["lang"]> = { jp: "JP", ko: "KR", en: "EN" };
+/** Ad.lang 매핑 — 로케일별로 보여줄 콘텐츠 언어 (tw=번체는 우리 분류상 CN 버킷) */
+const CONTENT_LANG: Record<ConsumerLocale, Ad["lang"]> = { jp: "JP", ko: "KR", en: "EN", tw: "CN" };
 
 // ---------- 시술 가이드 (슬러그는 로케일 공통 → hreflang 짝 유지) ----------
 // 효능 보장·최상급 표현 금지(의료광고 규제) — 일반 정보 + 개인차 고지로만 구성.
@@ -255,10 +255,85 @@ const TREATMENT_GUIDES_EN: TreatmentGuide[] = [
   },
 ];
 
+// 번체 중국어(대만·홍콩 방문자) — 효능 보장·최상급 표현 없이 정보성으로만.
+const TREATMENT_GUIDES_TW: TreatmentGuide[] = [
+  {
+    key: "물광주사",
+    slug: "water-glow",
+    name: "水光注射",
+    alt: "皮膚保濕針 · 玻尿酸微針",
+    desc: "將玻尿酸等保濕成分細密注入皮膚淺層，由內帶出水潤與光澤感的護理。是韓國美容的經典項目，也是外國旅客最受歡迎的施術之一。",
+    time: "約30〜60分鐘（含諮詢與麻醉藥膏）",
+    downtime: "施術後可能出現泛紅或小凸點（數小時〜數天，因人而異）",
+    tip: "多數人會把觀光行程安排在隔天以後。與回程航班的間隔請依診所建議。",
+  },
+  {
+    key: "리프팅",
+    slug: "lifting",
+    name: "拉提",
+    alt: "音波 · Shurink · HIFU",
+    desc: "以超音波（HIFU）或電波緊緻臉部線條的拉提類項目。韓國的儀器種類與選擇相當豐富。",
+    time: "約30〜90分鐘（依部位與儀器而定）",
+    downtime: "幾乎沒有〜數天的泛紅、腫脹（因人而異）",
+    tip: "多數項目恢復期短，旅途中也較容易安排。",
+  },
+  {
+    key: "보톡스",
+    slug: "botox",
+    name: "肉毒",
+    alt: "國字臉 · 皺紋肉毒",
+    desc: "針對國字臉、額頭、眼周等在意部位定點注射的經典項目。施術時間短，旅行空檔也方便進行。",
+    time: "約10〜20分鐘",
+    downtime: "幾乎沒有（注射部位可能有輕微泛紅）",
+    tip: "所需時間短，容易安排進觀光行程。",
+  },
+  {
+    key: "필러",
+    slug: "filler",
+    name: "填充",
+    alt: "唇部 · 下巴 · 法令紋填充",
+    desc: "以玻尿酸調整唇部、下巴、法令紋等的體積與輪廓。設計諮詢很重要，選擇有外語對應的診所較安心。",
+    time: "約15〜30分鐘",
+    downtime: "數天內可能出現腫脹或瘀青（因人而異）",
+    tip: "可能出現腫脹，建議在回國前預留幾天緩衝時間。",
+  },
+  {
+    key: "미백토닝",
+    slug: "toning",
+    name: "美白 · 雷射調理",
+    alt: "斑點 · 色素護理",
+    desc: "以雷射處理斑點、暗沉與膚色不均的護理。可單次進行，但原本多以多次療程為前提。",
+    time: "約20〜40分鐘",
+    downtime: "幾乎沒有（施術後可能出現輕微泛紅）",
+    tip: "恢復期短，是回國前一天也方便進行的人氣項目。",
+  },
+  {
+    key: "모공여드름",
+    slug: "pore-acne",
+    name: "毛孔 · 痘痘護理",
+    alt: "毛孔收縮 · 痘疤護理",
+    desc: "以儀器或藥劑處理毛孔粗大、黑頭與痘疤的類別。項目範圍廣，通常會在諮詢時依膚況給予建議。",
+    time: "依項目而定",
+    downtime: "依項目而定（換膚類可能出現泛紅、脫皮）",
+    tip: "此類別恢復期落差大，請告知旅行行程再諮詢。",
+  },
+  {
+    key: "스킨부스터",
+    slug: "skin-booster",
+    name: "皮膚基底護理",
+    alt: "Rejuran · Juvelook",
+    desc: "如Rejuran、Juvelook等，以改善膚質本身為目標的注射護理。與水光注射並列，是在韓國常見的代表項目。",
+    time: "約30〜60分鐘",
+    downtime: "數天內注射部位可能留有泛紅或小凸點（因人而異）",
+    tip: "施術後可能看到細小注射痕跡，許多人會安排在旅程前半。",
+  },
+];
+
 export const TREATMENT_GUIDES: Record<ConsumerLocale, TreatmentGuide[]> = {
   jp: TREATMENT_GUIDES_JP,
   ko: TREATMENT_GUIDES_KO,
   en: TREATMENT_GUIDES_EN,
+  tw: TREATMENT_GUIDES_TW,
 };
 
 export function guideBySlug(locale: ConsumerLocale, slug: string): TreatmentGuide | undefined {
@@ -361,10 +436,38 @@ const AREA_GUIDES_EN: AreaGuide[] = [
   },
 ];
 
+const AREA_GUIDES_TW: AreaGuide[] = [
+  {
+    key: "강남",
+    slug: "gangnam",
+    name: "江南",
+    sub: "含狎鷗亭 · 新沙",
+    desc: "韓國美容診所最密集的一級戰區。包含狎鷗亭、新沙一帶，專科診所高度集中。",
+    access: "地鐵2號線・新盆唐線 江南站等。從金浦機場搭地鐵約40〜50分鐘。",
+  },
+  {
+    key: "명동",
+    slug: "myeongdong",
+    name: "明洞",
+    sub: "含乙支路",
+    desc: "觀光與購物的中心，順道前往很方便。有外語對應的診所特別集中於此。",
+    access: "地鐵4號線 明洞站・2號線 乙支路入口站。從金浦機場搭地鐵約40分鐘。",
+  },
+  {
+    key: "홍대",
+    slug: "hongdae",
+    name: "弘大",
+    sub: "含合井 · 延南",
+    desc: "年輕文化的中心地帶。適合結合咖啡廳巡禮的旅客，新診所也持續增加。",
+    access: "機場鐵路A'REX 弘大入口站 — 從金浦、仁川機場皆可直達免轉乘。",
+  },
+];
+
 export const AREA_GUIDES: Record<ConsumerLocale, AreaGuide[]> = {
   jp: AREA_GUIDES_JP,
   ko: AREA_GUIDES_KO,
   en: AREA_GUIDES_EN,
+  tw: AREA_GUIDES_TW,
 };
 
 export function areaBySlug(locale: ConsumerLocale, slug: string): AreaGuide | undefined {
@@ -697,6 +800,94 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
         `Looking to get ${g.name} (${g.alt}) in ${a.name}? See foreign-friendly clinics with real popular Instagram posts, plus access, time, and downtime info.`,
     },
   },
+  tw: {
+    htmlLang: "zh-Hant",
+    brandTag: "韓國皮膚科指南",
+    navTreatments: "依項目尋找",
+    navAreas: "依地區尋找",
+    navOwner: "診所經營者專用",
+    heroPre: "選韓國皮膚科診所，",
+    heroHi: "用數據來挑",
+    heroDesc:
+      "每週收集江南・明洞・弘大診所實際發布的Instagram貼文。不是廣告，而是",
+    heroStrong: "「現在真正受歡迎的項目與診所」",
+    heroTail: "，為外國旅客打造的韓國皮膚科指南。",
+    secTreatments: "依項目尋找",
+    secAreas: "依地區尋找",
+    secTopPosts: "現在的人氣貼文",
+    topPostsHint: "真實Instagram貼文（點擊看原文）",
+    secPromos: "進行中的活動",
+    promosHint: "投放越久的廣告越是經典",
+    promoDay: (n) => `投放第${n}天的活動`,
+    recentPosts: (n) => `近期貼文 ${n} 則`,
+    breadcrumbRoot: "韓國皮膚科指南",
+    titleTreatmentPre: "在韓國做",
+    titleTreatmentPost: "，該去哪裡",
+    statLine: (c, p) => `近90天，收集 ${c} 家診所・${p} 則貼文`,
+    statLineArea: (p, t) => `近90天，此地區收集 ${p} 則${t}相關貼文`,
+    infoTime: "⏱ 所需時間參考",
+    infoDowntime: "🩹 恢復期",
+    infoTip: "✈️ 旅客備註",
+    secByArea: "依地區查看",
+    areaTreatmentLink: (a, t) => `在${a}做${t}`,
+    postsOf: (t) => `${t}的人氣貼文`,
+    postsOfArea: (a, t) => `${a}的${t}人氣貼文`,
+    clinicsPosting: (t) => `發布${t}的診所`,
+    clinicsOfArea: (a) => `${a}的診所`,
+    otherTreatments: "查看其他項目",
+    otherAreasFor: (t) => `其他地區的${t}`,
+    otherTreatmentsIn: (a) => `${a}的其他項目`,
+    secFaq: "常見問題",
+    faq: [
+      {
+        q: "要如何預約？",
+        a: "許多診所以Instagram私訊或LINE受理諮詢。一般是透過各診所Instagram個人檔案上的聯絡方式，告知希望的日期與項目來預約。",
+      },
+      {
+        q: "可以用中文嗎？",
+        a: "各診所對應狀況不同。本指南收錄的診所多半具備一定的外語支援（英文人員、或日文・LINE對應）。請於預約時確認。",
+      },
+      {
+        q: "付款方式？",
+        a: "多數診所可使用信用卡，部分提供現金（韓元）折扣。詳情請向各診所洽詢。",
+      },
+      {
+        q: "旅行中施術沒問題嗎？",
+        a: "恢復期（泛紅、腫脹等）依項目而異。建議先告知回程航班與觀光行程，於諮詢時討論後再決定。",
+      },
+      {
+        q: "可以當天預約嗎？",
+        a: "若有空檔，部分診所可當天預約；但人氣診所建議提前數天預約，週末尤其擁擠。",
+      },
+    ],
+    badge: { jp: "日文對應", line: "LINE諮詢", multi: "多語對應" },
+    clinicPostCount: (n) => `近90天貼文 ${n} 則`,
+    gimpo: {
+      tag: "機場周邊推薦",
+      title: "金浦機場周邊的選擇 — YOU&I 金浦",
+      body: "若從金浦機場進出，金浦一側的診所也很方便。可避開首爾市中心的擁擠，善用航班前後的時間。皮膚科網絡YOU&I的金浦分院以Instagram受理諮詢。",
+      cta: "透過 @youandi_gimpo_jp 諮詢 →",
+      href: "https://www.instagram.com/youandi_gimpo_jp/",
+    },
+    showPromosOnLanding: false,
+    disclaimer:
+      "本頁面僅以公開資訊為基礎提供資訊，並非對特定醫療行為進行招攬、安排或仲介。施術效果與恢復期因人而異。關於施術的判斷，請務必於醫療機構諮詢後再行決定。",
+    meta: {
+      layoutTitle: "韓國皮膚科指南 | DermaRadar",
+      layoutTemplate: "%s | DermaRadar 韓國皮膚科指南",
+      layoutDesc:
+        "以真實Instagram貼文數據，尋找江南・明洞・弘大皮膚科診所的旅客指南。介紹水光注射、拉提、肉毒等人氣項目。",
+      landingTitle: "韓國皮膚科指南 — 用數據找人氣項目與診所",
+      landingDesc:
+        "來韓國想看皮膚科？以江南・明洞・弘大診所的真實Instagram貼文數據，尋找水光注射、拉提、肉毒等人氣項目與外語友善診所。",
+      treatmentTitle: (g) => `在韓國做${g.name} — 各地區診所指南`,
+      treatmentDesc: (g) =>
+        `想在韓國做${g.name}（${g.alt}）？以數據介紹江南・明洞・弘大的外語友善診所與真實人氣Instagram貼文，並附所需時間・恢復期參考。`,
+      comboTitle: (g, a) => `在${a.name}（${a.sub}）做${g.name} — 診所與人氣貼文`,
+      comboDesc: (g, a) =>
+        `想在${a.name}做${g.name}（${g.alt}）？以數據介紹外語友善診所與真實人氣Instagram貼文，並附交通・所需時間・恢復期參考。`,
+    },
+  },
 };
 
 // ---------- 스냅샷 → 로케일별 게시물/광고 ----------
@@ -868,5 +1059,5 @@ export function treatmentCounts(data: ConsumerData): Map<TreatmentKey, number> {
 // ---------- hreflang 짝 (로케일 공통 슬러그 전제) ----------
 
 export function altLanguages(subPath: string): Record<string, string> {
-  return { ja: `/jp${subPath}`, ko: `/ko${subPath}`, en: `/en${subPath}` };
+  return { ja: `/jp${subPath}`, ko: `/ko${subPath}`, en: `/en${subPath}`, "zh-Hant": `/tw${subPath}` };
 }
