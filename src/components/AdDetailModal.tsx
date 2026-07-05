@@ -81,22 +81,31 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
             )}
           </div>
           {(() => {
-            // 항상 실제 게시물/원본으로 연결 (소스 우선, 없으면 광고 라이브러리)
-            const adLink = ad.sourceUrl ?? ad.adLibraryUrl;
-            const adLabel = "↗ 이 게시물 보기";
             const acctUrl = ad.igUsername
               ? `https://www.instagram.com/${ad.igUsername}/`
               : undefined;
+            // 게시물 permalink 판별 (프로필 URL 과 구분) — /p/ ·/reel/ ·/tv/
+            const isPost = (u?: string) => Boolean(u && /instagram\.com\/(p|reel|tv)\//.test(u));
+            // "원본 보기" 링크 — 계정 프로필은 제외(그건 아래 '인스타그램 보기'로 분리).
+            //  오가닉: 게시물 permalink(sourceUrl). 광고: Meta 광고 라이브러리(단일 IG 게시물이 없음).
+            const contentUrl =
+              ad.kind === "organic"
+                ? isPost(ad.sourceUrl)
+                  ? ad.sourceUrl
+                  : undefined
+                : ad.adLibraryUrl ?? (isPost(ad.sourceUrl) ? ad.sourceUrl : undefined);
+            const contentLabel = ad.kind === "organic" ? "↗ 이 게시물 보기" : "↗ 광고 원본 보기";
+            const showContent = Boolean(contentUrl && contentUrl !== acctUrl);
             return (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
-                {adLink ? (
+                {showContent ? (
                   <a
-                    href={adLink}
+                    href={contentUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[12px] font-bold text-primary-ink hover:underline"
                   >
-                    {adLabel}
+                    {contentLabel}
                   </a>
                 ) : null}
                 {acctUrl ? (

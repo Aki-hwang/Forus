@@ -3,7 +3,6 @@
 
 import Link from "next/link";
 import { ConsumerLocale, CONSUMER_UI } from "@/lib/consumer";
-import { SectionLink } from "./SectionLink";
 
 /** 반대 로케일 (헤더의 언어 전환 링크용) */
 const OTHER: Record<ConsumerLocale, { locale: ConsumerLocale; label: string }> = {
@@ -26,24 +25,9 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
             DermaRadar
           </p>
         </Link>
-        {/* 시술로/지역으로 찾기 → 해당 섹션으로 "부드럽게" 스크롤(SectionLink).
-            같은 랜딩이면 smooth scroll(scroll-mt-20 이 sticky 헤더 보정), 하위 페이지면 랜딩+해시로 이동.
-            모바일: 한 줄 유지(nowrap)+가로 스와이프, 데스크톱은 대시보드 버튼과 같은 13px. */}
-        <nav className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto text-[12px] font-bold sm:gap-2 sm:text-[13px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <SectionLink
-            base={`/${locale}`}
-            hash="treatments"
-            className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
-          >
-            {ui.navTreatments}
-          </SectionLink>
-          <SectionLink
-            base={`/${locale}`}
-            hash="areas"
-            className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
-          >
-            {ui.navAreas}
-          </SectionLink>
+        {/* 시술로/지역으로 찾기 섹션 앵커는 제거 — 같은 랜딩의 바로 아래 섹션이라 가치가 낮고
+            모바일에서 nav 가 넘쳐 홈 아이콘이 잘리던 원인. 헤더는 언어전환 + 홈만 남겨 정리. */}
+        <nav className="flex shrink-0 items-center gap-1.5 text-[12px] font-bold sm:gap-2 sm:text-[13px]">
           <Link
             href={`/${other.locale}`}
             className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
