@@ -18,33 +18,35 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-5">
         {/* 로고 → 서비스 메인(대시보드). 가이드 홈은 우측 내비로 이동 */}
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="DermaRadar" className="h-7 w-7" />
+          <img src="/logo.svg" alt="DermaRadar" className="h-6 w-6 sm:h-7 sm:w-7" />
           {/* 대시보드 헤더와 통일 — 같은 크기, 부제('피부과 시술 가이드')는 제거 */}
-          <p className="text-[20px] font-black tracking-tight text-foreground sm:text-[24px]">
+          <p className="text-[18px] font-black tracking-tight text-foreground sm:text-[24px]">
             DermaRadar
           </p>
         </Link>
         {/* 시술/지역 메뉴는 섹션 앵커(#treatments·#areas) 대신 가이드 홈 맨 위로 —
             앵커 점프(특히 지역 섹션은 페이지 중간)가 새로고침처럼 상단으로 가길 기대하는
             사용자에게 어색해서. 두 섹션 모두 첫 화면 바로 아래라 접근성은 동일. */}
-        <nav className="flex items-center gap-1.5 text-[13px] font-bold sm:gap-2">
+        {/* 모바일: 한 줄 유지(nowrap) + 넘치면 가로 스와이프 — 로고와 겹침/줄꺾임 방지.
+            데스크톱(sm+)은 대시보드 헤더 버튼과 같은 크기(13px, px-3 py-2). */}
+        <nav className="flex min-w-0 max-w-full items-center gap-1 overflow-x-auto text-[12px] font-bold sm:gap-2 sm:text-[13px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <TopLink
             href={`/${locale}`}
-            className="rounded-lg px-3 py-2 text-muted transition hover:text-foreground"
+            className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             {ui.navTreatments}
           </TopLink>
           <TopLink
             href={`/${locale}`}
-            className="rounded-lg px-3 py-2 text-muted transition hover:text-foreground"
+            className="shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             {ui.navAreas}
           </TopLink>
           <Link
             href={`/${other.locale}`}
-            className="rounded-lg border border-border px-3 py-2 text-muted transition hover:text-foreground"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             {other.label}
           </Link>
@@ -53,7 +55,7 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
             href="/"
             title={ui.navOwner}
             aria-label={ui.navOwner}
-            className="rounded-lg border border-border px-3 py-2 text-muted transition hover:text-foreground"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
           >
             <svg
               width="15"

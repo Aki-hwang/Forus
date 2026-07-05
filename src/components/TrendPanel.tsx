@@ -132,12 +132,15 @@ export function TrendPanel({
   keywordAds,
   onSelectAd,
   collectedAt,
+  nowMs,
 }: {
   trends: TrendSummary;
   ads: Ad[];
   keywordAds: Ad[];
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
+  /** 기준 시각(SSR) — 서버·클라이언트가 같은 값으로 7일 창을 계산해 하이드레이션 불일치 방지 */
+  nowMs?: number;
 }) {
   const { t: tt, tArea, tContentType, tTreatment, tClinic, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
@@ -157,7 +160,7 @@ export function TrendPanel({
   const isLikelyClinic = (a: Ad) =>
     a.advertiserType !== "influencer" &&
     (a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername));
-  const [now] = useState(() => Date.now());
+  const [now] = useState(() => nowMs ?? Date.now());
   // 최근 7일(게시물 날짜/광고 시작일 기준) — 90일 누적 스냅샷 전체로 랭킹하면
   // 항상 같은 클리닉·게시물이 고정되므로, TOP 지표는 최신 7일만 본다.
   const within7d = (a: Ad) => {
