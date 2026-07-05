@@ -69,11 +69,11 @@ export function CreativeCard({
 
       {/* lang / treatment badge — 시술은 확신 분류일 때만(빈 문자열이면 숨김) */}
       <div className="absolute left-3 top-3 flex items-center gap-1.5">
-        <span className="rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-bold text-foreground shadow-sm">
+        <span className="rounded-full bg-white/85 px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
           {lang === "JP" ? "🇯🇵 日本語" : lang === "CN" ? "🇨🇳 中文" : lang === "EN" ? "🇬🇧 English" : "🇰🇷 한국어"}
         </span>
         {treatmentLabel ? (
-          <span className="rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+          <span className="rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur">
             {treatmentLabel}
           </span>
         ) : null}

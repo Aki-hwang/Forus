@@ -81,7 +81,7 @@ export function AdCard({
         <p className="truncate text-[13px] font-bold text-foreground">
           {tClinic(ad.clinic, ad.igUsername)}
         </p>
-        <div className="flex flex-wrap items-center gap-1 text-[11px] font-medium text-muted">
+        <div className="flex flex-wrap items-center gap-1 text-[12px] font-medium text-muted">
           <span className="whitespace-nowrap rounded-md bg-background px-1.5 py-0.5 font-bold leading-none">
             📍 {tArea(ad.area)}
           </span>
@@ -122,7 +122,7 @@ export function AdCard({
             .map((t) => (
               <span
                 key={t}
-                className="max-w-[33%] shrink-0 truncate whitespace-nowrap text-[11px] font-medium text-primary-ink"
+                className="max-w-[33%] shrink-0 truncate whitespace-nowrap text-[12px] font-medium text-primary-ink"
               >
                 {t}
               </span>
