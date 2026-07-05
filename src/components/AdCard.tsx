@@ -78,7 +78,7 @@ export function AdCard({
       </div>
 
       <div className="space-y-1.5 p-3">
-        <p className="truncate text-[13px] font-bold text-foreground">
+        <p className="truncate text-[15px] font-black text-foreground">
           {tClinic(ad.clinic, ad.igUsername)}
         </p>
         <div className="flex flex-wrap items-center gap-1 text-[12px] font-medium text-muted">
