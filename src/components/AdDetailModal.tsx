@@ -86,26 +86,20 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
               : undefined;
             // 게시물 permalink 판별 (프로필 URL 과 구분) — /p/ ·/reel/ ·/tv/
             const isPost = (u?: string) => Boolean(u && /instagram\.com\/(p|reel|tv)\//.test(u));
-            // "원본 보기" 링크 — 계정 프로필은 제외(그건 아래 '인스타그램 보기'로 분리).
-            //  오가닉: 게시물 permalink(sourceUrl). 광고: Meta 광고 라이브러리(단일 IG 게시물이 없음).
-            const contentUrl =
-              ad.kind === "organic"
-                ? isPost(ad.sourceUrl)
-                  ? ad.sourceUrl
-                  : undefined
-                : ad.adLibraryUrl ?? (isPost(ad.sourceUrl) ? ad.sourceUrl : undefined);
-            const contentLabel = ad.kind === "organic" ? "↗ 이 게시물 보기" : "↗ 광고 원본 보기";
-            const showContent = Boolean(contentUrl && contentUrl !== acctUrl);
+            // '이 게시물 보기'는 "실제 인스타 게시물 permalink" 가 있을 때만.
+            //  광고는 단일 IG 게시물이 없어(Meta 광고 시스템에만 존재) 링크를 숨기고 계정 링크만
+            //  둔다 — 계정·Meta 라이브러리 같은 엉뚱한 곳으로 보내지 않기 위함.
+            const postUrl = isPost(ad.sourceUrl) ? ad.sourceUrl : undefined;
             return (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
-                {showContent ? (
+                {postUrl ? (
                   <a
-                    href={contentUrl}
+                    href={postUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[12px] font-bold text-primary-ink hover:underline"
                   >
-                    {contentLabel}
+                    ↗ 이 게시물 보기
                   </a>
                 ) : null}
                 {acctUrl ? (
