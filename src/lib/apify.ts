@@ -138,9 +138,9 @@ function activeDays(start?: string, end?: string): number {
 }
 
 // 집행 일수 상한: 이 일수를 초과해 오래 돌고 있는 광고는 제외(최신 트렌드만 노출).
-// 시작일 미상(days=0)은 유지. 환경변수 MAX_ACTIVE_DAYS 로 조정 가능(기본 30).
+// 시작일 미상(days=0)은 유지. 환경변수 MAX_ACTIVE_DAYS 로 조정 가능(기본 15).
 function maxActiveDays(): number {
-  return Math.max(1, Number(process.env.MAX_ACTIVE_DAYS) || 30);
+  return Math.max(1, Number(process.env.MAX_ACTIVE_DAYS) || 15);
 }
 
 // ---------- 광고 라이브러리 항목 → Ad ----------
