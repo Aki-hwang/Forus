@@ -46,6 +46,13 @@ function num(env: string | undefined, def: number, min = 1): number {
   return Math.max(min, Number(env) || def);
 }
 
+// 게시물 최신성 상한(일). 이보다 오래된 게시물은 수집하지 않는다 — 최신 트렌드만.
+// 서버단(actor onlyPostsNewerThan)으로 애초에 안 받아 예산 낭비를 막고, 클라이언트에서 한 번 더 컷.
+// 환경변수 ORGANIC_MAX_AGE_DAYS 로 조정 가능(기본 15).
+function organicMaxAgeDays(): number {
+  return num(process.env.ORGANIC_MAX_AGE_DAYS, 15, 1);
+}
+
 /** 검색할 해시태그 목록 (지역 힌트 포함). ORGANIC_HASHTAGS 로 덮어쓸 수 있음. */
 function hashtagTargets(): { tag: string; area?: Area }[] {
   const custom = process.env.ORGANIC_HASHTAGS?.trim();
@@ -186,6 +193,8 @@ async function runIgScraper(
           resultsLimit,
           addParentData: false,
           searchType: "hashtag",
+          // 서버단 최신성 컷 — 오래된 게시물은 애초에 받지 않아 과금 대상에서 제외.
+          onlyPostsNewerThan: `${organicMaxAgeDays()} days`,
         }),
         cache: "no-store",
         signal: controller.signal,
@@ -328,12 +337,17 @@ export async function fetchOrganicViaApify(
     return cache?.ads ?? null;
   }
 
-  // 게시물 단위 중복 제거(같은 url) + 광고주+캡션 동일 도배 제거
+  // 게시물 단위 중복 제거(같은 url) + 광고주+캡션 동일 도배 제거 + 최신성 컷(안전망)
+  // actor onlyPostsNewerThan 이 무시되는 경우(해시태그 등)를 대비해 클라이언트에서 한 번 더 자른다.
+  const cutoff = new Date(Date.now() - organicMaxAgeDays() * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
   const seen = new Set<string>();
   const norm = (s: string) => s.replace(/\s+/g, "").toLowerCase();
   const ads = out
     .sort((a, b) => b.date.localeCompare(a.date))
     .filter((ad) => {
+      if (ad.date < cutoff) return false; // 15일보다 오래된 게시물 제외
       const k1 = ad.id;
       const k2 = `${norm(ad.igUsername ?? ad.clinic)}|${norm(ad.caption).slice(0, 80)}`;
       if (seen.has(k1) || seen.has(k2)) return false;
