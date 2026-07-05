@@ -318,7 +318,9 @@ export function HomeClient({
 
       {/* 하단 고정 바 — 헤더(sticky top-0)처럼 스크롤해도 항상 보인다. 슬림하게 유지해
           화면을 조금만 차지. 등록·문의 CTA 를 어디서든 바로 누를 수 있게. */}
-      <footer className="sticky bottom-0 z-30 border-t border-border bg-surface/95 backdrop-blur">
+      {/* 불투명 배경 유지 — backdrop-blur(backdrop-filter)는 자식 position:fixed 의 기준을
+          뷰포트→footer 로 바꿔, 안에 있는 등록·문의·관리자 모달이 화면 구석에 갇히는 버그를 낸다. */}
+      <footer className="sticky bottom-0 z-30 border-t border-border bg-surface">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-5">
           <div className="flex min-w-0 items-center gap-3 text-[11px] text-muted">
             <span className="hidden truncate sm:inline">© Doctorstock Inc. All Rights Reserved</span>
