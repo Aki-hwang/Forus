@@ -10,6 +10,8 @@ import { AdminInquiries } from "@/components/AdminInquiries";
 import { AdminCollect } from "@/components/AdminCollect";
 import { useUiLang } from "@/lib/i18n";
 import { AdminGate } from "@/components/AdminGate";
+import { RegisterClinic } from "@/components/RegisterClinic";
+import { InquiryButton } from "@/components/InquiryButton";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
@@ -354,9 +356,18 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="flex flex-col items-center gap-2 border-t border-border py-6 text-center text-[12px] text-muted">
-        <span>DermaRadar · © Doctorstock Inc. All Rights Reserved</span>
-        <AdminGate manageKey={manageKey} onSet={setManageKey} />
+      <footer className="mt-10 border-t border-border bg-surface">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-8 sm:px-5">
+          {/* 병원 등록·문의 CTA — 헤더에서 이동. 모바일에서도 항상 노출(헤더는 좁아 숨겼던 것). */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <RegisterClinic />
+            <InquiryButton />
+          </div>
+          <span className="text-[12px] text-muted">
+            DermaRadar · © Doctorstock Inc. All Rights Reserved
+          </span>
+          <AdminGate manageKey={manageKey} onSet={setManageKey} />
+        </div>
       </footer>
 
       {selected ? (
