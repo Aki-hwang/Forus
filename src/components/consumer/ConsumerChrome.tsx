@@ -46,11 +46,27 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
           >
             {other.label}
           </Link>
+          {/* 대시보드(홈) — 텍스트 대신 홈 아이콘 (아이콘이라 모바일에서도 표시 가능) */}
           <Link
             href="/"
-            className="hidden rounded-lg border border-border px-2.5 py-1.5 text-muted transition hover:text-foreground sm:block"
+            title={ui.navOwner}
+            aria-label={ui.navOwner}
+            className="rounded-lg border border-border px-2.5 py-1.5 text-muted transition hover:text-foreground"
           >
-            {ui.navOwner}
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 10.5 12 3l9 7.5" />
+              <path d="M5 9.5V21h5v-6h4v6h5V9.5" />
+            </svg>
           </Link>
         </nav>
       </div>
