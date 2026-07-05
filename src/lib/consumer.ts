@@ -14,11 +14,11 @@ import { confidentTreatment } from "./treatments";
 import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
 import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
 
-export type ConsumerLocale = "jp" | "ko";
-export const CONSUMER_LOCALES: ConsumerLocale[] = ["jp", "ko"];
+export type ConsumerLocale = "jp" | "ko" | "en";
+export const CONSUMER_LOCALES: ConsumerLocale[] = ["jp", "ko", "en"];
 
 /** Ad.lang 매핑 — 로케일별로 보여줄 콘텐츠 언어 */
-const CONTENT_LANG: Record<ConsumerLocale, Ad["lang"]> = { jp: "JP", ko: "KR" };
+const CONTENT_LANG: Record<ConsumerLocale, Ad["lang"]> = { jp: "JP", ko: "KR", en: "EN" };
 
 // ---------- 시술 가이드 (슬러그는 로케일 공통 → hreflang 짝 유지) ----------
 // 효능 보장·최상급 표현 금지(의료광고 규제) — 일반 정보 + 개인차 고지로만 구성.
@@ -182,9 +182,83 @@ const TREATMENT_GUIDES_KO: TreatmentGuide[] = [
   },
 ];
 
+const TREATMENT_GUIDES_EN: TreatmentGuide[] = [
+  {
+    key: "물광주사",
+    slug: "water-glow",
+    name: "Water Glow Injection",
+    alt: "Skin booster · hydrating shots",
+    desc: "Fine micro-injections of hydrating ingredients such as hyaluronic acid into the shallow layer of the skin for moisture and glow. One of the most popular menus among visitors to Korea.",
+    time: "About 30–60 min (incl. consultation and numbing cream)",
+    downtime: "Redness or small bumps may appear right after (hours to a few days, varies by person)",
+    tip: "Many visitors schedule sightseeing for the next day. Follow the clinic's guidance on timing before your flight home.",
+  },
+  {
+    key: "리프팅",
+    slug: "lifting",
+    name: "Lifting",
+    alt: "Ultherapy · Shrink · HIFU",
+    desc: "Lift-focused treatments that tighten the facial line with ultrasound (HIFU) or radiofrequency. Korea is known for a wide choice of devices and menus.",
+    time: "About 30–90 min (depends on area and device)",
+    downtime: "Little to none, or a few days of redness/swelling (varies by person)",
+    tip: "Many menus have short downtime, so it's a category you can receive even during a trip.",
+  },
+  {
+    key: "보톡스",
+    slug: "botox",
+    name: "Botox",
+    alt: "Jaw · wrinkle botox",
+    desc: "A staple injection targeting specific areas such as the jaw, forehead, or around the eyes. The short procedure time makes it easy to fit into a trip.",
+    time: "About 10–20 min",
+    downtime: "Almost none (slight redness at injection sites may appear)",
+    tip: "Because it's quick, it's easy to fit into a sightseeing schedule.",
+  },
+  {
+    key: "필러",
+    slug: "filler",
+    name: "Filler",
+    alt: "Lip · chin · nasolabial filler",
+    desc: "Uses hyaluronic acid to shape volume and contour around lips, chin, or nasolabial folds. Design consultation matters, so an English- or Japanese-friendly clinic helps.",
+    time: "About 15–30 min",
+    downtime: "Swelling or bruising may last a few days (varies by person)",
+    tip: "Since swelling can occur, a schedule with a few days of buffer before your flight home is recommended.",
+  },
+  {
+    key: "미백토닝",
+    slug: "toning",
+    name: "Whitening · Laser Toning",
+    alt: "Blemish · pigment care",
+    desc: "Laser care that addresses blemishes, dullness, and uneven tone. It can be done once, but it's originally intended as a multi-session menu.",
+    time: "About 20–40 min",
+    downtime: "Almost none (mild redness may appear right after)",
+    tip: "Short downtime makes it a popular menu even the day before flying home.",
+  },
+  {
+    key: "모공여드름",
+    slug: "pore-acne",
+    name: "Pore · Acne Care",
+    alt: "Pore tightening · acne scar care",
+    desc: "A category that addresses enlarged pores, blackheads, and acne scars with devices or agents. The range is wide, so it's common to get a proposal based on your skin condition during consultation.",
+    time: "Depends on the treatment",
+    downtime: "Depends on the treatment (peeling types may cause redness/flaking)",
+    tip: "Downtime varies widely in this category. Share your travel schedule and consult.",
+  },
+  {
+    key: "스킨부스터",
+    slug: "skin-booster",
+    name: "Skin Booster",
+    alt: "Rejuran · Juvelook",
+    desc: "Injectable care aimed at improving skin quality itself, such as Rejuran or Juvelook. Along with water glow injections, a representative menu received in Korea.",
+    time: "About 30–60 min",
+    downtime: "Redness or tiny bumps may remain at injection sites for a few days (varies by person)",
+    tip: "Small injection marks can be visible right after, so many receive it early in the trip.",
+  },
+];
+
 export const TREATMENT_GUIDES: Record<ConsumerLocale, TreatmentGuide[]> = {
   jp: TREATMENT_GUIDES_JP,
   ko: TREATMENT_GUIDES_KO,
+  en: TREATMENT_GUIDES_EN,
 };
 
 export function guideBySlug(locale: ConsumerLocale, slug: string): TreatmentGuide | undefined {
@@ -260,9 +334,37 @@ const AREA_GUIDES_KO: AreaGuide[] = [
   },
 ];
 
+const AREA_GUIDES_EN: AreaGuide[] = [
+  {
+    key: "강남",
+    slug: "gangnam",
+    name: "Gangnam",
+    sub: "incl. Apgujeong · Sinsa",
+    desc: "The most competitive hub for Korean beauty clinics. Specialized clinics cluster here, including the Apgujeong and Sinsa areas.",
+    access: "Subway Line 2 / Sinbundang Line Gangnam Station and more. About 40–50 min by subway from Gimpo Airport.",
+  },
+  {
+    key: "명동",
+    slug: "myeongdong",
+    name: "Myeongdong",
+    sub: "incl. Euljiro",
+    desc: "A shopping and tourism center, easy to drop by. Clinics with foreign-language support are especially concentrated here.",
+    access: "Subway Line 4 Myeongdong Station / Line 2 Euljiro 1-ga Station. About 40 min by subway from Gimpo Airport.",
+  },
+  {
+    key: "홍대",
+    slug: "hongdae",
+    name: "Hongdae",
+    sub: "incl. Hapjeong · Yeonnam",
+    desc: "The heart of youth culture. Popular with travelers combining a café tour, and new clinics are increasing.",
+    access: "AREX Airport Railroad Hongik Univ. Station — direct from Gimpo and Incheon airports without transfer.",
+  },
+];
+
 export const AREA_GUIDES: Record<ConsumerLocale, AreaGuide[]> = {
   jp: AREA_GUIDES_JP,
   ko: AREA_GUIDES_KO,
+  en: AREA_GUIDES_EN,
 };
 
 export function areaBySlug(locale: ConsumerLocale, slug: string): AreaGuide | undefined {
@@ -507,6 +609,94 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
         `${a.name}에서 ${g.name}(${g.alt}) 받을 병원을 찾는다면. 실제 인스타 게시물과 진행 중인 이벤트를 데이터로 비교하세요.`,
     },
   },
+  en: {
+    htmlLang: "en",
+    brandTag: "Korea Dermatology Guide",
+    navTreatments: "By treatment",
+    navAreas: "By area",
+    navOwner: "For clinic owners",
+    heroPre: "Choose a Korean dermatology clinic ",
+    heroHi: "by data",
+    heroDesc:
+      "We collect the Instagram posts that clinics in Gangnam, Myeongdong, and Hongdae actually publish, every week. Not ads, but ",
+    heroStrong: "which treatments and clinics are genuinely popular right now",
+    heroTail: " — a Korea dermatology guide for visitors.",
+    secTreatments: "Find by treatment",
+    secAreas: "Find by area",
+    secTopPosts: "Popular posts now",
+    topPostsHint: "Real Instagram posts (tap to open)",
+    secPromos: "Ongoing campaigns",
+    promosHint: "The longer an ad runs, the more established it tends to be",
+    promoDay: (n) => `Running for ${n} day(s)`,
+    recentPosts: (n) => `${n} recent post(s)`,
+    breadcrumbRoot: "Korea Dermatology Guide",
+    titleTreatmentPre: "",
+    titleTreatmentPost: " in Korea",
+    statLine: (c, p) => `Collecting ${p} posts from ${c} clinics over the last 90 days`,
+    statLineArea: (p, t) => `Collecting ${p} ${t}-related posts in this area over the last 90 days`,
+    infoTime: "⏱ Estimated time",
+    infoDowntime: "🩹 Downtime",
+    infoTip: "✈️ Note for visitors",
+    secByArea: "Browse by area",
+    areaTreatmentLink: (a, t) => `${t} in ${a}`,
+    postsOf: (t) => `Popular ${t} posts`,
+    postsOfArea: (a, t) => `Popular ${t} posts in ${a}`,
+    clinicsPosting: (t) => `Clinics posting about ${t}`,
+    clinicsOfArea: (a) => `Clinics in ${a}`,
+    otherTreatments: "See other treatments",
+    otherAreasFor: (t) => `${t} in other areas`,
+    otherTreatmentsIn: (a) => `Other treatments in ${a}`,
+    secFaq: "Frequently asked questions",
+    faq: [
+      {
+        q: "How do I make a reservation?",
+        a: "Many clinics handle inquiries via Instagram DM or LINE. It's common to book through the contact listed on each clinic's Instagram profile, stating your preferred date and treatment. Some clinics offer English-speaking support.",
+      },
+      {
+        q: "Is English available?",
+        a: "Availability varies by clinic. Many clinics in this guide offer some foreign-language support (English staff, or Japanese/LINE consultation). Please confirm when you book.",
+      },
+      {
+        q: "How can I pay?",
+        a: "Most clinics accept credit cards. Some offer a cash (KRW) discount. Please check with each clinic for details.",
+      },
+      {
+        q: "Is it okay to get a treatment during my trip?",
+        a: "Downtime (redness, swelling, etc.) differs by treatment. We recommend telling the clinic your flight and sightseeing plans and consulting before deciding.",
+      },
+      {
+        q: "Can I book same-day?",
+        a: "Some clinics accept same-day bookings if slots are open, but popular clinics are best booked a few days ahead. Weekends are especially busy.",
+      },
+    ],
+    badge: { jp: "Japanese support", line: "LINE consultation", multi: "English · multilingual" },
+    clinicPostCount: (n) => `${n} posts in the last 90 days`,
+    gimpo: {
+      tag: "Airport Area Pick",
+      title: "Gimpo Airport area — YOU&I Gimpo",
+      body: "If you fly into Gimpo, a clinic on the Gimpo side can be convenient. You can avoid the crowds of central Seoul and make use of the time around your flight. The Gimpo branch of the YOU&I dermatology network takes inquiries via Instagram.",
+      cta: "Ask @youandi_gimpo_jp →",
+      href: "https://www.instagram.com/youandi_gimpo_jp/",
+    },
+    showPromosOnLanding: false,
+    disclaimer:
+      "This page provides information based on publicly available data only, and does not solicit, arrange, or broker any specific medical treatment. Effects and downtime vary by individual. Always make treatment decisions after a consultation at a medical institution.",
+    meta: {
+      layoutTitle: "Korea Dermatology Guide | DermaRadar",
+      layoutTemplate: "%s | DermaRadar Korea Dermatology Guide",
+      layoutDesc:
+        "A guide for visitors to find dermatology clinics in Gangnam, Myeongdong, and Hongdae from real Instagram post data. Popular treatments like water glow injection, lifting, and botox.",
+      landingTitle: "Korea Dermatology Guide — find popular treatments and clinics by data",
+      landingDesc:
+        "Visiting a dermatology clinic in Korea? Find popular treatments and foreign-friendly clinics in Gangnam, Myeongdong, and Hongdae from real Instagram post data — water glow injection, lifting, botox and more.",
+      treatmentTitle: (g) => `${g.name} in Korea — clinic guide by area`,
+      treatmentDesc: (g) =>
+        `Getting ${g.name} (${g.alt}) in Korea? See foreign-friendly clinics in Gangnam, Myeongdong, and Hongdae with real popular Instagram posts, plus estimated time and downtime.`,
+      comboTitle: (g, a) => `${g.name} in ${a.name} (${a.sub}) — clinics and popular posts`,
+      comboDesc: (g, a) =>
+        `Looking to get ${g.name} (${g.alt}) in ${a.name}? See foreign-friendly clinics with real popular Instagram posts, plus access, time, and downtime info.`,
+    },
+  },
 };
 
 // ---------- 스냅샷 → 로케일별 게시물/광고 ----------
@@ -678,5 +868,5 @@ export function treatmentCounts(data: ConsumerData): Map<TreatmentKey, number> {
 // ---------- hreflang 짝 (로케일 공통 슬러그 전제) ----------
 
 export function altLanguages(subPath: string): Record<string, string> {
-  return { ja: `/jp${subPath}`, ko: `/ko${subPath}` };
+  return { ja: `/jp${subPath}`, ko: `/ko${subPath}`, en: `/en${subPath}` };
 }

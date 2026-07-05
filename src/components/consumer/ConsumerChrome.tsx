@@ -2,17 +2,18 @@
 // 대시보드 Header(클라이언트·세션 의존)와 분리해 소비자 페이지는 JS 없이 가볍게 유지.
 
 import Link from "next/link";
-import { ConsumerLocale, CONSUMER_UI } from "@/lib/consumer";
+import { ConsumerLocale, CONSUMER_LOCALES, CONSUMER_UI } from "@/lib/consumer";
 
-/** 반대 로케일 (헤더의 언어 전환 링크용) */
-const OTHER: Record<ConsumerLocale, { locale: ConsumerLocale; label: string }> = {
-  jp: { locale: "ko", label: "🇰🇷 한국어" },
-  ko: { locale: "jp", label: "🇯🇵 日本語" },
+/** 로케일별 언어 전환 라벨 — 현재 로케일 제외한 나머지를 헤더에 노출 */
+const LOCALE_LABEL: Record<ConsumerLocale, string> = {
+  ko: "🇰🇷 한국어",
+  jp: "🇯🇵 日本語",
+  en: "🇬🇧 EN",
 };
 
 export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
   const ui = CONSUMER_UI[locale];
-  const other = OTHER[locale];
+  const others = CONSUMER_LOCALES.filter((l) => l !== locale);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-5">
@@ -28,12 +29,15 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
         {/* 시술로/지역으로 찾기 섹션 앵커는 제거 — 같은 랜딩의 바로 아래 섹션이라 가치가 낮고
             모바일에서 nav 가 넘쳐 홈 아이콘이 잘리던 원인. 헤더는 언어전환 + 홈만 남겨 정리. */}
         <nav className="flex shrink-0 items-center gap-1.5 text-[12px] font-bold sm:gap-2 sm:text-[13px]">
-          <Link
-            href={`/${other.locale}`}
-            className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
-          >
-            {other.label}
-          </Link>
+          {others.map((l) => (
+            <Link
+              key={l}
+              href={`/${l}`}
+              className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
+            >
+              {LOCALE_LABEL[l]}
+            </Link>
+          ))}
           {/* 대시보드(홈) — 텍스트 대신 홈 아이콘 (아이콘이라 모바일에서도 표시 가능) */}
           <Link
             href="/"
