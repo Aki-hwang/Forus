@@ -68,10 +68,10 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
         ) : null}
       </div>
       <div className="space-y-1 p-3">
-        <p className="truncate text-[12.5px] font-bold text-foreground">
+        <p className="truncate text-[13.5px] font-bold text-foreground">
           @{post.igUsername ?? post.clinic}
         </p>
-        <div className="flex items-center gap-2 text-[11px] font-medium text-muted">
+        <div className="flex items-center gap-2 text-[12px] font-medium text-muted">
           <span>📍 {areaByKey(locale, post.area).name}</span>
           <span className="ml-auto">
             {isViews ? `▶ ${fmt(locale, e)}` : e > 0 ? `♡ ${fmt(locale, e)}` : ""}
@@ -108,12 +108,12 @@ export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: 
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-bold text-foreground">{ad.headline}</p>
-        <p className="mt-0.5 truncate text-[11.5px] text-muted">
+        <p className="truncate text-[14px] font-bold text-foreground">{ad.headline}</p>
+        <p className="mt-0.5 truncate text-[12.5px] text-muted">
           {ad.clinic}
           {sureTreatment ? ` · ${guideByKey(locale, sureTreatment).name}` : ""}
         </p>
-        <p className="mt-0.5 text-[10.5px] font-bold text-primary-ink">
+        <p className="mt-0.5 text-[11.5px] font-bold text-primary-ink">
           {ui.promoDay(ad.activeDays ?? 0)}
         </p>
       </div>
@@ -139,10 +139,10 @@ export function ConsumerClinicCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-[14px] font-black text-foreground">
+          <p className="truncate text-[15px] font-black text-foreground">
             {locale === "ko" ? clinic.name : `@${clinic.handle}`}
           </p>
-          <p className="mt-0.5 flex flex-wrap gap-1 text-[11px] text-muted">
+          <p className="mt-0.5 flex flex-wrap gap-1 text-[12px] text-muted">
             {locale === "ko" ? <span className="truncate">@{clinic.handle}</span> : null}
             {clinic.areas.map((a) => (
               <span key={a}>📍 {areaByKey(locale, a).name}</span>
@@ -166,7 +166,7 @@ export function ConsumerClinicCard({
         </div>
       ) : null}
       {clinic.postCount > 0 ? (
-        <p className="mt-2 text-[11px] text-muted">{ui.clinicPostCount(clinic.postCount)}</p>
+        <p className="mt-2 text-[12px] text-muted">{ui.clinicPostCount(clinic.postCount)}</p>
       ) : null}
     </a>
   );

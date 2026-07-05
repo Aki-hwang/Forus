@@ -14,7 +14,6 @@ const LOCALE_LABEL: Record<ConsumerLocale, string> = {
 
 export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
   const ui = CONSUMER_UI[locale];
-  const others = CONSUMER_LOCALES.filter((l) => l !== locale);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-5">
@@ -30,15 +29,56 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
         {/* 시술로/지역으로 찾기 섹션 앵커는 제거 — 같은 랜딩의 바로 아래 섹션이라 가치가 낮고
             모바일에서 nav 가 넘쳐 홈 아이콘이 잘리던 원인. 헤더는 언어전환 + 홈만 남겨 정리. */}
         <nav className="flex shrink-0 items-center gap-1.5 text-[12px] font-bold sm:gap-2 sm:text-[13px]">
-          {others.map((l) => (
-            <Link
-              key={l}
-              href={`/${l}`}
-              className="shrink-0 whitespace-nowrap rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2"
-            >
-              {LOCALE_LABEL[l]}
-            </Link>
-          ))}
+          {/* 언어전환 — 4개 로케일을 지구본 하나로 접음 (JS 없이 <details> 디스클로저).
+              버튼 여러 개가 모바일에서 넘치던 문제 해결 + 확장(en/tw) 후에도 헤더가 깔끔. */}
+          <details className="group relative shrink-0">
+            <summary className="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-border px-2 py-1.5 text-muted transition hover:text-foreground sm:px-3 sm:py-2 [&::-webkit-details-marker]:hidden">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+              </svg>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="transition group-open:rotate-180"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </summary>
+            <div className="absolute right-0 top-full z-40 mt-1 min-w-[9rem] overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-lg">
+              {CONSUMER_LOCALES.map((l) => (
+                <Link
+                  key={l}
+                  href={`/${l}`}
+                  className={`flex items-center justify-between gap-3 px-3 py-2 transition hover:bg-muted/10 ${
+                    l === locale
+                      ? "font-black text-primary-ink"
+                      : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  {LOCALE_LABEL[l]}
+                  {l === locale && <span aria-hidden="true">✓</span>}
+                </Link>
+              ))}
+            </div>
+          </details>
           {/* 대시보드(홈) — 텍스트 대신 홈 아이콘 (아이콘이라 모바일에서도 표시 가능) */}
           <Link
             href="/"

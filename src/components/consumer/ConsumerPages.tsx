@@ -77,8 +77,8 @@ function InfoCards({ locale, g }: { locale: ConsumerLocale; g: TreatmentGuide })
         [ui.infoTip, g.tip],
       ].map(([label, value]) => (
         <div key={label} className="rounded-2xl border border-border bg-surface p-4">
-          <p className="text-[11.5px] font-black text-muted">{label}</p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-foreground">{value}</p>
+          <p className="text-[12.5px] font-black text-muted">{label}</p>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-foreground">{value}</p>
         </div>
       ))}
     </section>
@@ -127,7 +127,7 @@ export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
             {ui.heroHi}
           </span>
         </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-[13.5px] leading-relaxed text-muted sm:text-[14.5px]">
+        <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-muted sm:text-[16px]">
           {ui.heroDesc}
           <strong className="text-foreground">{ui.heroStrong}</strong>
           {ui.heroTail}
@@ -147,8 +147,8 @@ export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
               <p className="text-[15px] font-black text-foreground group-hover:text-primary-ink">
                 {g.name}
               </p>
-              <p className="mt-0.5 truncate text-[11px] text-muted">{g.alt}</p>
-              <p className="mt-2 text-[11.5px] font-bold text-primary-ink">
+              <p className="mt-0.5 truncate text-[12px] text-muted">{g.alt}</p>
+              <p className="mt-2 text-[12.5px] font-bold text-primary-ink">
                 {ui.recentPosts(counts.get(g.key) ?? 0)} →
               </p>
             </Link>
@@ -180,8 +180,8 @@ export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
               <p className="text-[16px] font-black text-foreground">
                 {a.name} <span className="text-[12px] font-bold text-muted">({a.sub})</span>
               </p>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{a.desc}</p>
-              <p className="mt-1.5 text-[11.5px] text-muted">🚇 {a.access}</p>
+              <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted">{a.desc}</p>
+              <p className="mt-1.5 text-[12.5px] text-muted">🚇 {a.access}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {TREATMENT_GUIDES[locale].slice(0, 4).map((g) => (
                   <Link
@@ -262,7 +262,7 @@ export async function ConsumerTreatmentPage({
           </span>
           {ui.titleTreatmentPost}
         </h1>
-        <p className="max-w-3xl text-[13.5px] leading-relaxed text-muted">{g.desc}</p>
+        <p className="max-w-3xl text-[14.5px] leading-relaxed text-muted">{g.desc}</p>
         {stats.postCount > 0 ? (
           <p className="text-[12px] font-bold text-primary-ink">
             {ui.statLine(stats.clinicCount, stats.postCount)}
@@ -408,7 +408,7 @@ export async function ConsumerTreatmentAreaPage({
             {g.name}
           </span>
         </h1>
-        <p className="max-w-3xl text-[13.5px] leading-relaxed text-muted">
+        <p className="max-w-3xl text-[14.5px] leading-relaxed text-muted">
           {a.desc} {g.desc}
         </p>
         <p className="text-[11.5px] text-muted">🚇 {a.access}</p>
