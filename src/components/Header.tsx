@@ -42,7 +42,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Link
             href={guideHref}
-            className="hidden whitespace-nowrap rounded-lg border border-border px-2.5 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground sm:block"
+            className="hidden whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-[12px] font-bold text-foreground transition hover:bg-background sm:block sm:px-3.5 sm:text-[13px]"
           >
             {t("consumerGuide")}
           </Link>
