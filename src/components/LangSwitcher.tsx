@@ -11,15 +11,16 @@ export function LangSwitcher() {
 
   return (
     <div className="relative">
+      {/* 지구본 아이콘만 — 현재 언어는 title·aria-label 로(툴팁·접근성), 드롭다운엔 ✓ 표시 */}
       <button
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        title="Language"
-        className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-[12px] font-bold text-foreground transition hover:bg-background sm:px-3.5 sm:text-[13px]"
+        title={`Language — ${current.label}`}
+        aria-label={`Language — ${current.label}`}
+        className="inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-border bg-surface px-3 py-2 text-[14px] text-foreground transition hover:bg-background"
       >
         <span aria-hidden="true">🌐</span>
-        <span className="hidden sm:inline">{current.label}</span>
       </button>
 
       {open ? (

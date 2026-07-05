@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { RegisterClinic } from "./RegisterClinic";
-import { InquiryButton } from "./InquiryButton";
 import { LangSwitcher } from "./LangSwitcher";
 import { useUiLang } from "@/lib/i18n";
 
@@ -47,10 +45,7 @@ export function Header({ onReset }: { onReset?: () => void }) {
             {t("consumerGuide")}
           </Link>
           <LangSwitcher />
-          <RegisterClinic />
-          <div className="hidden sm:block">
-            <InquiryButton />
-          </div>
+          {/* 병원 등록·문의 CTA 는 푸터로 이동(헤더 정리) — page.tsx footer 참고 */}
 
           {session?.user ? (
             <UserMenu
