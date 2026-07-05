@@ -301,9 +301,9 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted">
-            <span className="h-6 w-6 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
-            <span className="text-[13px] font-bold">데이터 불러오는 중…</span>
+          <div className="flex flex-col items-center justify-center gap-2.5 py-12 text-muted">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+            <span className="text-[12px] font-bold">데이터 불러오는 중…</span>
           </div>
         ) : (
           <div className="space-y-4">
