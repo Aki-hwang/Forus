@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { ConsumerLocale, CONSUMER_UI } from "@/lib/consumer";
+import { TopLink } from "./TopLink";
 
 /** 반대 로케일 (헤더의 언어 전환 링크용) */
 const OTHER: Record<ConsumerLocale, { locale: ConsumerLocale; label: string }> = {
@@ -27,19 +28,22 @@ export function ConsumerHeader({ locale }: { locale: ConsumerLocale }) {
             <p className="text-[10.5px] font-bold text-muted">{ui.brandTag}</p>
           </div>
         </Link>
+        {/* 시술/지역 메뉴는 섹션 앵커(#treatments·#areas) 대신 가이드 홈 맨 위로 —
+            앵커 점프(특히 지역 섹션은 페이지 중간)가 새로고침처럼 상단으로 가길 기대하는
+            사용자에게 어색해서. 두 섹션 모두 첫 화면 바로 아래라 접근성은 동일. */}
         <nav className="flex items-center gap-2 text-[12.5px] font-bold">
-          <Link
-            href={`/${locale}#treatments`}
+          <TopLink
+            href={`/${locale}`}
             className="rounded-lg px-2.5 py-1.5 text-muted transition hover:text-foreground"
           >
             {ui.navTreatments}
-          </Link>
-          <Link
-            href={`/${locale}#areas`}
+          </TopLink>
+          <TopLink
+            href={`/${locale}`}
             className="rounded-lg px-2.5 py-1.5 text-muted transition hover:text-foreground"
           >
             {ui.navAreas}
-          </Link>
+          </TopLink>
           <Link
             href={`/${other.locale}`}
             className="rounded-lg border border-border px-2.5 py-1.5 text-muted transition hover:text-foreground"
