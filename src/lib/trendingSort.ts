@@ -20,6 +20,20 @@ export function mergeForGallery(ads: Ad[], organic: Ad[]): Ad[] {
   return all.map((a) => (isEN(a) ? { ...a, lang: "EN" as Lang } : a));
 }
 
+/**
+ * 갤러리 노출 최신성 — 오가닉 게시물은 15일 이내만 (수집 최신성 정책 #39와 정렬).
+ * 스냅샷 보관(90일)은 그대로 두고 노출만 거른다 — DM 추출·분석용 데이터 자산은 보존.
+ * 유료 광고는 시작일이 오래여도 '집행 중'일 수 있으므로 자르지 않는다(수집이 이미 15일 캡).
+ */
+export function galleryFresh(list: Ad[], nowMs: number): Ad[] {
+  const cutoff = nowMs - 15 * 86_400_000;
+  return list.filter((a) => {
+    if ((a.kind ?? "ad") !== "organic") return true;
+    const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
+    return Number.isNaN(t) || t >= cutoff;
+  });
+}
+
 /** 인기(trending) 비교자 — 이미지 우선 → 최근 7일 → 일별 셔플(조회수 blend). */
 export function trendingComparator(list: Ad[], nowMs: number): (a: Ad, b: Ad) => number {
   const reach = (a: Ad) => a.views ?? a.likes ?? 0;

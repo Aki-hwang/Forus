@@ -60,6 +60,7 @@ const STRINGS: Record<string, Str> = {
   popKeywords: S("인기 키워드", "人気キーワード", "热门关键词", "Top keywords"),
   more: S("더보기", "もっと見る", "查看更多", "More"),
   topClinics: S("조회수 TOP 클리닉 (7일)", "再生数TOPクリニック(7日)", "播放量TOP诊所(7天)", "Top clinics (7d)"),
+  topReviewers: S("조회수 TOP 후기계정 (7일)", "再生数TOPレビュー(7日)", "播放量TOP分享(7天)", "Top reviewers (7d)"),
   topPosts: S("조회수 TOP 게시물 (7일)", "再生数TOP投稿(7日)", "播放量TOP帖子(7天)", "Top posts (7d)"),
   popTreatments: S("인기 시술 (7일)", "人気施術(7日)", "热门项目(7天)", "Top treatments (7d)"),
   contentTypes: S("콘텐츠 유형 (7일)", "コンテンツ種類(7日)", "内容类型(7天)", "Content types (7d)"),
@@ -83,6 +84,9 @@ const STRINGS: Record<string, Str> = {
   block: S("🚫 차단", "🚫 ブロック", "🚫 屏蔽", "🚫 Block"),
   registered: S("⭐ 등록", "⭐ 登録", "⭐ 登记", "⭐ Listed"),
   dayUnit: S("일", "日", "天", "d"),
+  advToReview: S("→후기", "→レビュー", "→分享", "→Review"),
+  advToClinic: S("→병원", "→医院", "→医院", "→Clinic"),
+  advToggleTip: S("광고주 유형 전환 (병원↔시술후기) — 이 계정의 모든 게시물에 적용, 영구 저장", "広告主タイプ切替（医院↔レビュー）— このアカウント全体に適用・永続保存", "切换广告主类型（医院↔分享）— 应用于该账号全部帖子并永久保存", "Toggle advertiser type (clinic↔review) — applies to this account, saved permanently"),
   excludeTip: S("이 게시물만 이번 수집에서 제외 (다음 수집 때 다시 보임)", "今回の収集からこの投稿のみ除外（次回再表示）", "仅本次收集排除该帖（下次会再出现）", "Exclude this post this collection (returns next collection)"),
   blockTip: S("이 계정 자체를 차단 (재수집해도 안 보임)", "このアカウントをブロック（再収集後も非表示）", "屏蔽该账号（重新收集也不显示）", "Block this account (stays hidden after re-collection)"),
   // 등록 모달

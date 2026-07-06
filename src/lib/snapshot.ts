@@ -205,6 +205,52 @@ export async function stripDeadImages(
   return stripped;
 }
 
+// ---------- 광고주 유형 수동 오버라이드 (관리자) ----------
+// 자동 분류(수집 시점 + 조회 시점 재계산)가 틀린 계정을 관리자가 병원↔시술후기로 고정한다.
+// 계정 단위(핸들, 없으면 광고주명 소문자) 저장 — 재수집·재계산보다 항상 우선.
+const ADVTYPE_FILE = "forus-advtype-overrides.json";
+
+export type AdvType = "clinic" | "influencer";
+export type AdvTypeOverrides = Record<string, AdvType>;
+
+export async function readAdvTypeOverrides(): Promise<AdvTypeOverrides> {
+  for (const dir of [PRIMARY_DIR, FALLBACK_DIR]) {
+    try {
+      const raw = await fs.readFile(path.join(dir, ADVTYPE_FILE), "utf8");
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) return obj as AdvTypeOverrides;
+    } catch {
+      /* 다음 후보 디렉터리 시도 */
+    }
+  }
+  return {};
+}
+
+/** 오버라이드 지정(type) 또는 해제(null). 갱신된 전체 목록을 반환. */
+export async function setAdvTypeOverride(
+  entry: string,
+  type: AdvType | null
+): Promise<AdvTypeOverrides> {
+  const e = entry.trim().toLowerCase();
+  const cur = await readAdvTypeOverrides();
+  if (!e) return cur;
+  if (type === null) delete cur[e];
+  else cur[e] = type;
+  const dir = await writableDir();
+  await fs.writeFile(path.join(dir, ADVTYPE_FILE), JSON.stringify(cur), "utf8");
+  return cur;
+}
+
+/** 핸들(우선) 또는 광고주명이 오버라이드에 있으면 advertiserType 을 강제한다 */
+export function applyAdvTypeOverrides(ads: Ad[], overrides: AdvTypeOverrides): Ad[] {
+  if (Object.keys(overrides).length === 0) return ads;
+  return ads.map((a) => {
+    const t =
+      overrides[a.igUsername?.toLowerCase() ?? ""] ?? overrides[a.clinic?.toLowerCase() ?? ""];
+    return t && t !== a.advertiserType ? { ...a, advertiserType: t } : a;
+  });
+}
+
 // ---------- 이미지 생존 판정 (조회 시점) ----------
 // stripDeadImages 는 수집 때 403/404/410 "확정 사망"만 걸러낸다. 수집 워밍이 조용히
 // 실패한 경우(타임아웃·5xx 등)는 imageUrl 이 남아 "이미지 있는 카드"로 앞에 배치되는데

@@ -9,10 +9,17 @@
 // 전체 목록은 마운트 후 /api 로 백그라운드 교체한다(initialPartial).
 // 조회 무료 원칙 그대로 — Apify 호출 없음.
 
-import { readSnapshot, readBlocklist, applyBlocklist, annotateImageHealth } from "@/lib/snapshot";
+import {
+  readSnapshot,
+  readBlocklist,
+  applyBlocklist,
+  annotateImageHealth,
+  readAdvTypeOverrides,
+  applyAdvTypeOverrides,
+} from "@/lib/snapshot";
 import { reclassifyStored } from "@/lib/clinics";
 import { slimForList } from "@/lib/apiCache";
-import { mergeForGallery, trendingComparator } from "@/lib/trendingSort";
+import { mergeForGallery, trendingComparator, galleryFresh } from "@/lib/trendingSort";
 import { sampleAds } from "@/lib/sampleAds";
 import { Ad } from "@/lib/ads";
 import { HomeClient } from "./HomeClient";
@@ -23,10 +30,11 @@ export const dynamic = "force-dynamic";
 const INITIAL_CARDS = 90;
 
 export default async function Page() {
-  const [adsSnap, organicSnap, block] = await Promise.all([
+  const [adsSnap, organicSnap, block, overrides] = await Promise.all([
     readSnapshot("ads"),
     readSnapshot("organic"),
     readBlocklist(),
+    readAdvTypeOverrides(),
   ]);
   // 요청 시각 — 서버 컴포넌트는 요청당 1회 실행(force-dynamic)이라 렌더 불안정성 없음.
   // eslint-disable-next-line react-hooks/purity
@@ -36,15 +44,24 @@ export default async function Page() {
   // 라벨 재계산(reclassifyStored)을 API 와 동일하게 적용 — 대시보드 초기 데이터도
   // 분류기 개선이 즉시 반영되게 (안 하면 API 응답과 시술후기 개수가 어긋난다)
   const fullAds: Ad[] = hasAds
-    ? (await annotateImageHealth(reclassifyStored(applyBlocklist(adsSnap!.ads, block)))).map(slimForList)
+    ? (
+        await annotateImageHealth(
+          applyAdvTypeOverrides(reclassifyStored(applyBlocklist(adsSnap!.ads, block)), overrides)
+        )
+      ).map(slimForList)
     : sampleAds;
   const fullOrganic: Ad[] =
     organicSnap && organicSnap.ads.length > 0
-      ? (await annotateImageHealth(reclassifyStored(applyBlocklist(organicSnap.ads, block)))).map(slimForList)
+      ? (
+          await annotateImageHealth(
+            applyAdvTypeOverrides(reclassifyStored(applyBlocklist(organicSnap.ads, block)), overrides)
+          )
+        ).map(slimForList)
       : [];
 
-  // 첫 화면용 상위 슬라이스 — 클라이언트와 같은 병합·비교자로 잘라 하이드레이션/교체 시 순서 유지
-  const merged = mergeForGallery(fullAds, fullOrganic);
+  // 첫 화면용 상위 슬라이스 — 클라이언트와 같은 병합·비교자·15일 노출 컷으로 잘라
+  // 하이드레이션/교체 시 순서 유지
+  const merged = galleryFresh(mergeForGallery(fullAds, fullOrganic), nowMs);
   const top = [...merged].sort(trendingComparator(merged, nowMs)).slice(0, INITIAL_CARDS);
   const topIds = new Set(top.map((a) => a.id));
   const partial = merged.length > INITIAL_CARDS;
