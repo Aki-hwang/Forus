@@ -19,7 +19,7 @@ import {
 } from "@/lib/snapshot";
 import { reclassifyStored } from "@/lib/clinics";
 import { slimForList } from "@/lib/apiCache";
-import { mergeForGallery, trendingComparator } from "@/lib/trendingSort";
+import { mergeForGallery, trendingComparator, galleryFresh } from "@/lib/trendingSort";
 import { sampleAds } from "@/lib/sampleAds";
 import { Ad } from "@/lib/ads";
 import { HomeClient } from "./HomeClient";
@@ -59,8 +59,9 @@ export default async function Page() {
         ).map(slimForList)
       : [];
 
-  // 첫 화면용 상위 슬라이스 — 클라이언트와 같은 병합·비교자로 잘라 하이드레이션/교체 시 순서 유지
-  const merged = mergeForGallery(fullAds, fullOrganic);
+  // 첫 화면용 상위 슬라이스 — 클라이언트와 같은 병합·비교자·15일 노출 컷으로 잘라
+  // 하이드레이션/교체 시 순서 유지
+  const merged = galleryFresh(mergeForGallery(fullAds, fullOrganic), nowMs);
   const top = [...merged].sort(trendingComparator(merged, nowMs)).slice(0, INITIAL_CARDS);
   const topIds = new Set(top.map((a) => a.id));
   const partial = merged.length > INITIAL_CARDS;

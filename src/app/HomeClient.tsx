@@ -19,7 +19,7 @@ import { InquiryButton } from "@/components/InquiryButton";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
-import { mergeForGallery, trendingComparator } from "@/lib/trendingSort";
+import { mergeForGallery, trendingComparator, galleryFresh } from "@/lib/trendingSort";
 
 export type Source = "sample" | "apify";
 
@@ -148,8 +148,11 @@ export function HomeClient({
   };
 
   // 타겟 언어(JP/CN) → 지역 필터 → 조회수 우선 정렬
-  // 광고 + 오가닉 병합 + EN 재분류 — 서버 초기 슬라이스와 동일 로직(trendingSort 공용)
-  const merged = useMemo(() => mergeForGallery(allAds, organicAds), [allAds, organicAds]);
+  // 광고 + 오가닉 병합 + EN 재분류 + 오가닉 15일 노출 컷 — 서버 초기 슬라이스와 동일 로직
+  const merged = useMemo(
+    () => galleryFresh(mergeForGallery(allAds, organicAds), nowMs),
+    [allAds, organicAds, nowMs]
+  );
 
   // 키워드 언어탭용 — 광고주 유형만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
   const advPool = useMemo(
@@ -283,6 +286,7 @@ export function HomeClient({
             onSelectAd={openAd}
             collectedAt={collectedAt}
             nowMs={nowMs}
+            reviewMode={adv === "influencer"}
           />
 
           <FilterBar

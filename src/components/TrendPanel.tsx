@@ -133,6 +133,7 @@ export function TrendPanel({
   onSelectAd,
   collectedAt,
   nowMs,
+  reviewMode = false,
 }: {
   trends: TrendSummary;
   ads: Ad[];
@@ -141,6 +142,8 @@ export function TrendPanel({
   collectedAt?: string | null;
   /** 기준 시각(SSR) — 서버·클라이언트가 같은 값으로 7일 창을 계산해 하이드레이션 불일치 방지 */
   nowMs?: number;
+  /** 시술후기 탭 여부 — true 면 병원 대신 후기 계정 기준으로 7일 지표를 집계 */
+  reviewMode?: boolean;
 }) {
   const { t: tt, tArea, tContentType, tTreatment, tClinic, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
@@ -155,11 +158,14 @@ export function TrendPanel({
     const day = String(d.getDate()).padStart(2, "0");
     return `${y}.${m}.${day} ${tt("collectedSuffix")}`;
   })();
-  // 병원으로 보이는 광고주만 (등록 클리닉 또는 계정명/핸들에 병원 신호) → 인플루언서·블로그 제외
-  // advertiserType 라벨(신규 수집분)이 있으면 우선 — 트렌드 지표는 병원 기준 고정
+  // 7일 지표 대상 — 기본(전체/병원 탭): 병원으로 보이는 광고주만 (인플루언서·블로그가
+  // 트렌드를 왜곡하지 않게). 시술후기 탭(reviewMode): 후기 계정 자체가 집계 대상 —
+  // 이 분기가 없으면 시술후기 탭에서 4개 지표가 전부 0건이 된다.
   const isLikelyClinic = (a: Ad) =>
-    a.advertiserType !== "influencer" &&
-    (a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername));
+    reviewMode
+      ? a.advertiserType === "influencer"
+      : a.advertiserType !== "influencer" &&
+        (a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername));
   const [now] = useState(() => nowMs ?? Date.now());
   // 최근 7일(게시물 날짜/광고 시작일 기준) — 90일 누적 스냅샷 전체로 랭킹하면
   // 항상 같은 클리닉·게시물이 고정되므로, TOP 지표는 최신 7일만 본다.
@@ -195,11 +201,17 @@ export function TrendPanel({
       }).length,
     [ads, now]
   );
-  // 최근 7일, 병원만 — 인기 시술·콘텐츠 유형 분포용 (인플루언서 협찬글이 트렌드를 왜곡하지 않게)
+  // 최근 7일 — 인기 시술·콘텐츠 유형 분포용. 기본은 병원만(협찬글 왜곡 방지),
+  // 시술후기 탭에선 후기 글이 곧 대상.
   const ads7 = useMemo(
-    () => ads.filter((a) => within7d(a) && a.advertiserType !== "influencer"),
+    () =>
+      ads.filter(
+        (a) =>
+          within7d(a) &&
+          (reviewMode ? a.advertiserType === "influencer" : a.advertiserType !== "influencer")
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ads, now]
+    [ads, now, reviewMode]
   );
   // 인기 시술 — 최근 7일, 캡션 키워드로 재분류, 안 잡히면 제외(물광 기본값 쏠림 방지)
   const topTreatments = useMemo(() => {
@@ -270,7 +282,9 @@ export function TrendPanel({
       }
     }
     return [...m.values()].sort((x, y) => (y.views ?? -1) - (x.views ?? -1) || y.followers - x.followers);
-  }, [ads, period, now]);
+    // isLikelyClinic 은 reviewMode 에만 의존하는 렌더 스코프 함수 — reviewMode 를 dep 로 대신 사용
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ads, period, now, reviewMode]);
   return (
     <div className="space-y-4">
       {/* 상단: 핵심 지표 · 지역별 분포 · 인기 키워드 */}
@@ -351,7 +365,9 @@ export function TrendPanel({
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("topClinics")}</p>
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">
+            {tt(reviewMode ? "topReviewers" : "topClinics")}
+          </p>
           <div className="space-y-2.5">
             {ranked.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">{tt("emptyPeriodAds")}</p>

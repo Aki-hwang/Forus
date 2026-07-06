@@ -60,6 +60,7 @@ const STRINGS: Record<string, Str> = {
   popKeywords: S("인기 키워드", "人気キーワード", "热门关键词", "Top keywords"),
   more: S("더보기", "もっと見る", "查看更多", "More"),
   topClinics: S("조회수 TOP 클리닉 (7일)", "再生数TOPクリニック(7日)", "播放量TOP诊所(7天)", "Top clinics (7d)"),
+  topReviewers: S("조회수 TOP 후기계정 (7일)", "再生数TOPレビュー(7日)", "播放量TOP分享(7天)", "Top reviewers (7d)"),
   topPosts: S("조회수 TOP 게시물 (7일)", "再生数TOP投稿(7日)", "播放量TOP帖子(7天)", "Top posts (7d)"),
   popTreatments: S("인기 시술 (7일)", "人気施術(7日)", "热门项目(7天)", "Top treatments (7d)"),
   contentTypes: S("콘텐츠 유형 (7일)", "コンテンツ種類(7日)", "内容类型(7天)", "Content types (7d)"),
