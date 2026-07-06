@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readSnapshot, readBlocklist, applyBlocklist } from "@/lib/snapshot";
+import { readSnapshot, readBlocklist, applyBlocklist, annotateImageHealth } from "@/lib/snapshot";
 import { reclassifyStored } from "@/lib/clinics";
 import { slimForList, LIST_CACHE_HEADERS } from "@/lib/apiCache";
 
@@ -9,7 +9,9 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const snap = await readSnapshot("organic");
   if (snap && snap.ads.length > 0) {
-    const ads = reclassifyStored(applyBlocklist(snap.ads, await readBlocklist())).map(slimForList);
+    const ads = (
+      await annotateImageHealth(reclassifyStored(applyBlocklist(snap.ads, await readBlocklist())))
+    ).map(slimForList);
     return NextResponse.json(
       { source: "apify", collectedAt: snap.collectedAt, count: ads.length, ads },
       { headers: LIST_CACHE_HEADERS }

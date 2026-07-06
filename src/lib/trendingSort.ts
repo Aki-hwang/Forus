@@ -23,7 +23,9 @@ export function mergeForGallery(ads: Ad[], organic: Ad[]): Ad[] {
 /** 인기(trending) 비교자 — 이미지 우선 → 최근 7일 → 일별 셔플(조회수 blend). */
 export function trendingComparator(list: Ad[], nowMs: number): (a: Ad, b: Ad) => number {
   const reach = (a: Ad) => a.views ?? a.likes ?? 0;
-  const hasImg = (a: Ad) => Boolean(a.imageUrl);
+  // '보이는 이미지'만 인정 — imageUrl 이 있어도 캐시에 실물이 없으면(imgCached:false,
+  // 서명 만료로 렌더가 깨지는 케이스) 이미지 없는 카드로 취급해 뒤로 보낸다.
+  const hasImg = (a: Ad) => Boolean(a.imageUrl) && a.imgCached !== false;
   const todayStart = new Date(nowMs);
   todayStart.setHours(0, 0, 0, 0);
   const cutoff = todayStart.getTime() - 7 * 86_400_000;
