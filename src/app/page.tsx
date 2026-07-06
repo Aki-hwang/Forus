@@ -60,11 +60,16 @@ export default async function Page() {
       : [];
 
   // 첫 화면용 상위 슬라이스 — 클라이언트와 같은 병합·비교자·15일 노출 컷으로 잘라
-  // 하이드레이션/교체 시 순서 유지
+  // 하이드레이션/교체 시 순서 유지. 기본 탭이 '시술후기'이므로 슬라이스도 같은 기준으로
+  // 잘라야 첫 화면이 즉시 찬다 (후기 데이터가 없으면 전체 기준으로 폴백).
   const merged = galleryFresh(mergeForGallery(fullAds, fullOrganic), nowMs);
-  const top = [...merged].sort(trendingComparator(merged, nowMs)).slice(0, INITIAL_CARDS);
+  const reviewView = merged.filter((a) => (a.advertiserType ?? "clinic") === "influencer");
+  const sliceSource = reviewView.length > 0 ? reviewView : merged;
+  const top = [...sliceSource]
+    .sort(trendingComparator(sliceSource, nowMs))
+    .slice(0, INITIAL_CARDS);
   const topIds = new Set(top.map((a) => a.id));
-  const partial = merged.length > INITIAL_CARDS;
+  const partial = merged.length > topIds.size;
   const initialAds = partial ? fullAds.filter((a) => topIds.has(a.id)) : fullAds;
   const initialOrganic = partial
     ? fullOrganic.filter((a) => topIds.has(a.id))
