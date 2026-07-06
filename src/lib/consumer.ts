@@ -13,6 +13,7 @@ import { Ad, Area, TreatmentKey, TREATMENTS } from "./ads";
 import { confidentTreatment } from "./treatments";
 import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
 import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
+import { dailyJitter, DAILY_QUALITY_WEIGHT } from "./dailyOrder";
 
 export type ConsumerLocale = "jp" | "ko" | "en" | "tw";
 export const CONSUMER_LOCALES: ConsumerLocale[] = ["jp", "ko", "en", "tw"];
@@ -1054,6 +1055,68 @@ export function treatmentCounts(data: ConsumerData): Map<TreatmentKey, number> {
     if (t) m.set(t, (m.get(t) ?? 0) + 1);
   }
   return m;
+}
+
+// ---------- 일별 로테이션 (소비자 페이지 노출 배치) ----------
+// 인기·이벤트 섹션이 "전체 1등부터" 고정 정렬이면 새로 수집된 게시물이 영원히 노출되지 못하고,
+// 단골 방문자에겐 매일 같은 화면으로 보인다. 대시보드의 일별 셔플(dailyOrder)과 같은 방식으로
+// (id, KST 날짜) 결정적 지터를 섞되, 최근 게시물은 풀에 무조건 포함시켜 신규 수집분을 노출한다.
+// 랜덤이 아니라 해시라 같은 날에는 새로고침해도 배치가 흔들리지 않는다.
+
+/** KST 자정 기준 일련번호 — 서버 TZ(UTC)와 무관하게 한국 자정에 배치가 바뀌게 */
+function kstDay(): number {
+  return Math.floor((Date.now() + 9 * 3_600_000) / 86_400_000);
+}
+
+function recencyMs(a: Ad): number {
+  const d = new Date((a.date ?? "").replace(" ", "T")).getTime();
+  const f = new Date(a.firstSeen ?? "").getTime();
+  return Math.max(Number.isNaN(d) ? 0 : d, Number.isNaN(f) ? 0 : f);
+}
+
+/**
+ * 일별 로테이션 — 기본 정렬(입력 순서) 상위 pool개 + 최근 recentDays일 게시물을 풀로 묶고,
+ * "기본 순위 × w + 그날의 지터 × (1-w)"로 재정렬한다. 인기 콘텐츠는 상위에 남되 배치가 매일 회전.
+ *
+ * take를 주면 그 개수만 반환하되, 그중 freshSlots개는 최근 게시물에 보장한다 —
+ * 신규 수집분은 반응 수가 낮아 점수 경쟁만으론 첫 화면에 영영 못 올라오기 때문.
+ */
+export function dailyRotation(
+  list: Ad[],
+  opts: { pool?: number; recentDays?: number; take?: number; freshSlots?: number } = {}
+): Ad[] {
+  const { pool = 24, recentDays = 7, take, freshSlots = 2 } = opts;
+  if (list.length <= 1) return list;
+  const day = kstDay();
+  const cutoff = Date.now() - recentDays * 86_400_000;
+  const isRecent = (a: Ad) => recencyMs(a) >= cutoff;
+
+  const inPool = new Map<string, Ad>();
+  for (const a of list.slice(0, pool)) inPool.set(a.id, a);
+  for (const a of list) if (isRecent(a)) inPool.set(a.id, a);
+
+  const rank = new Map(list.map((a, i) => [a.id, i]));
+  const denom = Math.max(1, list.length - 1);
+  const score = (a: Ad) => {
+    const quality = 1 - (rank.get(a.id) ?? denom) / denom;
+    return quality * DAILY_QUALITY_WEIGHT + dailyJitter(a.id, day) * (1 - DAILY_QUALITY_WEIGHT);
+  };
+  const blended = [...inPool.values()].sort((x, y) => score(y) - score(x));
+  if (!take) return blended;
+
+  const chosen = blended.slice(0, take);
+  const haveFresh = chosen.filter(isRecent).length;
+  if (haveFresh < freshSlots) {
+    // 지터 순(=그날의 순번)으로 최근 게시물을 골라, 하위 슬롯부터 교체해 넣는다
+    const chosenIds = new Set(chosen.map((a) => a.id));
+    const candidates = blended.filter((a) => isRecent(a) && !chosenIds.has(a.id));
+    const need = Math.min(freshSlots - haveFresh, candidates.length);
+    for (let i = 0; i < need; i++) {
+      const pos = Math.max(0, take - 1 - i * 3); // 예: take=8 → 8번째·5번째 자리
+      chosen[pos] = candidates[i];
+    }
+  }
+  return chosen;
 }
 
 // ---------- hreflang 짝 (로케일 공통 슬러그 전제) ----------

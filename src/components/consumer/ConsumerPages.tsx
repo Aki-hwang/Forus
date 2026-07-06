@@ -13,6 +13,7 @@ import {
   loadConsumerData,
   treatmentCounts,
   filterPosts,
+  dailyRotation,
   statsFor,
   clinicsFor,
   altLanguages,
@@ -112,8 +113,9 @@ export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
   const ui = CONSUMER_UI[locale];
   const data = await loadConsumerData(locale);
   const counts = treatmentCounts(data);
-  const topPosts = data.posts.slice(0, 8);
-  const promos = data.ads.slice(0, 6);
+  // 일별 로테이션 — 인기 상위 + 최근 7일 게시물 풀에서 매일 다른 배치 (KST 자정 회전, 최근 글 슬롯 보장)
+  const topPosts = dailyRotation(data.posts, { take: 8, freshSlots: 2 });
+  const promos = dailyRotation(data.ads, { pool: 12, take: 6, freshSlots: 2 });
 
   return (
     <div className="space-y-10">
@@ -231,8 +233,8 @@ export async function ConsumerTreatmentPage({
 }) {
   const ui = CONSUMER_UI[locale];
   const data = await loadConsumerData(locale);
-  const posts = filterPosts(data.posts, g.key);
-  const promos = filterPosts(data.ads, g.key).slice(0, 4);
+  const posts = dailyRotation(filterPosts(data.posts, g.key), { take: 8, freshSlots: 2 });
+  const promos = dailyRotation(filterPosts(data.ads, g.key), { pool: 8, take: 4, freshSlots: 1 });
   const stats = statsFor(data, g.key);
   const clinics = (await clinicsFor(locale, data.posts, undefined, g.key)).slice(0, 12);
 
@@ -373,8 +375,8 @@ export async function ConsumerTreatmentAreaPage({
 }) {
   const ui = CONSUMER_UI[locale];
   const data = await loadConsumerData(locale);
-  const posts = filterPosts(data.posts, g.key, a.key);
-  const promos = filterPosts(data.ads, g.key, a.key).slice(0, 4);
+  const posts = dailyRotation(filterPosts(data.posts, g.key, a.key), { take: 8, freshSlots: 2 });
+  const promos = dailyRotation(filterPosts(data.ads, g.key, a.key), { pool: 8, take: 4, freshSlots: 1 });
   const stats = statsFor(data, g.key, a.key);
   const clinics = (await clinicsFor(locale, data.posts, a.key, g.key)).slice(0, 12);
 
