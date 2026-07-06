@@ -212,12 +212,21 @@ const INFLUENCER_CATEGORIES = [
   "블로그", "크리에이터",
 ];
 
-// 인플루언서 텍스트 신호 (협찬·체험단 표기, 뷰티로그 계열)
+// 인플루언서 텍스트 신호 (협찬·체험단 표기, 뷰티로그 계열) — 부분 문자열 매칭
 const INFLUENCER_SIGNALS = [
   "협찬", "유료광고", "광고포함", "체험단", "제공받", "내돈내산", "공구",
   "뷰티로그", "beautylog", "dailybeauty", "리뷰왕", "리뷰맨", "꿀팁", "비결",
-  "#ad", "#pr", "sponsored",
+  "sponsored",
 ];
+// #ad·#pr 는 정확한 태그일 때만 — 부분 문자열로 하면 #PRogram, #ADvanced 등을 협찬으로 오인한다
+const SPONSOR_TAG_RE = /#(ad|pr)(?![a-z0-9_])/i;
+
+/** 협찬·체험단 신호 여부 (텍스트 신호 + 정확한 #ad/#pr 태그) */
+export function hasSponsorSignal(text?: string): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return INFLUENCER_SIGNALS.some((s) => t.includes(s.toLowerCase())) || SPONSOR_TAG_RE.test(t);
+}
 
 const NON_CLINIC_CATEGORIES = [
   "marketing agency", "advertising", "media", "product/service", "shopping",
@@ -271,7 +280,7 @@ export function classifyAdvertiser(
   const t = `${name ?? ""} ${text ?? ""}`.toLowerCase();
   const treatmentRelated =
     classifyTreatment(t) !== null || CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()));
-  const influencerText = INFLUENCER_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+  const influencerText = hasSponsorSignal(t);
   // 병원 여부는 '계정 정체성'(핸들+프로필명)으로만 판단한다.
   // 캡션의 병원 언급은 개인 후기에도 흔해서(예: "#손유나클리닉 다녀옴") clinic 근거로 쓰면
   // 시술후기가 전부 병원으로 분류돼 버린다 — 캡션은 treatmentRelated(시술 관련성)로만 활용.
