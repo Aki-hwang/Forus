@@ -112,6 +112,29 @@ export function HomeClient({
     }
   };
 
+  // 광고주 유형 전환: 병원↔시술후기 — 같은 계정의 모든 카드에 즉시 반영 + 서버에 영구 저장
+  // (자동 분류·재수집보다 항상 우선하는 오버라이드. 다시 누르면 반대로 전환)
+  const toggleAdvType = async (ad: Ad) => {
+    if (!manageKey) return;
+    const entry = (ad.igUsername || ad.clinic || "").trim();
+    if (!entry) return;
+    const next = (ad.advertiserType ?? "clinic") === "clinic" ? "influencer" : "clinic";
+    const handle = ad.igUsername?.toLowerCase();
+    const name = ad.clinic?.toLowerCase();
+    const match = (a: Ad) =>
+      Boolean(handle && a.igUsername?.toLowerCase() === handle) ||
+      Boolean(!handle && name && a.clinic?.toLowerCase() === name);
+    setAllAds((prev) => prev.map((a) => (match(a) ? { ...a, advertiserType: next } : a)));
+    setOrganicAds((prev) => prev.map((a) => (match(a) ? { ...a, advertiserType: next } : a)));
+    try {
+      await fetch(
+        `/api/advtype?key=${encodeURIComponent(manageKey)}&handle=${encodeURIComponent(entry)}&type=${next}`
+      );
+    } catch {
+      /* 무시 */
+    }
+  };
+
   // 제외: 이 게시물만 현재 스냅샷에서 제거 (다음 수집 때 다시 보임)
   const excludeAd = async (ad: Ad) => {
     if (!manageKey) return;
@@ -286,6 +309,7 @@ export function HomeClient({
                     onSelect={openAd}
                     onExclude={manageKey ? excludeAd : undefined}
                     onBlock={manageKey ? blockAccount : undefined}
+                    onToggleType={manageKey ? toggleAdvType : undefined}
                   />
                 ))}
               </div>

@@ -14,11 +14,14 @@ export function AdCard({
   onSelect,
   onExclude,
   onBlock,
+  onToggleType,
 }: {
   ad: Ad;
   onSelect: (ad: Ad) => void;
   onExclude?: (ad: Ad) => void;
   onBlock?: (ad: Ad) => void;
+  /** 관리 모드: 광고주 유형(병원↔시술후기) 전환 — 계정 단위로 영구 저장 */
+  onToggleType?: (ad: Ad) => void;
 }) {
   const { t, tArea, tTreatment, tClinic } = useUiLang();
   const isLive = ad.live === true;
@@ -29,8 +32,20 @@ export function AdCard({
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
       <div className="relative">
-        {onExclude || onBlock ? (
+        {onExclude || onBlock || onToggleType ? (
           <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
+            {onToggleType ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleType(ad);
+                }}
+                title={t("advToggleTip")}
+                className="inline-flex h-6 items-center rounded-full bg-black/60 px-2.5 text-[11px] font-bold leading-none text-white shadow transition hover:bg-primary"
+              >
+                {(ad.advertiserType ?? "clinic") === "clinic" ? t("advToReview") : t("advToClinic")}
+              </button>
+            ) : null}
             {onExclude ? (
               <button
                 onClick={(e) => {

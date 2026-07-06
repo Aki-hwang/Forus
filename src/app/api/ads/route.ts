@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { sampleAds } from "@/lib/sampleAds";
-import { readSnapshot, readBlocklist, applyBlocklist, annotateImageHealth } from "@/lib/snapshot";
+import {
+  readSnapshot,
+  readBlocklist,
+  applyBlocklist,
+  annotateImageHealth,
+  readAdvTypeOverrides,
+  applyAdvTypeOverrides,
+} from "@/lib/snapshot";
 import { reclassifyStored } from "@/lib/clinics";
 import { slimForList, LIST_CACHE_HEADERS } from "@/lib/apiCache";
 
@@ -10,8 +17,11 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const snap = await readSnapshot("ads");
   if (snap && snap.ads.length > 0) {
+    const [block, overrides] = await Promise.all([readBlocklist(), readAdvTypeOverrides()]);
     const ads = (
-      await annotateImageHealth(reclassifyStored(applyBlocklist(snap.ads, await readBlocklist())))
+      await annotateImageHealth(
+        applyAdvTypeOverrides(reclassifyStored(applyBlocklist(snap.ads, block)), overrides)
+      )
     ).map(slimForList);
     return NextResponse.json(
       { source: "apify", collectedAt: snap.collectedAt, count: ads.length, ads },
