@@ -141,7 +141,7 @@ export function HomeClient({
     // 썸네일 유무 — 일부 광고는 Meta가 크리에이티브 이미지를 안 줘 색배경 폴백으로 뜬다.
     // 인기 정렬에서 같은 최근그룹이면 이미지 있는 카드를 먼저 보여 첫 화면이 비주얼로 차게 한다.
     const hasImg = (a: Ad) => Boolean(a.imageUrl);
-    // 인기(trending): 최근 7일(달력일 기준) 게시물 우선 → 이미지 우선 → 그 안에서 "일별 셔플".
+    // 인기(trending): 이미지 우선(색배경 폴백은 항상 뒤로) → 최근 7일 우선 → "일별 셔플".
     // 날짜 기준은 서버가 내려준 nowMs — 서버·클라이언트 동일 값으로 하이드레이션 불일치 방지.
     const todayStart = new Date(nowMs);
     todayStart.setHours(0, 0, 0, 0);
@@ -161,13 +161,13 @@ export function HomeClient({
       dailyJitter(a.id, day) * n * (1 - DAILY_QUALITY_WEIGHT); // 낮을수록 앞
     const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
       trending: (a, b) => {
-        const ra = isRecent(a);
-        const rb = isRecent(b);
-        if (ra !== rb) return ra ? -1 : 1;
-        // 같은 최근그룹: 이미지 있는 카드 우선(색배경 폴백을 뒤로) → 그다음 일별 셔플 점수
+        // 이미지 유무가 최우선 — 신규(최근 7일)라도 썸네일 없는 카드가 첫 화면을 차지하지 않게
         const ia = hasImg(a);
         const ib = hasImg(b);
         if (ia !== ib) return ia ? -1 : 1;
+        const ra = isRecent(a);
+        const rb = isRecent(b);
+        if (ra !== rb) return ra ? -1 : 1;
         return dailyScore(a) - dailyScore(b);
       },
       views: byViews,
