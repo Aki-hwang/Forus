@@ -73,6 +73,9 @@ export interface Ad {
   igLikes?: number;
   /** 콘텐츠 종류: 유료 광고(ad) vs 인스타 오가닉 게시물(organic). 없으면 ad 취급 */
   kind?: "ad" | "organic";
+  /** 조회 시점 판정: imageUrl 은 있지만 볼륨 캐시에 실물이 없으면 false (정렬에서 뒤로).
+   *  저장 필드가 아니라 annotateImageHealth 가 응답 직전에 붙인다. */
+  imgCached?: boolean;
   /** 누적 병합: 최초 수집 시각(ISO). 신규 판별·보관기간 기준 */
   firstSeen?: string;
   /** 누적 병합: 마지막으로 수집에 잡힌 시각(ISO) */

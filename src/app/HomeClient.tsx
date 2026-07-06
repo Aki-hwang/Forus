@@ -19,7 +19,7 @@ import { InquiryButton } from "@/components/InquiryButton";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
-import { dayNumber, dailyJitter, DAILY_QUALITY_WEIGHT } from "@/lib/dailyOrder";
+import { mergeForGallery, trendingComparator } from "@/lib/trendingSort";
 
 export type Source = "sample" | "apify";
 
@@ -28,12 +28,15 @@ export function HomeClient({
   initialSource,
   initialOrganic,
   initialCollectedAt,
+  initialPartial = false,
   nowMs,
 }: {
   initialAds: Ad[];
   initialSource: Source;
   initialOrganic: Ad[];
   initialCollectedAt: string | null;
+  /** true 면 초기 데이터가 첫 화면용 상위 슬라이스 — 마운트 후 전체를 API 로 받아 교체 */
+  initialPartial?: boolean;
   /** 서버 렌더 시각 — 날짜 의존 정렬(최근7일·일별셔플)을 서버·클라이언트가 같은 값으로
    *  계산해 하이드레이션 불일치를 막는다. */
   nowMs: number;
@@ -73,6 +76,24 @@ export function HomeClient({
     if (k) setManageKey(k);
   }, []);
 
+  // 초기 데이터가 상위 슬라이스뿐이면(SSR 페이로드 절감) 전체 목록을 백그라운드로 받아 교체.
+  // 같은 정렬(trendingSort 공용)이라 상위 카드는 그대로고, 필터 탭·트렌드 집계만 전체값으로 차오른다.
+  useEffect(() => {
+    if (!initialPartial) return;
+    let alive = true;
+    Promise.all([
+      fetch("/api/ads").then((r) => r.json()).catch(() => null),
+      fetch("/api/organic").then((r) => r.json()).catch(() => null),
+    ]).then(([a, o]) => {
+      if (!alive) return;
+      if (a?.ads?.length) setAllAds(a.ads);
+      if (o?.ads) setOrganicAds(o.ads);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [initialPartial]);
+
   // 차단: 계정 자체를 영구 차단 (화면에서 즉시 제거 + 서버 차단목록 기록 → 재수집해도 안 보임)
   const blockAccount = async (ad: Ad) => {
     if (!manageKey) return;
@@ -104,18 +125,8 @@ export function HomeClient({
   };
 
   // 타겟 언어(JP/CN) → 지역 필터 → 조회수 우선 정렬
-  // 광고 + 오가닉 병합 (id 중복 제거)
-  const merged = useMemo(() => {
-    const seen = new Set(allAds.map((a) => a.id));
-    const all = [...allAds, ...organicAds.filter((a) => !seen.has(a.id))];
-    // 기존 데이터엔 EN 분류가 없으므로, 한자·한글·가나 없고 라틴문자 우세하면 영어로 재분류
-    const isEN = (a: Ad) => {
-      const t = `${a.headline ?? ""} ${a.caption ?? ""}`;
-      if (/[぀-ヿ가-힣㐀-鿿]/.test(t)) return false;
-      return (t.match(/[A-Za-z]/g) || []).length >= 4;
-    };
-    return all.map((a) => (isEN(a) ? { ...a, lang: "EN" as Lang } : a));
-  }, [allAds, organicAds]);
+  // 광고 + 오가닉 병합 + EN 재분류 — 서버 초기 슬라이스와 동일 로직(trendingSort 공용)
+  const merged = useMemo(() => mergeForGallery(allAds, organicAds), [allAds, organicAds]);
 
   // 키워드 언어탭용 — 광고주 유형만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
   const advPool = useMemo(
@@ -138,38 +149,10 @@ export function HomeClient({
     // 조회수순 — 조회수 없으면(유료 광고) 팔로워 수를 대용으로 써서 오가닉과 섞이게 한다.
     const reach = (a: Ad) => a.views ?? a.likes ?? 0;
     const byViews = (a: Ad, b: Ad) => reach(b) - reach(a);
-    // 썸네일 유무 — 일부 광고는 Meta가 크리에이티브 이미지를 안 줘 색배경 폴백으로 뜬다.
-    // 인기 정렬에서 같은 최근그룹이면 이미지 있는 카드를 먼저 보여 첫 화면이 비주얼로 차게 한다.
-    const hasImg = (a: Ad) => Boolean(a.imageUrl);
-    // 인기(trending): 이미지 우선(색배경 폴백은 항상 뒤로) → 최근 7일 우선 → "일별 셔플".
-    // 날짜 기준은 서버가 내려준 nowMs — 서버·클라이언트 동일 값으로 하이드레이션 불일치 방지.
-    const todayStart = new Date(nowMs);
-    todayStart.setHours(0, 0, 0, 0);
-    const cutoff = todayStart.getTime() - 7 * 86_400_000;
-    const isRecent = (a: Ad) => {
-      const ts = new Date((a.date ?? "").replace(" ", "T")).getTime();
-      return !Number.isNaN(ts) && ts >= cutoff;
-    };
-    // 일별 셔플 점수: 조회수 순위(quality) + 그날 지터를 blend. 인기 카드는 위에 남되
-    // 배치가 매일 회전한다. 하루 안에선 결정적(새로고침 안정), 자정마다 시드 변경.
-    const day = dayNumber(new Date(nowMs));
-    const qRank = new Map<string, number>();
-    [...list].sort((a, b) => reach(b) - reach(a)).forEach((a, i) => qRank.set(a.id, i));
-    const n = list.length || 1;
-    const dailyScore = (a: Ad) =>
-      (qRank.get(a.id) ?? 0) * DAILY_QUALITY_WEIGHT +
-      dailyJitter(a.id, day) * n * (1 - DAILY_QUALITY_WEIGHT); // 낮을수록 앞
     const cmp: Record<SortKey, (a: Ad, b: Ad) => number> = {
-      trending: (a, b) => {
-        // 이미지 유무가 최우선 — 신규(최근 7일)라도 썸네일 없는 카드가 첫 화면을 차지하지 않게
-        const ia = hasImg(a);
-        const ib = hasImg(b);
-        if (ia !== ib) return ia ? -1 : 1;
-        const ra = isRecent(a);
-        const rb = isRecent(b);
-        if (ra !== rb) return ra ? -1 : 1;
-        return dailyScore(a) - dailyScore(b);
-      },
+      // 인기: 이미지 우선 → 최근 7일 → 일별 셔플. 서버 초기 슬라이스와 동일 로직(trendingSort 공용).
+      // 날짜 기준은 서버가 내려준 nowMs — 서버·클라이언트 동일 값으로 하이드레이션 불일치 방지.
+      trending: trendingComparator(list, nowMs),
       views: byViews,
       followers: (a, b) => b.likes - a.likes,
       recent: (a, b) => b.date.localeCompare(a.date),

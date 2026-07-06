@@ -205,6 +205,43 @@ export async function stripDeadImages(
   return stripped;
 }
 
+// ---------- 이미지 생존 판정 (조회 시점) ----------
+// stripDeadImages 는 수집 때 403/404/410 "확정 사망"만 걸러낸다. 수집 워밍이 조용히
+// 실패한 경우(타임아웃·5xx 등)는 imageUrl 이 남아 "이미지 있는 카드"로 앞에 배치되는데
+// 실제 렌더에선 서명 만료로 깨진다. 볼륨 캐시에 파일이 실제로 있는지를 판정 신호로 쓴다.
+// 캐시에 없어도 렌더 시도는 유지되므로(프록시가 성공하면 캐시 저장) 자연 복구된다.
+
+let imgSetMemo: { at: number; set: Set<string> } | null = null;
+
+/** img-cache 디렉터리의 파일명 집합 (60초 메모) */
+async function cachedImageSet(): Promise<Set<string>> {
+  if (imgSetMemo && Date.now() - imgSetMemo.at < 60_000) return imgSetMemo.set;
+  let set = new Set<string>();
+  try {
+    set = new Set(await fs.readdir(IMG_CACHE_DIR));
+  } catch {
+    /* 캐시 디렉터리 없음(로컬 등) → 빈 집합 */
+  }
+  imgSetMemo = { at: Date.now(), set };
+  return set;
+}
+
+/**
+ * imageUrl 은 있는데 볼륨 캐시에 실물이 없는 항목에 imgCached:false 를 표시한다.
+ * (정렬에서 이미지 없는 카드처럼 뒤로 보내되, imageUrl 은 유지해 렌더·자가복구는 계속)
+ * 캐시가 아예 비어 있으면(로컬 개발 등) 판정 불가로 보고 그대로 반환한다.
+ */
+export async function annotateImageHealth(ads: Ad[]): Promise<Ad[]> {
+  const set = await cachedImageSet();
+  if (set.size === 0) return ads;
+  return ads.map((a) => {
+    if (!a.imageUrl) return a;
+    const f = imgCacheFile(a.imageUrl);
+    const cached = f ? set.has(path.basename(f)) : false;
+    return cached ? a : { ...a, imgCached: false };
+  });
+}
+
 // 파싱 캐시 — 스냅샷(850KB)을 매 요청마다 읽고 JSON.parse 하지 않도록 mtime 으로 무효화.
 // 파일이 바뀌면(수집·이미지정리) mtimeMs 가 달라져 자동 재파싱. 쓰기는 같은 프로세스가
 // 하므로 여기서 캐시를 비워 즉시 반영한다(invalidateSnapshotCache).

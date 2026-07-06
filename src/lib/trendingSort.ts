@@ -1,0 +1,54 @@
+// 대시보드 '인기' 정렬 — 서버(page.tsx 초기 슬라이스)·클라이언트(HomeClient) 공용.
+//
+// 초기 SSR 페이로드를 상위 N장으로 줄이려면 서버가 클라이언트와 "완전히 같은" 순서로
+// 잘라야 한다 (다르면 전체 데이터 도착 시 카드가 재배치되며 화면이 튄다). 그래서
+// 병합·EN 재분류·인기 비교자를 여기로 추출해 양쪽이 공유한다.
+
+import { Ad, Lang } from "./ads";
+import { dayNumber, dailyJitter, DAILY_QUALITY_WEIGHT } from "./dailyOrder";
+
+/** 광고 + 오가닉 병합 (id 중복 제거) + 레거시 EN 재분류 */
+export function mergeForGallery(ads: Ad[], organic: Ad[]): Ad[] {
+  const seen = new Set(ads.map((a) => a.id));
+  const all = [...ads, ...organic.filter((a) => !seen.has(a.id))];
+  // 기존 데이터엔 EN 분류가 없으므로, 한자·한글·가나 없고 라틴문자 우세하면 영어로 재분류
+  const isEN = (a: Ad) => {
+    const t = `${a.headline ?? ""} ${a.caption ?? ""}`;
+    if (/[぀-ヿ가-힣㐀-鿿]/.test(t)) return false;
+    return (t.match(/[A-Za-z]/g) || []).length >= 4;
+  };
+  return all.map((a) => (isEN(a) ? { ...a, lang: "EN" as Lang } : a));
+}
+
+/** 인기(trending) 비교자 — 이미지 우선 → 최근 7일 → 일별 셔플(조회수 blend). */
+export function trendingComparator(list: Ad[], nowMs: number): (a: Ad, b: Ad) => number {
+  const reach = (a: Ad) => a.views ?? a.likes ?? 0;
+  // '보이는 이미지'만 인정 — imageUrl 이 있어도 캐시에 실물이 없으면(imgCached:false,
+  // 서명 만료로 렌더가 깨지는 케이스) 이미지 없는 카드로 취급해 뒤로 보낸다.
+  const hasImg = (a: Ad) => Boolean(a.imageUrl) && a.imgCached !== false;
+  const todayStart = new Date(nowMs);
+  todayStart.setHours(0, 0, 0, 0);
+  const cutoff = todayStart.getTime() - 7 * 86_400_000;
+  const isRecent = (a: Ad) => {
+    const ts = new Date((a.date ?? "").replace(" ", "T")).getTime();
+    return !Number.isNaN(ts) && ts >= cutoff;
+  };
+  const day = dayNumber(new Date(nowMs));
+  const qRank = new Map<string, number>();
+  [...list].sort((a, b) => reach(b) - reach(a)).forEach((a, i) => qRank.set(a.id, i));
+  const n = list.length || 1;
+  const dailyScore = (a: Ad) =>
+    (qRank.get(a.id) ?? 0) * DAILY_QUALITY_WEIGHT +
+    dailyJitter(a.id, day) * n * (1 - DAILY_QUALITY_WEIGHT); // 낮을수록 앞
+
+  return (a, b) => {
+    // 이미지 유무가 최우선 — 신규(최근 7일)라도 썸네일 없는 카드가 첫 화면을 차지하지 않게
+    const ia = hasImg(a);
+    const ib = hasImg(b);
+    if (ia !== ib) return ia ? -1 : 1;
+    const ra = isRecent(a);
+    const rb = isRecent(b);
+    if (ra !== rb) return ra ? -1 : 1;
+    return dailyScore(a) - dailyScore(b);
+  };
+}
