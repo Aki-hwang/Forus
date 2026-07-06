@@ -21,13 +21,18 @@ export function mergeForGallery(ads: Ad[], organic: Ad[]): Ad[] {
 }
 
 /**
- * 갤러리 노출 최신성 — 오가닉 게시물은 15일 이내만 (수집 최신성 정책 #39와 정렬).
- * 스냅샷 보관(90일)은 그대로 두고 노출만 거른다 — DM 추출·분석용 데이터 자산은 보존.
- * 유료 광고는 시작일이 오래여도 '집행 중'일 수 있으므로 자르지 않는다(수집이 이미 15일 캡).
+ * 갤러리 노출 필터 — 스냅샷 보관(90일)은 그대로 두고 노출만 거른다
+ * (DM 추출·분석용 데이터 자산은 보존).
+ *  - 죽은 이미지(imgCached:false — URL은 있지만 캐시에 실물 없음)는 아예 숨긴다.
+ *    깨진 카드가 뒤에서라도 보이는 것보다 안 보이는 게 낫고, 다음 수집의 이미지
+ *    워밍이 성공하면 플래그가 풀려 자동으로 다시 나타난다(주 2회).
+ *  - 오가닉 게시물은 15일 이내만 (수집 최신성 정책 #39와 정렬).
+ *    유료 광고는 시작일이 오래여도 '집행 중'일 수 있으므로 날짜로 자르지 않는다.
  */
 export function galleryFresh(list: Ad[], nowMs: number): Ad[] {
   const cutoff = nowMs - 15 * 86_400_000;
   return list.filter((a) => {
+    if (a.imgCached === false) return false;
     if ((a.kind ?? "ad") !== "organic") return true;
     const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
     return Number.isNaN(t) || t >= cutoff;
