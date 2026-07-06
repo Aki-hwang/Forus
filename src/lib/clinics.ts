@@ -5,7 +5,7 @@
 //  - "등록 클리닉" 태그 + 특징 메모 표시
 //  - (추후) 2단계 인스타 조회수 수집의 시드로 사용
 
-import { Area } from "./ads";
+import { Ad, Area } from "./ads";
 import { classifyTreatment } from "./treatments";
 
 export interface KnownClinic {
@@ -313,4 +313,30 @@ export function isExcludedAd(
   pageCategory?: string
 ): boolean {
   return classifyAdvertiser(igUsername, name, text, pageCategory) === null;
+}
+
+/**
+ * 저장 스냅샷의 광고주 라벨 재계산 — 조회 시점에 적용.
+ *
+ * 라벨은 수집 시점에 찍히므로 분류기를 개선해도 과거 수집분(15일 보관)은 옛 라벨로
+ * 남는다. 재수집(주 2회·과금)을 기다리는 대신, 저장된 필드만으로 결정되는 분류라
+ * 읽을 때 재계산해 개선이 전체 데이터에 즉시 반영되게 한다. (CPU 코스트만, Apify 0원)
+ *  - 등록·승인 병원(featured) → 항상 clinic
+ *  - 오가닉 → 항상 재계산 (스냅샷 캡션은 200자 절단본이지만 신호 판별에는 충분)
+ *  - 유료 광고 → 수집 시 Meta 카테고리 기반 라벨을 신뢰, 라벨 없던 레거시만 재계산
+ */
+export function reclassifyStored(list: Ad[]): Ad[] {
+  return list.map((a) => {
+    if (a.featured) {
+      return a.advertiserType === "clinic" ? a : { ...a, advertiserType: "clinic" as const };
+    }
+    const isOrganic = (a.kind ?? "ad") === "organic";
+    if (!isOrganic && a.advertiserType) return a;
+    const text = `${a.caption ?? ""} ${(a.hashtags ?? []).join(" ")}`;
+    const next =
+      classifyAdvertiser(a.igUsername, a.clinic, text, a.pageCategory) ??
+      a.advertiserType ??
+      ("clinic" as const); // null(잡계정 판정)이어도 저장분은 유지 — 조회 시점엔 라벨만 바꾼다
+    return next === a.advertiserType ? a : { ...a, advertiserType: next };
+  });
 }
