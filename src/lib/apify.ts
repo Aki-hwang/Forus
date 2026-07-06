@@ -15,6 +15,7 @@
 import { Ad, Area, Lang, StyleKey, TreatmentKey, TREATMENT_LABEL } from "./ads";
 import { searchQueries, areaFromText, SearchQuery } from "./adQueries";
 import { findClinicByHandle, classifyAdvertiser, isMedicalCategory } from "./clinics";
+import { readAdvTypeOverrides, AdvTypeOverrides } from "./snapshot";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
 import { classifyTreatment, DEFAULT_TREATMENT } from "./treatments";
 
@@ -209,6 +210,9 @@ function bodyText(s?: FbSnapshot): string {
   return typeof s.body === "string" ? s.body : s.body.text ?? "";
 }
 
+// 관리자 광고주 유형 오버라이드 — 수집 시작 시 로드(모듈 스코프), mapFbAdToAd 에서 참조
+let ADV_OVERRIDES: AdvTypeOverrides = {};
+
 function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn" | "en"): Ad | null {
   const s = fb.snapshot ?? {};
   const body = bodyText(s).trim();
@@ -227,8 +231,13 @@ function mapFbAdToAd(fb: FbAd, fallbackArea?: Area, langHint?: "jp" | "kr" | "cn
   const igUsername = pageInfo?.ig_username?.trim() || undefined;
   const pageCategory = pageInfo?.page_category?.trim() || s.page_categories?.[0] || undefined;
 
-  // 광고주 분류: 병원/인플루언서는 라벨로 보존, 잡광고(제품/대행사/여행)는 제외
-  const advertiserType = classifyAdvertiser(igUsername, fb.page_name, blob, pageCategory);
+  // 광고주 분류: 병원/인플루언서는 라벨로 보존, 잡광고(제품/대행사/여행)는 제외.
+  // 관리자 오버라이드가 있으면 자동 분류를 무시하고 강제 — 수집 단계에서 버려지지도 않는다.
+  const forced =
+    ADV_OVERRIDES[igUsername?.toLowerCase() ?? ""] ??
+    ADV_OVERRIDES[(fb.page_name ?? "").toLowerCase()];
+  const advertiserType =
+    forced ?? classifyAdvertiser(igUsername, fb.page_name, blob, pageCategory);
   if (advertiserType === null) return null;
 
   const known = findClinicByHandle(igUsername);
@@ -418,6 +427,9 @@ export async function fetchAdsViaApify(
   // 기본 40: 쿼리 70개 × 40 ≈ 2,800건/수집. 쿼리 다양성(JP 42개)이 100건+ 확보를 좌우하므로
   //   같은 광고를 깊게 파는 것(높은 perQuery)보다 넓게 훑는 게 dedup 후 고유 광고 확보에 유리·저렴.
   const perQuery = Math.max(10, opts.perQuery || Number(process.env.APIFY_PER_QUERY) || 20);
+
+  // 관리자 오버라이드 로드 — 병원↔시술후기로 고정한 계정이 자동 분류에 밀려 버려지지 않게
+  ADV_OVERRIDES = await readAdvTypeOverrides();
 
   try {
     const collected = await collectAds(token, queries, perQuery);

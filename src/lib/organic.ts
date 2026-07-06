@@ -21,7 +21,7 @@ import { Ad, Area } from "./ads";
 import { classifyTreatment } from "./treatments";
 import { KNOWN_CLINICS, findClinicByHandle, classifyAdvertiser, hasClinicSignal } from "./clinics";
 import { hasClinicVerifyKeys, verifyAdvertisers } from "./clinicVerify";
-import { readApprovedClinics } from "./snapshot";
+import { readApprovedClinics, readAdvTypeOverrides, AdvTypeOverrides } from "./snapshot";
 import { areaFromText } from "./adQueries";
 import {
   inferTreatment,
@@ -104,6 +104,8 @@ function postId(p: IgPost): string {
 /** IG 게시물 → Ad(kind:"organic"). 비클리닉(제품/인플루언서 등)은 제외, 등록 클리닉은 항상 유지. */
 // 승인된 병원(런타임, /data) 핸들→이름/지역. 수집 시작 시 채워진다.
 let APPROVED_LOOKUP: Map<string, { name: string; areas: Area[]; note?: string }> = new Map();
+// 관리자 광고주 유형 오버라이드 — 수집 시작 시 로드, mapPostToAd·게이트에서 참조
+let ADV_OVERRIDES: AdvTypeOverrides = {};
 function lookupClinic(username: string): { name: string; areas: Area[]; note?: string } | undefined {
   const k = findClinicByHandle(username);
   if (k) return { name: k.name, areas: k.areas, note: k.note };
@@ -117,10 +119,13 @@ function mapPostToAd(p: IgPost, areaHint?: Area): Ad | null {
   if (!caption && !p.displayUrl) return null;
 
   const known = lookupClinic(username);
-  // 등록 클리닉이면 무조건 clinic, 아니면 분류(병원/인플루언서/잡계정 제외)
+  // 등록 클리닉이면 무조건 clinic. 관리자 오버라이드가 있으면 자동 분류를 무시하고 강제
+  // (병원↔시술후기로 고정한 계정이 잡계정 판정으로 수집에서 버려지지 않게).
+  // 그 외에는 분류(병원/인플루언서/잡계정 제외).
   const advertiserType = known
     ? ("clinic" as const)
-    : classifyAdvertiser(username, p.ownerFullName, caption, undefined);
+    : ADV_OVERRIDES[username.toLowerCase()] ??
+      classifyAdvertiser(username, p.ownerFullName, caption, undefined);
   if (advertiserType === null) return null;
 
   const blob = `${p.ownerFullName ?? ""}\n${caption}`;
@@ -229,6 +234,7 @@ async function applyOrganicGate(ads: Ad[]): Promise<Ad[]> {
   for (const a of ads) {
     if (
       a.advertiserType === "influencer" || // 인플루언서 라벨은 게이트 비대상(당연히 병원 아님)
+      ADV_OVERRIDES[a.igUsername?.toLowerCase() ?? ""] != null || // 관리자 지정 계정은 무조건 통과
       a.featured ||
       hasClinicSignal(a.clinic) ||
       hasClinicSignal(a.igUsername) ||
@@ -283,6 +289,8 @@ export async function fetchOrganicViaApify(
   APPROVED_LOOKUP = new Map(
     approved.map((c) => [c.handle.toLowerCase(), { name: c.name, areas: c.areas as Area[], note: undefined }])
   );
+  // 관리자 광고주 유형 오버라이드 로드 — 고정 계정이 자동 분류에 밀려 버려지지 않게
+  ADV_OVERRIDES = await readAdvTypeOverrides();
   for (const c of approved) {
     const h = c.handle.toLowerCase();
     if (!h) continue;
