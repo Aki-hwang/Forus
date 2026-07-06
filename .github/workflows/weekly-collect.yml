@@ -32,7 +32,9 @@ jobs:
           COLLECT_KEY: ${{ secrets.COLLECT_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${COLLECT_KEY:-}" ]; then
+          # 붙여넣기 실수 방어: 앞뒤 공백·줄바꿈·따옴표 제거 (값에 섞이면 curl 이 URL 오류로 즉사)
+          COLLECT_KEY="$(printf '%s' "${COLLECT_KEY:-}" | tr -d '\r\n' | sed -e 's/^["'"'"' ]*//' -e 's/["'"'"' ]*$//')"
+          if [ -z "${COLLECT_KEY}" ]; then
             echo "::error::COLLECT_KEY secret 이 설정돼 있지 않습니다. (Settings → Secrets → Actions)"
             exit 1
           fi
@@ -40,9 +42,10 @@ jobs:
           collect () {
             part="$1"
             echo "── ${part} 수집 시작 ──"
-            # 키는 URL 로 전달하되 로그엔 출력하지 않음(시크릿은 Actions 가 자동 마스킹).
-            code=$(curl -sS --max-time 480 -o "resp_${part}.json" -w '%{http_code}' \
-              "${BASE_URL}/api/collect?key=${COLLECT_KEY}&full=1&part=${part}") \
+            # 키는 쿼리로 전달하되 --data-urlencode 로 특수문자 안전 처리. 로그엔 출력하지 않음(시크릿 자동 마스킹).
+            code=$(curl -sS --max-time 480 -o "resp_${part}.json" -w '%{http_code}' -G \
+              --data-urlencode "key=${COLLECT_KEY}" --data "full=1" --data "part=${part}" \
+              "${BASE_URL}/api/collect") \
               || { echo "::error::${part} 요청 실패(네트워크/타임아웃)"; return 1; }
             echo "[${part}] HTTP ${code}"
             cat "resp_${part}.json" 2>/dev/null || true
