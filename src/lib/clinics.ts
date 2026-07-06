@@ -272,6 +272,12 @@ export function classifyAdvertiser(
   const treatmentRelated =
     classifyTreatment(t) !== null || CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()));
   const influencerText = INFLUENCER_SIGNALS.some((s) => t.includes(s.toLowerCase()));
+  // 병원 여부는 '계정 정체성'(핸들+프로필명)으로만 판단한다.
+  // 캡션의 병원 언급은 개인 후기에도 흔해서(예: "#손유나클리닉 다녀옴") clinic 근거로 쓰면
+  // 시술후기가 전부 병원으로 분류돼 버린다 — 캡션은 treatmentRelated(시술 관련성)로만 활용.
+  const clinicIdentity =
+    CLINIC_SIGNALS.some((s) => id.includes(s.toLowerCase())) ||
+    /닥터|\bdr\.|doctor/.test(id);
 
   // ① Meta 카테고리 (가장 정확)
   if (categoryMatch(pageCategory, MEDICAL_CATEGORIES)) return "clinic";
@@ -280,11 +286,13 @@ export function classifyAdvertiser(
   }
   if (categoryMatch(pageCategory, NON_CLINIC_CATEGORIES)) return null;
 
-  // ② 텍스트 신호 (카테고리가 없거나 'Health/beauty'처럼 애매할 때)
-  //    협찬 신호가 있으면 클리닉 신호보다 우선 — 병원을 언급하는 협찬글이 clinic 으로 새지 않게
+  // ② 정체성·텍스트 신호 (카테고리가 없거나 'Health/beauty'처럼 애매할 때)
+  //    협찬 신호가 있으면 클리닉 정체성보다 우선 — 병원을 언급하는 협찬글이 clinic 으로 새지 않게
   if (influencerText) return treatmentRelated ? "influencer" : null;
-  if (CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return "clinic";
+  if (clinicIdentity) return "clinic";
   if (NON_CLINIC_SIGNALS.some((s) => t.includes(s.toLowerCase()))) return null;
+  // 계정명엔 병원 신호가 없는데 글은 시술·병원 이야기 → 개인 시술후기
+  if (treatmentRelated) return "influencer";
   return "clinic"; // 애매 → 유지 (기존 동작과 동일, 이후 의료 게이트가 한 번 더 거름)
 }
 
