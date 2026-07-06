@@ -44,7 +44,9 @@ export function HomeClient({
   const [area, setArea] = useState<Area | "전체">("전체");
   const [lang, setLang] = useState<Lang | "전체">("전체");
   const [sort, setSort] = useState<SortKey>("trending");
-  const [adv, setAdv] = useState<AdvKey>("전체");
+  // 기본 탭 = 시술후기 — 방문자(소비자)는 병원 광고보다 실제 후기에 먼저 반응한다.
+  // 서버(page.tsx)의 초기 슬라이스도 같은 기준으로 잘라 첫 화면이 즉시 차게 한다.
+  const [adv, setAdv] = useState<AdvKey>("influencer");
   const [selected, setSelected] = useState<Ad | null>(null);
   // 카드/게시물 상세 열기 + GA 클릭 이벤트(인기 클릭 추적)
   const openAd = (ad: Ad) => {
