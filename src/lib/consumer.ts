@@ -12,7 +12,13 @@
 import { Ad, Area, TreatmentKey, TREATMENTS } from "./ads";
 import { confidentTreatment } from "./treatments";
 import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
-import { readSnapshot, readBlocklist, applyBlocklist, readApprovedClinics } from "./snapshot";
+import {
+  readSnapshot,
+  readBlocklist,
+  applyBlocklist,
+  readApprovedClinics,
+  annotateImageHealth,
+} from "./snapshot";
 import { dailyJitter, DAILY_QUALITY_WEIGHT } from "./dailyOrder";
 
 export type ConsumerLocale = "jp" | "ko" | "en" | "tw";
@@ -925,11 +931,15 @@ export async function loadConsumerData(locale: ConsumerLocale): Promise<Consumer
     readSnapshot("organic"),
     readBlocklist(),
   ]);
-  const organic = applyBlocklist(organicSnap?.ads ?? [], block).filter(
-    (a) => a.lang === lang
+  // 이미지 생존 판정(imgCached) — 만료된 광고 이미지가 깨진 아이콘으로 렌더되지 않게.
+  // 카드 컴포넌트가 imgCached:false 면 <img> 대신 그라데이션 폴백을 그린다.
+  const organic = await annotateImageHealth(
+    applyBlocklist(organicSnap?.ads ?? [], block).filter((a) => a.lang === lang)
   );
-  const paid = applyBlocklist(adsSnap?.ads ?? [], block).filter(
-    (a) => a.lang === lang && a.kind !== "organic"
+  const paid = await annotateImageHealth(
+    applyBlocklist(adsSnap?.ads ?? [], block).filter(
+      (a) => a.lang === lang && a.kind !== "organic"
+    )
   );
   // 게시물 반응 순 정렬 (조회수 > 좋아요+저장)
   organic.sort((a, b) => engagement(b) - engagement(a));
