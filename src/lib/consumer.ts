@@ -525,7 +525,16 @@ interface ConsumerUi {
   faq: FaqItem[];
   badge: Record<ClinicBadge, string>;
   clinicPostCount: (n: number) => string;
-  gimpo: { tag: string; title: string; body: string; cta: string; href: string };
+  gimpo: {
+    tag: string;
+    title: string;
+    body: string;
+    cta: string;
+    href: string;
+    /** LINE 등 상담 채널 허브(linktr.ee) — 두 번째 CTA */
+    lineCta: string;
+    lineHref: string;
+  };
   showPromosOnLanding: boolean;
   disclaimer: string;
   meta: {
@@ -610,6 +619,8 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       body: "羽田—金浦便を使うなら、金浦空港側のクリニックも便利です。ソウル中心部の混雑を避けて、フライト前後の時間を活用できます。皮膚科ネットワーク「YOU&I(ユーアンドアイ)」の金浦店は日本語Instagramアカウントで相談を受け付けています。",
       cta: "@youandi_gimpo_jp で相談する →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
+      lineCta: "LINEで相談する →",
+      lineHref: "https://linktr.ee/YOUANDI_Clinic",
     },
     showPromosOnLanding: false,
     disclaimer:
@@ -693,6 +704,8 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       body: "강남까지 가지 않아도 되는 선택지. 피부과 네트워크 유앤아이(YOU&I)의 김포점은 김포한강신도시에 있어 김포·서부권 생활권에서 다니기 좋습니다.",
       cta: "유앤아이 김포점 알아보기 →",
       href: "https://www.gpuni114.co.kr/",
+      lineCta: "상담 채널 바로가기 →",
+      lineHref: "https://linktr.ee/YOUANDI_Clinic",
     },
     showPromosOnLanding: true,
     disclaimer:
@@ -781,6 +794,8 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       body: "If you fly into Gimpo, a clinic on the Gimpo side can be convenient. You can avoid the crowds of central Seoul and make use of the time around your flight. The Gimpo branch of the YOU&I dermatology network takes inquiries via Instagram.",
       cta: "Ask @youandi_gimpo_jp →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
+      lineCta: "Chat on LINE →",
+      lineHref: "https://linktr.ee/YOUANDI_Clinic",
     },
     showPromosOnLanding: false,
     disclaimer:
@@ -869,6 +884,8 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       body: "若從金浦機場進出，金浦一側的診所也很方便。可避開首爾市中心的擁擠，善用航班前後的時間。皮膚科網絡YOU&I的金浦分院以Instagram受理諮詢。",
       cta: "透過 @youandi_gimpo_jp 諮詢 →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
+      lineCta: "透過 LINE 諮詢 →",
+      lineHref: "https://linktr.ee/YOUANDI_Clinic",
     },
     showPromosOnLanding: false,
     disclaimer:
