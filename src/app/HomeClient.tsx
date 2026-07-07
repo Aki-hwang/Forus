@@ -156,10 +156,11 @@ export function HomeClient({
     [allAds, organicAds, nowMs]
   );
 
-  // 키워드 언어탭용 — 광고주 유형만 반영, 언어는 미필터(키워드 카드가 자체 탭으로 분리)
-  const advPool = useMemo(
-    () => merged.filter((a) => adv === "전체" || (a.advertiserType ?? "clinic") === adv),
-    [merged, adv]
+  // 상단 요약 지표(수집·신규·최다조회·지역분포)용 — 언어 탭만 반영, 병원/시술후기 탭은
+  // 무시한다. 요약은 '전체 현황판'이라 탭을 바꿔도 숫자가 흔들리지 않는 게 자연스럽다.
+  const overview = useMemo(
+    () => merged.filter((a) => lang === "전체" || a.lang === lang),
+    [merged, lang]
   );
 
   const base = useMemo(
@@ -189,9 +190,8 @@ export function HomeClient({
     return [...list].sort(cmp[sort]);
   }, [base, area, sort, nowMs]);
 
-  // 트렌드(지역별 분포 등)는 지역 필터와 무관하게 전체(언어 기준) 고정 집계.
-  // 아래 지역 탭은 갤러리 그리드에만 적용됨.
-  const trends = useMemo(() => summarizeTrends(base), [base]);
+  // 트렌드 요약(수집 건수·지역별 분포)은 병원/시술후기 탭과 무관하게 전체(언어 기준) 고정 집계.
+  const trends = useMemo(() => summarizeTrends(overview), [overview]);
 
   // 필터·정렬이 바뀌면 첫 페이지부터 다시 (스크롤 위치 기준 재계산 방지)
   useEffect(() => {
@@ -284,7 +284,8 @@ export function HomeClient({
           <TrendPanel
             trends={trends}
             ads={base}
-            keywordAds={advPool}
+            overviewAds={overview}
+            keywordAds={merged}
             onSelectAd={openAd}
             collectedAt={collectedAt}
             nowMs={nowMs}

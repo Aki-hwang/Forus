@@ -129,6 +129,7 @@ function classifyContentType(text: string): string {
 export function TrendPanel({
   trends,
   ads,
+  overviewAds,
   keywordAds,
   onSelectAd,
   collectedAt,
@@ -137,6 +138,9 @@ export function TrendPanel({
 }: {
   trends: TrendSummary;
   ads: Ad[];
+  /** 상단 요약(신규 광고·최다 조회)용 — 병원/시술후기 탭 무시, 언어 탭만 반영된 전체 목록.
+   *  요약 지표는 탭을 바꿔도 흔들리지 않는 '전체 현황판'으로 고정한다. */
+  overviewAds?: Ad[];
   keywordAds: Ad[];
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
@@ -176,14 +180,24 @@ export function TrendPanel({
   const clinicAds = useMemo(
     () => ads.filter((a) => isLikelyClinic(a) && within7d(a)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ads, now]
+    [ads, now, reviewMode]
   );
-  // 최다 조회 광고 — 최근 7일 클리닉만 기준 (클릭 시 모달)
+  // 상단 요약용 전체 목록 — overviewAds 미전달 시 ads 로 폴백(하위호환)
+  const overview = overviewAds ?? ads;
+  // 최다 조회(7일) — 상단 요약 카드: 탭 무관 전체 기준, 병원으로 보이는 광고주만
+  // (전체 탭에서의 기존 산식 그대로 — 인플루언서 협찬 릴스가 지표를 왜곡하지 않게)
   const topAd = useMemo(() => {
-    const v = clinicAds.filter((a) => typeof a.views === "number");
+    const pool = overview.filter(
+      (a) =>
+        within7d(a) &&
+        a.advertiserType !== "influencer" &&
+        (a.featured || hasClinicSignal(a.clinic) || hasClinicSignal(a.igUsername))
+    );
+    const v = pool.filter((a) => typeof a.views === "number");
     if (v.length) return [...v].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0];
-    return [...clinicAds].sort((a, b) => b.likes - a.likes)[0] ?? null;
-  }, [clinicAds]);
+    return [...pool].sort((a, b) => b.likes - a.likes)[0] ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overview, now]);
   // 조회수 TOP 게시물 — 최근 7일 개별 게시물(클릭 시 모달)
   const topPosts = useMemo(
     () =>
@@ -192,14 +206,14 @@ export function TrendPanel({
         .slice(0, 5),
     [clinicAds]
   );
-  // 신규 광고 — 최근 7일 내 시작
+  // 신규 광고(7일 내 시작) — 상단 요약 카드: 탭 무관 전체 기준
   const newAds7 = useMemo(
     () =>
-      ads.filter((a) => {
+      overview.filter((a) => {
         const t = new Date((a.date ?? "").replace(" ", "T")).getTime();
         return !Number.isNaN(t) && now - t <= 7 * 86_400_000;
       }).length,
-    [ads, now]
+    [overview, now]
   );
   // 최근 7일 — 인기 시술·콘텐츠 유형 분포용. 기본은 병원만(협찬글 왜곡 방지),
   // 시술후기 탭에선 후기 글이 곧 대상.
