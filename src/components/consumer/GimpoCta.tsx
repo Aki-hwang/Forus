@@ -10,6 +10,7 @@ export function GimpoCta({
   locale,
   page,
   treatment,
+  cta = "main",
   className,
 }: {
   href: string;
@@ -18,6 +19,8 @@ export function GimpoCta({
   /** 노출 위치: landing | treatment | combo — 위치별 클릭률 비교용 */
   page: string;
   treatment?: string;
+  /** 어떤 버튼인지: main(인스타/홈페이지) | line(상담 채널) */
+  cta?: "main" | "line";
   className?: string;
 }) {
   return (
@@ -26,7 +29,7 @@ export function GimpoCta({
       target="_blank"
       rel="noopener noreferrer"
       className={className}
-      onClick={() => gaEvent("gimpo_cta_click", { locale, page, treatment: treatment ?? "" })}
+      onClick={() => gaEvent("gimpo_cta_click", { locale, page, treatment: treatment ?? "", cta })}
     >
       {label}
     </a>

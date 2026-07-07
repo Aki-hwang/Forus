@@ -94,15 +94,26 @@ function GimpoBlock({ locale }: { locale: ConsumerLocale }) {
       <p className="text-[11px] font-black uppercase tracking-wide text-primary-ink">
         {g.tag}
       </p>
-      <h2 className="mt-1 text-[17px] font-black text-foreground">{g.title}</h2>
-      <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted">{g.body}</p>
-      <GimpoCta
-        href={g.href}
-        label={g.cta}
-        locale={locale}
-        page="landing"
-        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
-      />
+      {/* break-keep: 한국어·CJK가 단어 중간에서 줄바꿈되지 않게 */}
+      <h2 className="mt-1 break-keep text-[17px] font-black text-foreground">{g.title}</h2>
+      <p className="mt-2 max-w-3xl break-keep text-[13px] leading-relaxed text-muted">{g.body}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <GimpoCta
+          href={g.href}
+          label={g.cta}
+          locale={locale}
+          page="landing"
+          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
+        />
+        <GimpoCta
+          href={g.lineHref}
+          label={g.lineCta}
+          locale={locale}
+          page="landing"
+          cta="line"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[#06C755]/40 bg-[#06C755]/10 px-4 py-2 text-[12.5px] font-bold text-[#06925f] transition hover:bg-[#06C755]/20"
+        />
+      </div>
     </section>
   );
 }
@@ -128,16 +139,27 @@ function GimpoBanner({
         <p className="text-[10.5px] font-black uppercase tracking-wide text-primary-ink">
           {g.tag}
         </p>
-        <p className="mt-0.5 text-[14.5px] font-black text-foreground">{g.title}</p>
+        <p className="mt-0.5 break-keep text-[14.5px] font-black text-foreground">{g.title}</p>
       </div>
-      <GimpoCta
-        href={g.href}
-        label={g.cta}
-        locale={locale}
-        page={page}
-        treatment={treatment}
-        className="shrink-0 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
-      />
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <GimpoCta
+          href={g.href}
+          label={g.cta}
+          locale={locale}
+          page={page}
+          treatment={treatment}
+          className="rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
+        />
+        <GimpoCta
+          href={g.lineHref}
+          label={g.lineCta}
+          locale={locale}
+          page={page}
+          treatment={treatment}
+          cta="line"
+          className="rounded-full border border-[#06C755]/40 bg-[#06C755]/10 px-4 py-2 text-[12.5px] font-bold text-[#06925f] transition hover:bg-[#06C755]/20"
+        />
+      </div>
     </section>
   );
 }
