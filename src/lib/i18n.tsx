@@ -20,7 +20,7 @@ const STRINGS: Record<string, Str> = {
   // 헤더
   // 소비자 가이드 링크 — UI 언어에 따라 라벨·목적지(/ko·/jp)가 바뀐다 (Header 참고)
   consumerGuide: S("피부과 여행 가이드", "🇯🇵 旅行者ガイド", "🇯🇵 旅行者指南", "🇯🇵 Visitor guide"),
-  register: S("병원 인스타그램 등록", "クリニックInstagram登録", "诊所Instagram登记", "Register clinic Instagram"),
+  register: S("인스타그램 등록", "Instagram登録", "Instagram登记", "Register Instagram"),
   registerShort: S("인스타 등록", "登録", "登记", "Register"),
   inquiry: S("문의하기", "お問い合わせ", "咨询", "Contact"),
   admin: S("관리자", "管理者", "管理员", "Admin"),
@@ -90,7 +90,7 @@ const STRINGS: Record<string, Str> = {
   excludeTip: S("이 게시물만 이번 수집에서 제외 (다음 수집 때 다시 보임)", "今回の収集からこの投稿のみ除外（次回再表示）", "仅本次收集排除该帖（下次会再出现）", "Exclude this post this collection (returns next collection)"),
   blockTip: S("이 계정 자체를 차단 (재수집해도 안 보임)", "このアカウントをブロック（再収集後も非表示）", "屏蔽该账号（重新收集也不显示）", "Block this account (stays hidden after re-collection)"),
   // 등록 모달
-  regTitle: S("병원 인스타그램 등록", "クリニックInstagram登録", "诊所Instagram登记", "Register clinic Instagram"),
+  regTitle: S("인스타그램 등록", "Instagram登録", "Instagram登记", "Register Instagram"),
   regSub: S("등록되면 트렌드 대시보드에 우리 병원 게시물이 함께 수집돼요.", "登録するとトレンドにあなたのクリニックの投稿も収集されます。", "登记后，您诊所的帖子也会被收集到趋势中。", "Once listed, your clinic's posts are included in the dashboard."),
   fName: S("병원명", "クリニック名", "诊所名称", "Clinic name"),
   fNamePh: S("예: 유앤아이의원", "例: ○○クリニック", "例: ○○诊所", "e.g. YOU&I Clinic"),
