@@ -14,10 +14,11 @@ const SORTS: [SortKey, TKey][] = [
   ["views", "sortViews"],
   ["followers", "sortFollowers"],
 ];
+// 기본 탭(시술후기)이 맨 앞 — 모바일 좁은 화면에서 활성 탭이 스크롤 밖으로 잘리지 않게
 const ADVS: [AdvKey, TKey][] = [
-  ["전체", "all"],
-  ["clinic", "clinicTab"],
   ["influencer", "influencer"],
+  ["clinic", "clinicTab"],
+  ["전체", "all"],
 ];
 
 export function FilterBar({
@@ -42,6 +43,12 @@ export function FilterBar({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* 모바일: 탭이 가로로 넘칠 때 스크롤 가능함을 알리는 우측 페이드 힌트 */}
+      <div className="relative max-w-full sm:max-w-none">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent sm:hidden"
+        />
       <div className="flex max-w-full items-center gap-2 overflow-x-auto sm:gap-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="inline-flex shrink-0 rounded-xl border border-border bg-surface p-1">
           {areaTabs.map((a) => (
@@ -70,6 +77,7 @@ export function FilterBar({
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       <div className="flex items-center gap-3">

@@ -152,6 +152,9 @@ export function TrendPanel({
   const { t: tt, tArea, tContentType, tTreatment, tClinic, lang } = useUiLang();
   const [kwLang, setKwLang] = useState<Lang | "전체">("전체");
   const [kwOpen, setKwOpen] = useState(false);
+  // 모바일: 지표 패널 6개가 세로로 쌓여 갤러리가 2~3스크린 밀리던 문제 —
+  // 핵심 지표 3칸만 기본 노출하고 나머지는 '더보기'로 접는다 (md 이상은 항상 펼침)
+  const [trendOpen, setTrendOpen] = useState(false);
   const maxArea = Math.max(1, ...trends.byArea.map((a) => a.count));
   const collectedLabel = (() => {
     if (!collectedAt) return tt("hintRegions");
@@ -315,7 +318,7 @@ export function TrendPanel({
           />
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
+        <div className={`${trendOpen ? "block" : "hidden"} rounded-2xl border border-border bg-surface p-4 md:block md:col-span-3`}>
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("regionDist")}</p>
           <div className="space-y-2.5">
             {/* 라벨 폭: 영어(Myeongdong)만 넓게, CJK(강남·明洞)는 2자라 좁게 — 막대 길이 확보 */}
@@ -325,7 +328,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
+        <div className={`${trendOpen ? "block" : "hidden"} rounded-2xl border border-border bg-surface p-4 md:block md:col-span-4`}>
           <div className="mb-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <p className="text-[13px] font-bold text-foreground">{tt("popKeywords")}</p>
@@ -376,8 +379,16 @@ export function TrendPanel({
         </div>
       </section>
 
+      {/* 모바일 전용: 트렌드 지표 펼치기/접기 */}
+      <button
+        onClick={() => setTrendOpen((v) => !v)}
+        className="w-full rounded-xl border border-dashed border-border bg-surface py-2 text-[12.5px] font-bold text-primary-ink transition hover:bg-background md:hidden"
+      >
+        {trendOpen ? `▲ ${tt("trendLess")}` : `▼ ${tt("trendMore")}`}
+      </button>
+
       {/* 하단: 조회수 TOP 클리닉 · 인기 시술 */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <section className={`${trendOpen ? "grid" : "hidden"} grid-cols-1 gap-4 md:grid md:grid-cols-12`}>
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-2">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">
             {tt(reviewMode ? "topReviewers" : "topClinics")}

@@ -24,6 +24,7 @@ import {
   ConsumerClinicCard,
 } from "./ConsumerCards";
 import { ConsumerFaq, FaqJsonLd, BreadcrumbJsonLd } from "./ConsumerFaq";
+import { GimpoCta } from "./GimpoCta";
 
 const BASE = "https://www.dermaradar.kr";
 
@@ -95,14 +96,48 @@ function GimpoBlock({ locale }: { locale: ConsumerLocale }) {
       </p>
       <h2 className="mt-1 text-[17px] font-black text-foreground">{g.title}</h2>
       <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-muted">{g.body}</p>
-      <a
+      <GimpoCta
         href={g.href}
-        target="_blank"
-        rel="noopener noreferrer"
+        label={g.cta}
+        locale={locale}
+        page="landing"
         className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
-      >
-        {g.cta}
-      </a>
+      />
+    </section>
+  );
+}
+
+/**
+ * 김포 CTA 컴팩트 배너 — 시술·시술×지역 딥페이지용.
+ * SEO 유입은 랜딩이 아니라 딥페이지로 착지하므로, 랜딩에만 있던 유앤아이 김포 CTA 를
+ * 구매의도가 가장 높은 페이지에도 노출한다 (1줄 배너로 본문 흐름을 해치지 않게).
+ */
+function GimpoBanner({
+  locale,
+  page,
+  treatment,
+}: {
+  locale: ConsumerLocale;
+  page: "treatment" | "combo";
+  treatment?: string;
+}) {
+  const g = CONSUMER_UI[locale].gimpo;
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-accent/5 px-5 py-4">
+      <div className="min-w-0">
+        <p className="text-[10.5px] font-black uppercase tracking-wide text-primary-ink">
+          {g.tag}
+        </p>
+        <p className="mt-0.5 text-[14.5px] font-black text-foreground">{g.title}</p>
+      </div>
+      <GimpoCta
+        href={g.href}
+        label={g.cta}
+        locale={locale}
+        page={page}
+        treatment={treatment}
+        className="shrink-0 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-2 text-[12.5px] font-bold text-white shadow-sm transition hover:opacity-90"
+      />
     </section>
   );
 }
@@ -339,6 +374,8 @@ export async function ConsumerTreatmentPage({
         </section>
       ) : null}
 
+      <GimpoBanner locale={locale} page="treatment" treatment={g.slug} />
+
       <ConsumerFaq items={ui.faq} title={ui.secFaq} />
 
       {/* 다른 시술 링크 (내부 링크 강화) */}
@@ -460,6 +497,8 @@ export async function ConsumerTreatmentAreaPage({
           </div>
         </section>
       ) : null}
+
+      <GimpoBanner locale={locale} page="combo" treatment={g.slug} />
 
       <ConsumerFaq items={ui.faq} title={ui.secFaq} />
 

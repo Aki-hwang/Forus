@@ -78,6 +78,18 @@ const STRINGS: Record<string, Str> = {
   kwModalTitle: S("인기 키워드 전체", "人気キーワード全体", "全部热门关键词", "All top keywords"),
   countSuffix: S("개", "件", "个", ""),
   unit: S("건", "件", "条", ""),
+  // 상세 모달
+  viewPost: S("↗ 이 게시물 보기", "↗ この投稿を見る", "↗ 查看该帖子", "↗ View post"),
+  viewAccount: S("인스타그램 (@{h}) 보기", "Instagram (@{h}) を見る", "查看 Instagram (@{h})", "View Instagram (@{h})"),
+  viewsUnit: S("조회", "再生", "播放", "views"),
+  activeDaysRan: S("{n}일 집행", "{n}日配信", "已投放 {n} 天", "running {n}d"),
+  // 갤러리 빈 상태·무한스크롤
+  emptyFiltered: S("조건에 맞는 게시물이 없어요.", "条件に合う投稿がありません。", "没有符合条件的帖子。", "No posts match the filters."),
+  resetFilters: S("필터 초기화", "フィルターをリセット", "重置筛选", "Reset filters"),
+  scrollMore: S("{shown}/{total} — 스크롤하면 더 보여요", "{shown}/{total} — スクロールでさらに表示", "{shown}/{total} — 滚动查看更多", "{shown}/{total} — scroll for more"),
+  // 트렌드 패널 모바일 접기
+  trendMore: S("트렌드 지표 더보기", "トレンド指標をもっと見る", "查看更多趋势指标", "More trend metrics"),
+  trendLess: S("트렌드 지표 접기", "トレンド指標をたたむ", "收起趋势指标", "Hide trend metrics"),
   // 카드
   detailView: S("상세 보기", "詳細を見る", "查看详情", "View details"),
   exclude: S("제외", "除外", "排除", "Exclude"),
