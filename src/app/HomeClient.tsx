@@ -303,8 +303,19 @@ export function HomeClient({
           />
 
           {filtered.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-surface py-16 text-center text-muted">
-              조건에 맞는 광고가 없어요. 필터를 바꿔보세요.
+            <div className="space-y-3 rounded-2xl border border-dashed border-border bg-surface py-16 text-center text-muted">
+              <p>{t("emptyFiltered")}</p>
+              <button
+                onClick={() => {
+                  setArea("전체");
+                  setLang("전체");
+                  setAdv("influencer");
+                  setSort("trending");
+                }}
+                className="rounded-full border border-border bg-background px-4 py-2 text-[13px] font-bold text-foreground transition hover:border-primary hover:text-primary-ink"
+              >
+                {t("resetFilters")}
+              </button>
             </div>
           ) : (
             <>
@@ -322,7 +333,7 @@ export function HomeClient({
               </div>
               {visibleCount < filtered.length ? (
                 <div ref={moreRef} className="py-6 text-center text-[12px] text-muted">
-                  {visibleCount}/{filtered.length} — 스크롤하면 더 보여요
+                  {t("scrollMore", { shown: visibleCount, total: filtered.length })}
                 </div>
               ) : null}
             </>
