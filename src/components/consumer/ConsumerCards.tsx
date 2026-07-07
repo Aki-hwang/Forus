@@ -20,9 +20,11 @@ function fmt(locale: ConsumerLocale, n: number): string {
 
 /** IG 게시물 카드 — 원본 게시물로 새 탭 링크 */
 export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; post: Ad }) {
-  const proxied = post.imageUrl
-    ? `/api/img?u=${encodeURIComponent(post.imageUrl)}`
-    : null;
+  // imgCached:false = 캐시에 실물 없는 만료 이미지 — 깨진 아이콘 대신 그라데이션 폴백으로
+  const proxied =
+    post.imageUrl && post.imgCached !== false
+      ? `/api/img?u=${encodeURIComponent(post.imageUrl)}`
+      : null;
   const e = engagement(post);
   const isViews = typeof post.views === "number" && post.views > 0;
   // 시술 배지는 확신 분류일 때만, 재판정된 값으로 — 저장값은 기본값 폴백일 수 있다
@@ -85,7 +87,11 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
 /** 진행 중 프로모션(광고) 카드 */
 export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: Ad }) {
   const ui = CONSUMER_UI[locale];
-  const proxied = ad.imageUrl ? `/api/img?u=${encodeURIComponent(ad.imageUrl)}` : null;
+  // imgCached:false = 만료 이미지 — 깨진 아이콘 대신 그라데이션 박스 (이벤트 정보는 유지)
+  const proxied =
+    ad.imageUrl && ad.imgCached !== false
+      ? `/api/img?u=${encodeURIComponent(ad.imageUrl)}`
+      : null;
   const sureTreatment = confidentTreatment(ad);
   return (
     <a
