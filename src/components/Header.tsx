@@ -13,6 +13,9 @@ export function Header({ onReset }: { onReset?: () => void }) {
   const { lang, t } = useUiLang();
   // 소비자 가이드: UI 언어에 맞는 버전으로 연결 (한국어 → /ko, 그 외 → /jp)
   const guideHref = lang === "ko" ? "/ko" : "/jp";
+  // 주간 레이더: UI 언어별 로케일 매핑 (가이드와 달리 4개 로케일 모두 존재)
+  const weeklyHref =
+    lang === "ko" ? "/ko/weekly" : lang === "zh" ? "/tw/weekly" : lang === "en" ? "/en/weekly" : "/jp/weekly";
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
@@ -38,6 +41,14 @@ export function Header({ onReset }: { onReset?: () => void }) {
         </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* 주간 레이더 리포트 — 모바일은 📡 아이콘만(헤더 폭 절약), sm 이상 텍스트 표시 */}
+          <Link
+            href={weeklyHref}
+            title={t("weeklyRadar")}
+            className="whitespace-nowrap rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-[12px] font-bold text-primary-ink transition hover:bg-primary/10 sm:px-3.5 sm:text-[13px]"
+          >
+            📡<span className="hidden sm:inline"> {t("weeklyRadar")}</span>
+          </Link>
           {/* 모바일에서도 항상 표시 — 소비자 가이드는 핵심 진입점이라 숨기지 않는다 */}
           <Link
             href={guideHref}
