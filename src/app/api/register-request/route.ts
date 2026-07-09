@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { addRegisterRequest, readRegisterRequests } from "@/lib/snapshot";
+import { notifyTelegram } from "@/lib/notify";
 
 // 병원 인스타 등록 요청.
 //  - POST: 공개 폼에서 제출 → /data 에 저장.
@@ -32,6 +33,18 @@ export async function POST(req: Request) {
 
   try {
     const entry = await addRegisterRequest({ clinic, instagram, area, contact, message });
+    void notifyTelegram(
+      [
+        "🏥 DermaRadar 인스타 등록 요청",
+        `병원: ${clinic}`,
+        `인스타: ${instagram}`,
+        area && `지역: ${area}`,
+        contact && `연락처: ${contact}`,
+        message && `\n${message}`,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
     return NextResponse.json({ ok: true, id: entry.id });
   } catch (e) {
     return NextResponse.json({ error: "save_failed", detail: String(e) }, { status: 500 });

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { OutboundTracker } from "@/components/OutboundTracker";
 import Script from "next/script";
 
 const notoKR = Noto_Sans_KR({
@@ -96,6 +97,7 @@ export default function RootLayout({
           </>
         ) : null}
         <Providers>{children}</Providers>
+        <OutboundTracker />
       </body>
     </html>
   );

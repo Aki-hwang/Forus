@@ -12,6 +12,10 @@ import {
   areaByKey,
 } from "@/lib/consumer";
 
+/** LINE 브랜드 필 스타일 (색·보더·호버) — 김포 CTA(ConsumerPages)와 클리닉 카드가 공유 */
+export const LINE_PILL_CLS =
+  "rounded-full border border-[#06C755]/40 bg-[#06C755]/10 font-bold text-[#06925f] transition hover:bg-[#06C755]/20";
+
 function fmt(locale: ConsumerLocale, n: number): string {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}${locale === "jp" ? "万" : "만"}`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -36,6 +40,7 @@ export function ConsumerPostCard({ locale, post }: { locale: ConsumerLocale; pos
       href={post.sourceUrl ?? `https://www.instagram.com/${post.igUsername ?? ""}/`}
       target="_blank"
       rel="noopener noreferrer"
+      data-oc="guide_post"
       className="group block overflow-hidden rounded-2xl border border-border bg-surface transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
     >
       <div
@@ -98,6 +103,7 @@ export function ConsumerPromoCard({ locale, ad }: { locale: ConsumerLocale; ad: 
       href={ad.sourceUrl ?? ad.adLibraryUrl ?? `https://www.instagram.com/${ad.igUsername ?? ""}/`}
       target="_blank"
       rel="noopener noreferrer"
+      data-oc="guide_promo"
       className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
     >
       <div
@@ -136,13 +142,18 @@ export function ConsumerClinicCard({
   clinic: ConsumerClinic;
 }) {
   const ui = CONSUMER_UI[locale];
+  // 카드 전체는 인스타 프로필로 (stretched-link 오버레이), LINE 직링크가 있으면 그 위(z-10)에
+  // 별도 버튼 — <a> 중첩은 불가하므로 절대배치 패턴. 서버 컴포넌트 유지(JS 불필요).
   return (
-    <a
-      href={clinic.instagramUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block rounded-2xl border border-border bg-surface p-4 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
-    >
+    <div className="relative rounded-2xl border border-border bg-surface p-4 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
+      <a
+        href={clinic.instagramUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${clinic.name} (@${clinic.handle}) — Instagram`}
+        data-oc="guide_clinic"
+        className="absolute inset-0 rounded-2xl"
+      />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-[15px] font-black text-foreground">
@@ -174,6 +185,17 @@ export function ConsumerClinicCard({
       {clinic.postCount > 0 ? (
         <p className="mt-2 text-[12px] text-muted">{ui.clinicPostCount(clinic.postCount)}</p>
       ) : null}
-    </a>
+      {clinic.lineUrl ? (
+        <a
+          href={clinic.lineUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-oc="guide_clinic_line"
+          className={`${LINE_PILL_CLS} relative z-10 mt-2.5 inline-flex items-center px-3 py-1.5 text-[11.5px]`}
+        >
+          {ui.clinicLine}
+        </a>
+      ) : null}
+    </div>
   );
 }

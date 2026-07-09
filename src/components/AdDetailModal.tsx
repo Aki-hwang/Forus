@@ -128,6 +128,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                     href={postUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-oc="modal_post"
                     className="inline-flex items-center gap-1 text-[12px] font-bold text-primary-ink hover:underline"
                   >
                     {t("viewPost")}
@@ -138,6 +139,7 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                     href={acctUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    data-oc="modal_account"
                     className="inline-flex items-center gap-1 text-[12px] font-medium text-muted hover:underline"
                   >
                     {t("viewAccount", { h: ad.igUsername ?? "" })}

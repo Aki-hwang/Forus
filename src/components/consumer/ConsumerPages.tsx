@@ -22,6 +22,7 @@ import {
   ConsumerPostCard,
   ConsumerPromoCard,
   ConsumerClinicCard,
+  LINE_PILL_CLS,
 } from "./ConsumerCards";
 import { ConsumerFaq, FaqJsonLd, BreadcrumbJsonLd } from "./ConsumerFaq";
 import { GimpoCta } from "./GimpoCta";
@@ -87,12 +88,26 @@ function InfoCards({ locale, g }: { locale: ConsumerLocale; g: TreatmentGuide })
   );
 }
 
+/** 광고 자기표기 배지 — 일본 스테마 규제·표시광고법 대응 (김포 블록·배너 공용) */
+function PrBadge({ label, small }: { label: string; small?: boolean }) {
+  return (
+    <span
+      className={`rounded bg-foreground/10 px-1.5 py-0.5 font-bold normal-case tracking-normal text-muted ${
+        small ? "text-[9.5px]" : "text-[10px]"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
 function GimpoBlock({ locale }: { locale: ConsumerLocale }) {
   const g = CONSUMER_UI[locale].gimpo;
   return (
     <section className="rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-accent/5 p-5">
-      <p className="text-[11px] font-black uppercase tracking-wide text-primary-ink">
+      <p className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-primary-ink">
         {g.tag}
+        <PrBadge label={g.prLabel} />
       </p>
       {/* break-keep: 한국어·CJK가 단어 중간에서 줄바꿈되지 않게 */}
       <h2 className="mt-1 break-keep text-[17px] font-black text-foreground">{g.title}</h2>
@@ -111,9 +126,13 @@ function GimpoBlock({ locale }: { locale: ConsumerLocale }) {
           locale={locale}
           page="landing"
           cta="line"
-          className="inline-flex items-center gap-1.5 rounded-full border border-[#06C755]/40 bg-[#06C755]/10 px-4 py-2 text-[12.5px] font-bold text-[#06925f] transition hover:bg-[#06C755]/20"
+          className={`${LINE_PILL_CLS} inline-flex items-center gap-1.5 px-4 py-2 text-[12.5px]`}
         />
       </div>
+      {/* 운영 주체·무료 이유 공시 — 신뢰와 규제 대응을 겸한다 */}
+      <p className="mt-3 max-w-3xl break-keep text-[11px] leading-relaxed text-muted/80">
+        {g.disclosure}
+      </p>
     </section>
   );
 }
@@ -136,8 +155,9 @@ function GimpoBanner({
   return (
     <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-gradient-to-r from-primary/5 to-accent/5 px-5 py-4">
       <div className="min-w-0">
-        <p className="text-[10.5px] font-black uppercase tracking-wide text-primary-ink">
+        <p className="flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wide text-primary-ink">
           {g.tag}
+          <PrBadge label={g.prLabel} small />
         </p>
         <p className="mt-0.5 break-keep text-[14.5px] font-black text-foreground">{g.title}</p>
       </div>
@@ -157,7 +177,7 @@ function GimpoBanner({
           page={page}
           treatment={treatment}
           cta="line"
-          className="rounded-full border border-[#06C755]/40 bg-[#06C755]/10 px-4 py-2 text-[12.5px] font-bold text-[#06925f] transition hover:bg-[#06C755]/20"
+          className={`${LINE_PILL_CLS} px-4 py-2 text-[12.5px]`}
         />
       </div>
     </section>

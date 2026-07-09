@@ -201,14 +201,21 @@ export function TrendPanel({
     return [...pool].sort((a, b) => b.likes - a.likes)[0] ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overview, now]);
-  // 조회수 TOP 게시물 — 최근 7일 개별 게시물(클릭 시 모달)
-  const topPosts = useMemo(
-    () =>
-      [...clinicAds]
-        .sort((a, b) => (b.views ?? b.likes) - (a.views ?? a.likes))
-        .slice(0, 5),
-    [clinicAds]
-  );
+  // 조회수 TOP 게시물 — 최근 7일, 계정당 1건.
+  // Meta 광고는 광고별 조회수가 없어 계정 중앙값을 공유하므로, 제한이 없으면
+  // 광고를 여러 개 돌리는 한 계정이 같은 숫자로 목록을 독식한다.
+  const topPosts = useMemo(() => {
+    const seen = new Set<string>();
+    return [...clinicAds]
+      .sort((a, b) => (b.views ?? b.likes) - (a.views ?? a.likes))
+      .filter((a) => {
+        const key = (a.igUsername ?? a.clinic).toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 5);
+  }, [clinicAds]);
   // 신규 광고(7일 내 시작) — 상단 요약 카드: 탭 무관 전체 기준
   const newAds7 = useMemo(
     () =>
@@ -425,6 +432,7 @@ export function TrendPanel({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  data-oc="trend_account"
                   className={rowClass}
                 >
                   {inner}
