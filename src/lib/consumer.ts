@@ -547,6 +547,29 @@ interface ConsumerUi {
     /** 운영 주체·무료 이유 공시 — 김포 블록 하단 소형 문구 */
     disclosure: string;
   };
+  /** 주간 레이더 리포트 (/weekly) 문구 */
+  weekly: {
+    navTitle: string;
+    landingBanner: string;
+    landingBannerHint: string;
+    title: (weekLabel: string) => string;
+    weekLabel: (month: number, day: number) => string;
+    currentBadge: string;
+    intro: string;
+    statLine: (posts: number, ads: number, accounts: number) => string;
+    secTrending: string;
+    trendingHint: string;
+    secNewAds: string;
+    newAdsHint: string;
+    secTopPosts: string;
+    topPostsHint: string;
+    secLongRunners: string;
+    longRunnersHint: string;
+    archive: string;
+    noData: string;
+    metaTitle: (weekLabel: string) => string;
+    metaDesc: (weekLabel: string) => string;
+  };
   showPromosOnLanding: boolean;
   disclaimer: string;
   meta: {
@@ -638,6 +661,30 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       disclosure:
         "本サイトは皮膚科ネットワークYOU&I金浦店が運営する無料の情報サービスです。自院の紹介を含みますが、データの収集・集計はすべてのクリニックに同じ基準で行っています。",
     },
+    weekly: {
+      navTitle: "週間レーダー",
+      landingBanner: "今週のレーダーレポートを見る →",
+      landingBannerHint: "今週人気の施術・新キャンペーンの要約",
+      title: (w) => `週間レーダー — ${w}`,
+      weekLabel: (m, d) => `${m}月${d}日の週`,
+      currentBadge: "今週 · 集計中",
+      intro:
+        "江南・明洞・弘大の皮膚科クリニックの実際のInstagram投稿・広告データを、毎週月曜日基準でまとめています。",
+      statLine: (p, a, c) => `今週の投稿 ${p}件 · 新キャンペーン ${a}件 · 発信アカウント ${c}件`,
+      secTrending: "施術トレンド",
+      trendingHint: "先週比の投稿数",
+      secNewAds: "今週始まったキャンペーン",
+      newAdsHint: "今週配信開始の広告",
+      secTopPosts: "今週の人気投稿",
+      topPostsHint: "アカウントごとに1件 · 反応順",
+      secLongRunners: "長く続いているキャンペーン",
+      longRunnersHint: "長く配信されている広告ほど定番",
+      archive: "過去のレポート",
+      noData: "この週は収集データがありません。",
+      metaTitle: (w) => `${w} — 韓国皮膚科トレンドレポート`,
+      metaDesc: (w) =>
+        `${w}の江南・明洞・弘大の皮膚科データまとめ — 人気施術の増減、新しく始まったキャンペーン、人気投稿をチェックできます。`,
+    },
     showPromosOnLanding: false,
     disclaimer:
       "本ページは公開情報をもとにした情報提供のみを目的としており、特定の医療行為の勧誘・斡旋・仲介を行うものではありません。施術の効果・ダウンタイムには個人差があります。施術に関する判断は、必ず医療機関でのカウンセリングのうえで行ってください。",
@@ -726,6 +773,30 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       prLabel: "광고",
       disclosure:
         "이 사이트는 유앤아이의원 김포점이 운영하는 무료 정보 서비스입니다. 자사 소개가 포함되며, 데이터 수집·집계는 모든 병원에 동일한 기준으로 적용됩니다.",
+    },
+    weekly: {
+      navTitle: "주간 레이더",
+      landingBanner: "이번 주 레이더 리포트 보기 →",
+      landingBannerHint: "이번 주 뜨는 시술·새 이벤트 요약",
+      title: (w) => `주간 레이더 — ${w}`,
+      weekLabel: (m, d) => `${m}월 ${d}일 주`,
+      currentBadge: "이번 주 · 집계 중",
+      intro:
+        "강남·명동·홍대 피부과의 실제 인스타 게시물·광고 데이터를 매주 월요일 기준으로 요약합니다.",
+      statLine: (p, a, c) => `이번 주 게시물 ${p}건 · 새 이벤트 ${a}건 · 활동 계정 ${c}곳`,
+      secTrending: "시술 동향",
+      trendingHint: "지난주 대비 게시물 수",
+      secNewAds: "이번 주 시작한 이벤트",
+      newAdsHint: "이번 주 집행을 시작한 광고",
+      secTopPosts: "이번 주 인기 게시물",
+      topPostsHint: "계정당 1건 · 반응 순",
+      secLongRunners: "오래 돌고 있는 이벤트",
+      longRunnersHint: "오래 집행될수록 검증된 정석 이벤트",
+      archive: "지난 리포트",
+      noData: "이 주에는 수집된 데이터가 없어요.",
+      metaTitle: (w) => `${w} — 피부과 시술 트렌드 리포트`,
+      metaDesc: (w) =>
+        `${w} 강남·명동·홍대 피부과 데이터 요약 — 뜨는 시술의 증감, 새로 시작한 이벤트, 인기 게시물을 확인하세요.`,
     },
     showPromosOnLanding: true,
     disclaimer:
@@ -821,6 +892,30 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       disclosure:
         "DermaRadar is a free service operated by YOU&I Clinic Gimpo. This section features our own clinic; data collection and ranking use the same criteria for every clinic.",
     },
+    weekly: {
+      navTitle: "Weekly Radar",
+      landingBanner: "See this week's radar report →",
+      landingBannerHint: "Trending treatments & new promotions",
+      title: (w) => `Weekly Radar — ${w}`,
+      weekLabel: (m, d) => `Week of ${m}/${d}`,
+      currentBadge: "This week · in progress",
+      intro:
+        "A weekly summary of real Instagram posts and ads from dermatology clinics in Gangnam, Myeongdong, and Hongdae. Updated every Monday.",
+      statLine: (p, a, c) => `${p} posts · ${a} new promotions · ${c} active accounts`,
+      secTrending: "Treatment trends",
+      trendingHint: "posts vs last week",
+      secNewAds: "Promotions launched this week",
+      newAdsHint: "ads that started running this week",
+      secTopPosts: "Top posts this week",
+      topPostsHint: "one per account · by engagement",
+      secLongRunners: "Long-running promotions",
+      longRunnersHint: "the longer it runs, the more established",
+      archive: "Past reports",
+      noData: "No data collected for this week.",
+      metaTitle: (w) => `${w} — Korea Dermatology Trend Report`,
+      metaDesc: (w) =>
+        `Data summary for ${w}: trending treatments, newly launched promotions, and top posts from clinics in Gangnam, Myeongdong, and Hongdae.`,
+    },
     showPromosOnLanding: false,
     disclaimer:
       "This page provides information based on publicly available data only, and does not solicit, arrange, or broker any specific medical treatment. Effects and downtime vary by individual. Always make treatment decisions after a consultation at a medical institution.",
@@ -914,6 +1009,28 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       prLabel: "廣告",
       disclosure:
         "本網站是由 YOU&I 金浦店營運的免費資訊服務。本區塊包含本院介紹；資料收集與統計對所有診所採用相同標準。",
+    },
+    weekly: {
+      navTitle: "每週雷達",
+      landingBanner: "查看本週雷達報告 →",
+      landingBannerHint: "本週熱門施術與新活動摘要",
+      title: (w) => `每週雷達 — ${w}`,
+      weekLabel: (m, d) => `${m}月${d}日當週`,
+      currentBadge: "本週 · 統計中",
+      intro: "以每週一為基準，整理江南・明洞・弘大皮膚科的真實Instagram貼文與廣告數據。",
+      statLine: (p, a, c) => `本週貼文 ${p} 則 · 新活動 ${a} 則 · 活躍帳號 ${c} 個`,
+      secTrending: "施術趨勢",
+      trendingHint: "貼文數與上週相比",
+      secNewAds: "本週開始的活動",
+      newAdsHint: "本週開始投放的廣告",
+      secTopPosts: "本週人氣貼文",
+      topPostsHint: "每帳號 1 則 · 依反應排序",
+      secLongRunners: "長期投放中的活動",
+      longRunnersHint: "投放越久越是定番",
+      archive: "過往報告",
+      noData: "該週沒有收集到數據。",
+      metaTitle: (w) => `${w} — 韓國皮膚科趨勢報告`,
+      metaDesc: (w) => `${w}江南・明洞・弘大皮膚科數據整理 — 熱門施術增減、新活動與人氣貼文。`,
     },
     showPromosOnLanding: false,
     disclaimer:
