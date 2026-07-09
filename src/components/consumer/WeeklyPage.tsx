@@ -246,12 +246,12 @@ export async function ConsumerWeeklyPage({
 
       <GimpoBanner locale={locale} page="weekly" />
 
-      {/* 아카이브 */}
+      {/* 아카이브 — 왼쪽부터 오래된 순 (시간이 왼→오로 흐르는 자연스러운 읽기 방향) */}
       {weeks.length > 1 ? (
         <section className="space-y-3">
           <h2 className="text-[16px] font-black text-foreground">{w.archive}</h2>
           <div className="flex flex-wrap gap-1.5">
-            {weeks.map((id) =>
+            {[...weeks].reverse().map((id) =>
               id === report.id ? (
                 <span
                   key={id}
