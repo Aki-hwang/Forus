@@ -18,7 +18,11 @@ export async function POST(req: Request) {
   // 연락처 필수 — 회신 불가능한 문의는 리드가 아니다
   if (!name || !contact || !message) {
     return NextResponse.json(
-      { error: "missing_fields", message: "이름, 연락처, 문의 내용은 필수입니다." },
+      // 구버전 번들(연락처 선택이던 시절)이 그대로 노출하는 문자열 — 주 사용층인 일본어 병기
+      {
+        error: "missing_fields",
+        message: "이름, 연락처, 문의 내용은 필수입니다. / お名前・連絡先・内容は必須です。",
+      },
       { status: 400 }
     );
   }

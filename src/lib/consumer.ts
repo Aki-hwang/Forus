@@ -11,7 +11,7 @@
 
 import { Ad, Area, TreatmentKey, TREATMENTS } from "./ads";
 import { confidentTreatment } from "./treatments";
-import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic } from "./clinics";
+import { KNOWN_CLINICS, KR_CONSUMER_CLINICS, KnownClinic, YOUANDI_LINE_URL } from "./clinics";
 import {
   readSnapshot,
   readBlocklist,
@@ -633,7 +633,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       cta: "@youandi_gimpo_jp で相談する →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "LINEで相談する →",
-      lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      lineHref: YOUANDI_LINE_URL,
       prLabel: "PR",
       disclosure:
         "本サイトは皮膚科ネットワークYOU&I金浦店が運営する無料の情報サービスです。自院の紹介を含みますが、データの収集・集計はすべてのクリニックに同じ基準で行っています。",
@@ -722,7 +722,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       cta: "유앤아이 김포점 알아보기 →",
       href: "https://www.gpuni114.co.kr/",
       lineCta: "상담 채널 바로가기 →",
-      lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      lineHref: YOUANDI_LINE_URL,
       prLabel: "광고",
       disclosure:
         "이 사이트는 유앤아이의원 김포점이 운영하는 무료 정보 서비스입니다. 자사 소개가 포함되며, 데이터 수집·집계는 모든 병원에 동일한 기준으로 적용됩니다.",
@@ -816,7 +816,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       cta: "Ask @youandi_gimpo_jp →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "Chat on LINE →",
-      lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      lineHref: YOUANDI_LINE_URL,
       prLabel: "PR",
       disclosure:
         "DermaRadar is a free service operated by YOU&I Clinic Gimpo. This section features our own clinic; data collection and ranking use the same criteria for every clinic.",
@@ -910,7 +910,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       cta: "透過 @youandi_gimpo_jp 諮詢 →",
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "透過 LINE 諮詢 →",
-      lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      lineHref: YOUANDI_LINE_URL,
       prLabel: "廣告",
       disclosure:
         "本網站是由 YOU&I 金浦店營運的免費資訊服務。本區塊包含本院介紹；資料收集與統計對所有診所採用相同標準。",
@@ -1007,11 +1007,12 @@ export interface ConsumerClinic {
 }
 
 /** note/핸들에서 배지 키 파생 (내부 메모 원문을 노출하지 않기 위한 장치) */
-function deriveBadges(c: { handle: string; note?: string }): ClinicBadge[] {
+function deriveBadges(c: { handle: string; note?: string; lineUrl?: string }): ClinicBadge[] {
   const src = `${c.handle} ${c.note ?? ""}`.toLowerCase();
   const badges: ClinicBadge[] = [];
   if (/jp|jpn|japan|일본어|일본인/.test(src)) badges.push("jp");
-  if (/line/.test(src)) badges.push("line");
+  // lineUrl(실제 상담 링크 보유)이 가장 강한 근거 — 배지와 카드의 LINE 버튼이 어긋나지 않게
+  if (c.lineUrl || /line/.test(src)) badges.push("line");
   if (/글로벌|global|다국어|영어|영문|multilingual/.test(src)) badges.push("multi");
   return badges;
 }
@@ -1041,7 +1042,8 @@ export async function clinicsFor(
       note: undefined,
     })),
   ];
-  // 핸들 중복 제거 (등록 명단 우선)
+  // 핸들 중복 제거 — 첫 등장 우선이므로 정적 명단(KNOWN/KR)이 승인 명단을 이긴다.
+  // 승인 명단에는 lineUrl 등 부가 필드가 없으므로 이 순서를 바꾸면 안 된다.
   const seen = new Set<string>();
   const uniq = all.filter((c) => {
     const h = c.handle.toLowerCase();

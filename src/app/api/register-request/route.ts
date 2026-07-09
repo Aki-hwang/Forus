@@ -34,9 +34,16 @@ export async function POST(req: Request) {
   try {
     const entry = await addRegisterRequest({ clinic, instagram, area, contact, message });
     void notifyTelegram(
-      `🏥 DermaRadar 인스타 등록 요청\n병원: ${clinic}\n인스타: ${instagram}` +
-        `${area ? `\n지역: ${area}` : ""}${contact ? `\n연락처: ${contact}` : ""}` +
-        `${message ? `\n\n${message}` : ""}`
+      [
+        "🏥 DermaRadar 인스타 등록 요청",
+        `병원: ${clinic}`,
+        `인스타: ${instagram}`,
+        area && `지역: ${area}`,
+        contact && `연락처: ${contact}`,
+        message && `\n${message}`,
+      ]
+        .filter(Boolean)
+        .join("\n")
     );
     return NextResponse.json({ ok: true, id: entry.id });
   } catch (e) {

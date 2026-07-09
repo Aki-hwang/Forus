@@ -12,6 +12,10 @@ import {
   areaByKey,
 } from "@/lib/consumer";
 
+/** LINE 브랜드 필 스타일 (색·보더·호버) — 김포 CTA(ConsumerPages)와 클리닉 카드가 공유 */
+export const LINE_PILL_CLS =
+  "rounded-full border border-[#06C755]/40 bg-[#06C755]/10 font-bold text-[#06925f] transition hover:bg-[#06C755]/20";
+
 function fmt(locale: ConsumerLocale, n: number): string {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}${locale === "jp" ? "万" : "만"}`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -146,7 +150,7 @@ export function ConsumerClinicCard({
         href={clinic.instagramUrl}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`@${clinic.handle} Instagram`}
+        aria-label={`${clinic.name} (@${clinic.handle}) — Instagram`}
         data-oc="guide_clinic"
         className="absolute inset-0 rounded-2xl"
       />
@@ -187,7 +191,7 @@ export function ConsumerClinicCard({
           target="_blank"
           rel="noopener noreferrer"
           data-oc="guide_clinic_line"
-          className="relative z-10 mt-2.5 inline-flex items-center rounded-full border border-[#06C755]/40 bg-[#06C755]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#06925f] transition hover:bg-[#06C755]/20"
+          className={`${LINE_PILL_CLS} relative z-10 mt-2.5 inline-flex items-center px-3 py-1.5 text-[11.5px]`}
         >
           {ui.clinicLine}
         </a>

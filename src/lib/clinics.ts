@@ -8,6 +8,9 @@
 import { Ad, Area } from "./ads";
 import { classifyTreatment } from "./treatments";
 
+/** 유앤아이 상담 채널 허브 — 소비자 UI(gimpo.lineHref)와 클리닉 카드(lineUrl)가 공유하는 단일 출처 */
+export const YOUANDI_LINE_URL = "https://linktr.ee/YOUANDI_Clinic";
+
 export interface KnownClinic {
   name: string;
   handle: string; // @ 제외, 소문자
@@ -71,7 +74,7 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "밴스클리닉 신사점", handle: "vands_sinsa.jp", areas: ["강남"], followers: "", note: "신사역, 일본어 계정" },
   { name: "VS라인클리닉 압구정", handle: "vslineclinic", areas: ["강남"], followers: "", note: "압구정, 일본어 단서" },
   // 김포 권역 (3개 지역 외 — areas 빈 배열, 워치리스트 수집 대상)
-  { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정", lineUrl: "https://linktr.ee/YOUANDI_Clinic" },
+  { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정", lineUrl: YOUANDI_LINE_URL },
 ];
 
 // ---------- 한국인 타깃 클리닉 (소비자 /ko 페이지 전용) ----------
