@@ -531,6 +531,8 @@ interface ConsumerUi {
   faq: FaqItem[];
   badge: Record<ClinicBadge, string>;
   clinicPostCount: (n: number) => string;
+  /** 클리닉 카드의 LINE 직링크 버튼 라벨 (lineUrl 이 있는 병원에만 노출) */
+  clinicLine: string;
   gimpo: {
     tag: string;
     title: string;
@@ -540,6 +542,10 @@ interface ConsumerUi {
     /** LINE 등 상담 채널 허브(linktr.ee) — 두 번째 CTA */
     lineCta: string;
     lineHref: string;
+    /** 광고 자기표기 라벨 — 일본 스테마 규제·국내 표시광고법 대응 */
+    prLabel: string;
+    /** 운영 주체·무료 이유 공시 — 김포 블록 하단 소형 문구 */
+    disclosure: string;
   };
   showPromosOnLanding: boolean;
   disclaimer: string;
@@ -619,6 +625,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
     ],
     badge: { jp: "日本語対応", line: "LINE相談OK", multi: "多言語対応" },
     clinicPostCount: (n) => `直近90日の日本語投稿 ${n}件`,
+    clinicLine: "LINEで相談 →",
     gimpo: {
       tag: "Airport Area Pick",
       title: "金浦空港エリアという選択肢 — YOU&I 金浦店",
@@ -627,6 +634,9 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "LINEで相談する →",
       lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      prLabel: "PR",
+      disclosure:
+        "本サイトは皮膚科ネットワークYOU&I金浦店が運営する無料の情報サービスです。自院の紹介を含みますが、データの収集・集計はすべてのクリニックに同じ基準で行っています。",
     },
     showPromosOnLanding: false,
     disclaimer:
@@ -704,6 +714,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
     ],
     badge: { jp: "일본어 대응", line: "LINE 상담", multi: "다국어 대응" },
     clinicPostCount: (n) => `최근 90일 게시물 ${n}건`,
+    clinicLine: "LINE 상담 →",
     gimpo: {
       tag: "Area Pick",
       title: "김포에서 찾는다면 — 유앤아이의원 김포점",
@@ -712,6 +723,9 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       href: "https://www.gpuni114.co.kr/",
       lineCta: "상담 채널 바로가기 →",
       lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      prLabel: "광고",
+      disclosure:
+        "이 사이트는 유앤아이의원 김포점이 운영하는 무료 정보 서비스입니다. 자사 소개가 포함되며, 데이터 수집·집계는 모든 병원에 동일한 기준으로 적용됩니다.",
     },
     showPromosOnLanding: true,
     disclaimer:
@@ -794,6 +808,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
     ],
     badge: { jp: "Japanese support", line: "LINE consultation", multi: "English · multilingual" },
     clinicPostCount: (n) => `${n} posts in the last 90 days`,
+    clinicLine: "Chat on LINE →",
     gimpo: {
       tag: "Airport Area Pick",
       title: "Gimpo Airport area — YOU&I Gimpo",
@@ -802,6 +817,9 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "Chat on LINE →",
       lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      prLabel: "PR",
+      disclosure:
+        "DermaRadar is a free service operated by YOU&I Clinic Gimpo. This section features our own clinic; data collection and ranking use the same criteria for every clinic.",
     },
     showPromosOnLanding: false,
     disclaimer:
@@ -884,6 +902,7 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
     ],
     badge: { jp: "日文對應", line: "LINE諮詢", multi: "多語對應" },
     clinicPostCount: (n) => `近90天貼文 ${n} 則`,
+    clinicLine: "LINE 諮詢 →",
     gimpo: {
       tag: "機場周邊推薦",
       title: "金浦機場周邊的選擇 — YOU&I 金浦",
@@ -892,6 +911,9 @@ export const CONSUMER_UI: Record<ConsumerLocale, ConsumerUi> = {
       href: "https://www.instagram.com/youandi_gimpo_jp/",
       lineCta: "透過 LINE 諮詢 →",
       lineHref: "https://linktr.ee/YOUANDI_Clinic",
+      prLabel: "廣告",
+      disclosure:
+        "本網站是由 YOU&I 金浦店營運的免費資訊服務。本區塊包含本院介紹；資料收集與統計對所有診所採用相同標準。",
     },
     showPromosOnLanding: false,
     disclaimer:
@@ -980,6 +1002,8 @@ export interface ConsumerClinic {
   /** 게시물 반응 합계 (정렬용) */
   reach: number;
   instagramUrl: string;
+  /** LINE 등 상담 채널 직링크 (있는 병원만) */
+  lineUrl?: string;
 }
 
 /** note/핸들에서 배지 키 파생 (내부 메모 원문을 노출하지 않기 위한 장치) */
@@ -1002,12 +1026,13 @@ export async function clinicsFor(
   // ko 로케일은 한국인 타깃 명단을 앞에 합친다 (수집 워치리스트와 무관, 표시 전용)
   const baseList: KnownClinic[] =
     locale === "ko" ? [...KR_CONSUMER_CLINICS, ...KNOWN_CLINICS] : KNOWN_CLINICS;
-  const all: { name: string; handle: string; areas: Area[]; note?: string }[] = [
+  const all: { name: string; handle: string; areas: Area[]; note?: string; lineUrl?: string }[] = [
     ...baseList.map((c: KnownClinic) => ({
       name: c.name,
       handle: c.handle,
       areas: c.areas,
       note: c.note,
+      lineUrl: c.lineUrl,
     })),
     ...approved.map((c) => ({
       name: c.name,
@@ -1047,6 +1072,7 @@ export async function clinicsFor(
         postCount: rel.length,
         reach: rel.reduce((s, p) => s + engagement(p), 0),
         instagramUrl: `https://www.instagram.com/${c.handle}/`,
+        lineUrl: c.lineUrl,
       };
     })
     .sort((x, y) => y.postCount - x.postCount || y.reach - x.reach);

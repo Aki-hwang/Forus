@@ -14,6 +14,8 @@ export interface KnownClinic {
   areas: Area[]; // 우리 3개 지역 중 해당되는 곳 (전국/타지역은 빈 배열)
   followers: string;
   note: string;
+  /** LINE 등 상담 채널 직링크 — 있으면 소비자 클리닉 카드에 상담 버튼 노출 */
+  lineUrl?: string;
 }
 
 export const KNOWN_CLINICS: KnownClinic[] = [
@@ -69,7 +71,7 @@ export const KNOWN_CLINICS: KnownClinic[] = [
   { name: "밴스클리닉 신사점", handle: "vands_sinsa.jp", areas: ["강남"], followers: "", note: "신사역, 일본어 계정" },
   { name: "VS라인클리닉 압구정", handle: "vslineclinic", areas: ["강남"], followers: "", note: "압구정, 일본어 단서" },
   // 김포 권역 (3개 지역 외 — areas 빈 배열, 워치리스트 수집 대상)
-  { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정" },
+  { name: "유앤아이의원 김포점", handle: "youandi_gimpo_jp", areas: [], followers: "", note: "김포공항 인근, 일본어 계정", lineUrl: "https://linktr.ee/YOUANDI_Clinic" },
 ];
 
 // ---------- 한국인 타깃 클리닉 (소비자 /ko 페이지 전용) ----------

@@ -26,7 +26,8 @@ export function InquiryButton() {
   };
 
   const submit = async () => {
-    if (!name.trim() || !message.trim()) {
+    // 연락처 필수 — 회신할 수 없는 문의는 받아도 응대가 불가능하다
+    if (!name.trim() || !contact.trim() || !message.trim()) {
       setErr(t("errReqInq"));
       return;
     }
@@ -111,12 +112,12 @@ export function InquiryButton() {
                 </div>
                 <div>
                   <label className="mb-1 block text-[12px] font-bold text-foreground">
-                    {t("fContact")} <span className="font-medium text-muted">{t("optional")}</span>
+                    {t("fContact")} <span className="text-accent">*</span>
                   </label>
                   <input
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
-                    placeholder="이메일 또는 전화번호"
+                    placeholder={t("fContactPh")}
                     className={inputCls}
                   />
                 </div>

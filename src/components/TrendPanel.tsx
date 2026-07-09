@@ -425,6 +425,7 @@ export function TrendPanel({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  data-oc="trend_account"
                   className={rowClass}
                 >
                   {inner}

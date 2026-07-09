@@ -130,7 +130,7 @@ const STRINGS: Record<string, Str> = {
   inqSend: S("문의 보내기", "送信する", "发送咨询", "Send"),
   inqDoneTitle: S("문의가 접수됐어요!", "お問い合わせを受け付けました！", "已收到您的咨询！", "Message sent!"),
   inqDoneDesc: S("남겨주신 연락처로 회신드릴게요. 감사합니다.", "ご連絡先へ返信いたします。ありがとうございます。", "我们会通过您的联系方式回复。谢谢！", "We'll get back to you. Thank you!"),
-  errReqInq: S("이름과 문의 내용은 필수예요.", "お名前とお問い合わせ内容は必須です。", "姓名和咨询内容为必填。", "Name and message are required."),
+  errReqInq: S("이름, 연락처, 문의 내용을 모두 입력해 주세요.", "お名前・連絡先・お問い合わせ内容をすべてご入力ください。", "请填写姓名、联系方式和咨询内容。", "Please fill in name, contact, and message."),
 };
 
 const AREA: Record<string, Str> = {

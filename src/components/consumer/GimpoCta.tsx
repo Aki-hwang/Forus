@@ -28,6 +28,7 @@ export function GimpoCta({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      data-oc={cta === "line" ? "gimpo_line" : "gimpo_main"}
       className={className}
       onClick={() => gaEvent("gimpo_cta_click", { locale, page, treatment: treatment ?? "", cta })}
     >
