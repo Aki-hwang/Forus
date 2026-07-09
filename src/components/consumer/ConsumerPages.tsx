@@ -138,17 +138,17 @@ function GimpoBlock({ locale }: { locale: ConsumerLocale }) {
 }
 
 /**
- * 김포 CTA 컴팩트 배너 — 시술·시술×지역 딥페이지용.
+ * 김포 CTA 컴팩트 배너 — 시술·시술×지역 딥페이지 + 주간 리포트용.
  * SEO 유입은 랜딩이 아니라 딥페이지로 착지하므로, 랜딩에만 있던 유앤아이 김포 CTA 를
  * 구매의도가 가장 높은 페이지에도 노출한다 (1줄 배너로 본문 흐름을 해치지 않게).
  */
-function GimpoBanner({
+export function GimpoBanner({
   locale,
   page,
   treatment,
 }: {
   locale: ConsumerLocale;
-  page: "treatment" | "combo";
+  page: "treatment" | "combo" | "weekly";
   treatment?: string;
 }) {
   const g = CONSUMER_UI[locale].gimpo;
@@ -189,7 +189,7 @@ function GimpoBanner({
 export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
   const ui = CONSUMER_UI[locale];
   const data = await loadConsumerData(locale);
-  const counts = treatmentCounts(data);
+  const counts = treatmentCounts(data.posts);
   // 일별 로테이션 — 인기 상위 + 최근 7일 게시물 풀에서 매일 다른 배치 (KST 자정 회전, 최근 글 슬롯 보장)
   const topPosts = dailyRotation(data.posts, { take: 8, freshSlots: 2 });
   const promos = dailyRotation(data.ads, { pool: 12, take: 6, freshSlots: 2 });
@@ -212,6 +212,17 @@ export async function ConsumerLanding({ locale }: { locale: ConsumerLocale }) {
           {ui.heroTail}
         </p>
       </section>
+
+      {/* 주간 레이더 배너 — 재방문 앵커 + 리포트 진입점 */}
+      <Link
+        href={`/${locale}/weekly`}
+        className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/25 bg-primary/5 px-5 py-3.5 transition hover:border-primary/50 hover:bg-primary/10"
+      >
+        <span className="flex items-center gap-2 text-[14px] font-black text-foreground">
+          📡 {ui.weekly.landingBanner}
+        </span>
+        <span className="text-[12px] font-medium text-muted">{ui.weekly.landingBannerHint}</span>
+      </Link>
 
       {/* 시술에서 찾기 */}
       <section id="treatments" className="space-y-3 scroll-mt-20">
