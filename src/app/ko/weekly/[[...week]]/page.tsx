@@ -2,7 +2,7 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ConsumerWeeklyPage, weeklyMetadata } from "@/components/consumer/WeeklyPage";
+import { ConsumerWeeklyPage, weeklyMetadataChecked } from "@/components/consumer/WeeklyPage";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,7 @@ export async function generateMetadata({
   params: Promise<Params>;
 }): Promise<Metadata> {
   const { week } = await params;
-  if (week && week.length > 1) return {};
-  return weeklyMetadata("ko", week?.[0] ?? null);
+  return weeklyMetadataChecked("ko", week);
 }
 
 export default async function Page({ params }: { params: Promise<Params> }) {

@@ -31,6 +31,18 @@ export function weeklyMetadata(locale: ConsumerLocale, week: string | null): Met
   };
 }
 
+/** 라우트 generateMetadata 용 — 스트리밍 시작 전에 잘못된 주차를 걸러 진짜 404 상태코드를 준다.
+ *  (본문 렌더 중 notFound() 는 loading.tsx 스트리밍 때문에 200 + 404 UI 가 되는 소프트 404) */
+export async function weeklyMetadataChecked(
+  locale: ConsumerLocale,
+  weekParam?: string[]
+): Promise<Metadata> {
+  if (weekParam && weekParam.length > 1) notFound();
+  const week = weekParam?.[0] ?? null;
+  if (week && !resolveWeekly(await loadConsumerData(locale), week)) notFound();
+  return weeklyMetadata(locale, week);
+}
+
 /** 증감 표기 — ▲ 증가 / ▼ 감소 / – 유지 */
 function Delta({ delta }: { delta: number }) {
   if (delta > 0) return <span className="font-black text-emerald-600">▲{delta}</span>;

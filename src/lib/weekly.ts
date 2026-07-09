@@ -125,7 +125,14 @@ export function buildWeeklyReport(
   const isCurrent = weekStartOf(nowMs) === startMs;
   const posts = data.posts.filter((p) => inWeek(p, startMs));
   const adsInWeek = data.ads.filter((a) => inWeek(a, startMs));
-  const prevPosts = data.posts.filter((p) => inWeek(p, startMs - WEEK_MS));
+  // 지난주 비교 창 — 진행 중인 주는 '지난주 같은 시점까지'와 비교해야 공정하다
+  // (부분 주 vs 전체 주 비교는 항상 ▼로 왜곡)
+  const prevStart = startMs - WEEK_MS;
+  const prevEnd = isCurrent ? prevStart + (nowMs - startMs) : startMs;
+  const prevPosts = data.posts.filter((p) => {
+    const t = postTime(p);
+    return t >= prevStart && t < prevEnd;
+  });
 
   const cnt = new Map<TreatmentKey, number>();
   const prevCnt = new Map<TreatmentKey, number>();
