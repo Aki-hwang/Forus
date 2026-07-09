@@ -69,6 +69,8 @@ const STRINGS: Record<string, Str> = {
   topAdvertisers: S("광고 집행 TOP", "広告出稿TOP", "广告投放TOP", "Top advertisers"),
   topAdvertisersTip: S("광고 수 × 집행일 누적 합계 — 많이·오래 집행할수록 상위", "広告数×配信日数の累計 — 多く長いほど上位", "广告数×投放天数累计 — 越多越久越靠前", "Sum of days across all ads — more & longer ranks higher"),
   popTreatments: S("인기 시술 (7일)", "人気施術(7日)", "热门项目(7天)", "Top treatments (7d)"),
+  popTreatmentsHint: S("병원 게시물 중 시술이 확실한 것만 집계", "クリニック投稿のうち施術が明確なもののみ", "仅统计施术明确的医院帖子", "clinic posts with a confident treatment match"),
+  popTreatmentsHintReview: S("후기 게시물 중 시술이 확실한 것만 집계", "レビュー投稿のうち施術が明確なもののみ", "仅统计施术明确的分享帖子", "review posts with a confident treatment match"),
   contentTypes: S("콘텐츠 유형 (7일)", "コンテンツ種類(7日)", "内容类型(7天)", "Content types (7d)"),
   statCollected: S("수집된 광고", "収集した広告", "已收集广告", "Ads collected"),
   statNew: S("🆕 신규 광고", "🆕 新規広告", "🆕 新增广告", "🆕 New ads"),

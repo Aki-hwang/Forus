@@ -519,7 +519,13 @@ export function TrendPanel({
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
-          <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("popTreatments")}</p>
+          <p className="mb-0.5 text-center text-[13px] font-bold text-foreground">
+            {tt("popTreatments")}
+          </p>
+          {/* '수집 N건'과 모집단이 다르다는 오해 방지 — 7일 · 탭 대상 · 확정 분류만 */}
+          <p className="mb-3 text-center text-[10.5px] text-muted">
+            {tt(reviewMode ? "popTreatmentsHintReview" : "popTreatmentsHint")}
+          </p>
           <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
               <p className="text-[12px] text-muted">{tt("emptyTreatments")}</p>
