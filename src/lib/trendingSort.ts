@@ -7,16 +7,49 @@
 import { Ad, Lang } from "./ads";
 import { dayNumber, dailyJitter, DAILY_QUALITY_WEIGHT } from "./dailyOrder";
 
+/** 계정 그룹핑 키 — 소문자 정규화 (계정 단위 집계·중복 제거의 단일 기준) */
+export function accountKey(a: Ad): string {
+  return (a.igUsername ?? a.clinic).toLowerCase();
+}
+
 /** 계정당 1건만 남기는 필터 — Meta 광고는 계정 중앙값 조회수를 공유 스탬프하므로,
  *  제한이 없으면 다광고 계정이 같은 숫자로 TOP 목록을 독식한다 (TrendPanel·주간 리포트 공용) */
 export function onePerAccount(list: Ad[]): Ad[] {
   const seen = new Set<string>();
   return list.filter((a) => {
-    const k = (a.igUsername ?? a.clinic).toLowerCase();
+    const k = accountKey(a);
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
   });
+}
+
+export interface AdLeaderRow {
+  clinic: string;
+  igUsername?: string;
+  ads: number;
+  days: number;
+}
+
+/**
+ * 광고 집행 리더보드 — 병원별 광고 수·누적 집행일수 (모든 소재 합산 = 투자 총량 지표).
+ * 원본 목록(allAds)에서 집계할 것: galleryFresh 를 거친 목록은 죽은 이미지 광고가
+ * 빠져 있어 집행 이력이 과소집계된다 (이미지 생존과 집행 기간은 무관).
+ * 그룹 키는 광고주 페이지명(clinic) — 같은 광고주의 소재 일부에만 igUsername 이 있어
+ * 핸들 키를 쓰면 한 병원이 두 줄로 쪼개진다.
+ */
+export function buildAdLeaderboard(ads: Ad[], top = 5): AdLeaderRow[] {
+  const m = new Map<string, AdLeaderRow>();
+  for (const a of ads) {
+    if ((a.kind ?? "ad") === "organic" || a.advertiserType === "influencer") continue;
+    const k = a.clinic.toLowerCase();
+    const e = m.get(k) ?? { clinic: a.clinic, igUsername: a.igUsername, ads: 0, days: 0 };
+    if (!e.igUsername && a.igUsername) e.igUsername = a.igUsername;
+    e.ads += 1;
+    e.days += a.activeDays ?? 0;
+    m.set(k, e);
+  }
+  return [...m.values()].sort((x, y) => y.days - x.days || y.ads - x.ads).slice(0, top);
 }
 
 /** 광고 + 오가닉 병합 (id 중복 제거) + 레거시 EN 재분류 */

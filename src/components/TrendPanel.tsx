@@ -5,7 +5,7 @@ import { Ad, Lang, TreatmentKey, TrendSummary } from "@/lib/ads";
 import { classifyTreatment, displayHashtags } from "@/lib/treatments";
 import { useUiLang } from "@/lib/i18n";
 import { hasClinicSignal } from "@/lib/clinics";
-import { onePerAccount } from "@/lib/trendingSort";
+import { onePerAccount, type AdLeaderRow } from "@/lib/trendingSort";
 
 function fmt(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
@@ -127,11 +127,63 @@ function classifyContentType(text: string): string {
   return "브랜딩";
 }
 
+/** 순위 행 — TOP 클리닉·TOP 게시물·광고 집행 TOP 패널 공용 (링크/버튼/정적 3형) */
+function RankRow({
+  i,
+  name,
+  sub,
+  right,
+  href,
+  oc,
+  onClick,
+}: {
+  i: number;
+  name: string;
+  sub?: string;
+  right: React.ReactNode;
+  href?: string;
+  oc?: string;
+  onClick?: () => void;
+}) {
+  const cls =
+    "flex w-full items-center gap-1.5 rounded-lg px-1.5 text-left transition hover:bg-background";
+  const short = name.length > 15 ? name.slice(0, 15) + "…" : name;
+  const inner = (
+    <>
+      <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
+        {i + 1}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+        {short}
+        {sub ? <span className="ml-1 text-[11px] font-medium text-muted">· {sub}</span> : null}
+      </span>
+      <span className="shrink-0 whitespace-nowrap text-[12px] font-bold text-primary-ink">
+        {right}
+      </span>
+    </>
+  );
+  if (href)
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" data-oc={oc} className={cls}>
+        {inner}
+      </a>
+    );
+  if (onClick)
+    return (
+      <button onClick={onClick} className={cls}>
+        {inner}
+      </button>
+    );
+  return <div className={cls}>{inner}</div>;
+}
+
 export function TrendPanel({
   trends,
   ads,
   overviewAds,
   keywordAds,
+  leaderboard = [],
+  dataPending = false,
   onSelectAd,
   collectedAt,
   nowMs,
@@ -143,6 +195,10 @@ export function TrendPanel({
    *  요약 지표는 탭을 바꿔도 흔들리지 않는 '전체 현황판'으로 고정한다. */
   overviewAds?: Ad[];
   keywordAds: Ad[];
+  /** 광고 집행 리더보드 — HomeClient 가 원본 전체 광고(allAds)에서 집계해 전달 */
+  leaderboard?: AdLeaderRow[];
+  /** 초기 슬라이스만 있는 상태 — 광고 기반 패널이 '없음'으로 깜빡이지 않게 로딩 표시 */
+  dataPending?: boolean;
   onSelectAd?: (ad: Ad) => void;
   collectedAt?: string | null;
   /** 기준 시각(SSR) — 서버·클라이언트가 같은 값으로 7일 창을 계산해 하이드레이션 불일치 방지 */
@@ -202,23 +258,6 @@ export function TrendPanel({
     return [...pool].sort((a, b) => b.likes - a.likes)[0] ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overview, now]);
-  // 광고 집행 리더보드 — 병원별 누적 집행일수 (탭 무관 전체 광고 기준).
-  // '오래 돌리는 광고 = 돈이 되는 검증된 이벤트' 라는 이 사이트만의 데이터 각도.
-  const leaderboard = useMemo(() => {
-    const m = new Map<
-      string,
-      { clinic: string; igUsername?: string; ads: number; days: number }
-    >();
-    for (const a of overview) {
-      if ((a.kind ?? "ad") === "organic" || a.advertiserType === "influencer") continue;
-      const k = (a.igUsername ?? a.clinic).toLowerCase();
-      const e = m.get(k) ?? { clinic: a.clinic, igUsername: a.igUsername, ads: 0, days: 0 };
-      e.ads += 1;
-      e.days += a.activeDays ?? 0;
-      m.set(k, e);
-    }
-    return [...m.values()].sort((x, y) => y.days - x.days || y.ads - x.ads).slice(0, 5);
-  }, [overview]);
   // 조회수 TOP 게시물 — 최근 7일, 계정당 1건 (onePerAccount 주석 참고)
   const topPosts = useMemo(
     () =>
@@ -415,45 +454,17 @@ export function TrendPanel({
             {ranked.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">{tt("emptyPeriodAds")}</p>
             ) : null}
-            {ranked.slice(0, 5).map((c, i) => {
-              const href = c.igUsername
-                ? `https://www.instagram.com/${c.igUsername}/`
-                : undefined;
-              const rowClass =
-                "flex items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-background";
-              const name = tClinic(c.clinic, c.igUsername);
-              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
-              const inner = (
-                <>
-                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
-                    {i + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                    {shortName}
-                    <span className="ml-1 text-[11px] font-medium text-muted">· {tArea(c.area)}</span>
-                  </span>
-                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
-                    {c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
-                  </span>
-                </>
-              );
-              return href ? (
-                <a
-                  key={c.clinic + i}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-oc="trend_account"
-                  className={rowClass}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <div key={c.clinic + i} className={rowClass}>
-                  {inner}
-                </div>
-              );
-            })}
+            {ranked.slice(0, 5).map((c, i) => (
+              <RankRow
+                key={c.clinic + i}
+                i={i}
+                name={tClinic(c.clinic, c.igUsername)}
+                sub={tArea(c.area)}
+                right={c.views != null ? `▶ ${fmt(c.views)}` : "▶ -"}
+                href={c.igUsername ? `https://www.instagram.com/${c.igUsername}/` : undefined}
+                oc="trend_account"
+              />
+            ))}
           </div>
         </div>
 
@@ -463,81 +474,47 @@ export function TrendPanel({
             {topPosts.length === 0 ? (
               <p className="py-3 text-[12px] text-muted">{tt("emptyPosts")}</p>
             ) : null}
-            {topPosts.map((a, i) => {
-              const name = tClinic(a.clinic, a.igUsername);
-              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
-              const reach = a.views ?? a.likes;
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => onSelectAd?.(a)}
-                  className="flex w-full items-center gap-1.5 rounded-lg px-1.5 text-left transition hover:bg-background"
-                >
-                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
-                    {i + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                    {shortName}
-                  </span>
-                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
-                    ▶ {fmt(reach)}
-                  </span>
-                </button>
-              );
-            })}
+            {topPosts.map((a, i) => (
+              <RankRow
+                key={a.id}
+                i={i}
+                name={tClinic(a.clinic, a.igUsername)}
+                right={`▶ ${fmt(a.views ?? a.likes)}`}
+                onClick={() => onSelectAd?.(a)}
+              />
+            ))}
           </div>
         </div>
 
         <div
-          title={tt("leaderTip")}
+          title={tt("topAdvertisersTip")}
           className="rounded-2xl border border-border bg-surface p-4 md:col-span-2"
         >
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">
-            {tt("leaderTitle")}
+            {tt("topAdvertisers")}
           </p>
           <div className="space-y-2.5">
             {leaderboard.length === 0 ? (
-              <p className="py-3 text-[12px] text-muted">{tt("emptyPeriodAds")}</p>
+              // 전체 데이터 로딩 전엔 빈 문구 대신 로딩 표시 — '없음'으로 깜빡였다 채워지는 플래시 방지
+              <p className="py-3 text-center text-[12px] text-muted">
+                {dataPending ? "…" : tt("emptyPeriodAds")}
+              </p>
             ) : null}
-            {leaderboard.map((c, i) => {
-              const href = c.igUsername
-                ? `https://www.instagram.com/${c.igUsername}/`
-                : undefined;
-              const name = tClinic(c.clinic, c.igUsername);
-              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
-              const inner = (
-                <>
-                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
-                    {i + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
-                    {shortName}
-                  </span>
-                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+            {leaderboard.map((c, i) => (
+              <RankRow
+                key={c.clinic + i}
+                i={i}
+                name={tClinic(c.clinic, c.igUsername)}
+                right={
+                  <span title={`${c.ads}${tt("unit")} · ${c.days}${tt("dayUnit")}`}>
                     📅 {c.days}
                     {tt("dayUnit")}
                   </span>
-                </>
-              );
-              const rowClass =
-                "flex items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-background";
-              return href ? (
-                <a
-                  key={c.clinic + i}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-oc="trend_leaderboard"
-                  className={rowClass}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <div key={c.clinic + i} className={rowClass}>
-                  {inner}
-                </div>
-              );
-            })}
+                }
+                href={c.igUsername ? `https://www.instagram.com/${c.igUsername}/` : undefined}
+                oc="trend_leaderboard"
+              />
+            ))}
           </div>
         </div>
 

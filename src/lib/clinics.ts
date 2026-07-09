@@ -226,11 +226,26 @@ const INFLUENCER_SIGNALS = [
 // #ad·#pr 는 정확한 태그일 때만 — 부분 문자열로 하면 #PRogram, #ADvanced 등을 협찬으로 오인한다
 const SPONSOR_TAG_RE = /#(ad|pr)(?![a-z0-9_])/i;
 
-/** 협찬·체험단 신호 여부 (텍스트 신호 + 정확한 #ad/#pr 태그) */
+/** 협찬·체험단 신호 여부 (텍스트 신호 + 정확한 #ad/#pr 태그) — '계정 분류'용 휴리스틱.
+ *  내돈내산·꿀팁 같은 후기 어투 신호가 섞여 있어 '협찬 표시' 판정에는 쓰면 안 된다. */
 export function hasSponsorSignal(text?: string): boolean {
   if (!text) return false;
   const t = text.toLowerCase();
   return INFLUENCER_SIGNALS.some((s) => t.includes(s.toLowerCase())) || SPONSOR_TAG_RE.test(t);
+}
+
+// 협찬 '자기표기' 문구만 — 분류 신호와 달리 명시적 공개 선언. '내돈내산'(자비 구매 선언)이
+// 포함되면 비협찬 후기에 협찬 배지가 붙는 오탐이 난다.
+const SPONSOR_DISCLOSURE = [
+  "협찬", "유료광고", "유료 광고", "광고포함", "광고 포함", "체험단", "제공받",
+  "提供を受け", "広告案件", "pr投稿", "sponsored",
+];
+
+/** 협찬 자기표기 감지 — 투명성 배지용 (명시적 공개 문구 + 정확한 #ad/#pr 태그만) */
+export function hasSponsorDisclosure(text?: string): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return SPONSOR_DISCLOSURE.some((s) => t.includes(s)) || SPONSOR_TAG_RE.test(t);
 }
 
 const NON_CLINIC_CATEGORIES = [

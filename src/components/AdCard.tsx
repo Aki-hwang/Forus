@@ -3,7 +3,7 @@
 import { Ad } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
 import { confidentTreatment, displayHashtags } from "@/lib/treatments";
-import { hasSponsorSignal } from "@/lib/clinics";
+import { hasSponsorDisclosure } from "@/lib/clinics";
 import { useUiLang } from "@/lib/i18n";
 
 function fmt(n: number): string {
@@ -32,10 +32,12 @@ export function AdCard({
   const isOrganic = ad.kind === "organic";
   // 배지는 재판정된 시술을 표시 — 레거시 데이터는 저장값(기본값 폴백)과 다를 수 있다
   const sureTreatment = confidentTreatment(ad);
-  // 협찬 자기표기 감지 — '광고를 광고라고 말해주는' 투명성 배지 (시술후기 카드 한정)
+  // 협찬 자기표기 감지 — '광고를 광고라고 말해주는' 투명성 배지 (시술후기 카드 한정).
+  // 분류용 hasSponsorSignal 은 '내돈내산·꿀팁' 같은 후기 어투 신호가 섞여 있어 쓰면 안 된다
+  // (비협찬 선언 후기에 협찬 배지가 붙는 오탐) — 명시적 공개 문구만 보는 함수를 쓴다.
   const isSponsored =
     ad.advertiserType === "influencer" &&
-    hasSponsorSignal(`${ad.caption ?? ""} ${(ad.hashtags ?? []).join(" ")}`);
+    hasSponsorDisclosure(`${ad.caption ?? ""} ${(ad.hashtags ?? []).join(" ")}`);
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
@@ -90,8 +92,9 @@ export function AdCard({
             lang={ad.lang}
             badge={
               ad.advertiserType === "influencer"
-                ? isSponsored
-                  ? `${t("influencer")} · ${t("sponsored")}`
+                ? // 결합 라벨은 절대배치 배지 폭을 넘쳐 언어 칩과 겹친다 — 짧은 단일 라벨로
+                  isSponsored
+                  ? t("sponsoredReview")
                   : t("influencer")
                 : undefined
             }
