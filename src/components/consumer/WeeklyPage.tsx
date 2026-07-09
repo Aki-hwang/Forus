@@ -2,6 +2,7 @@
 // 집계는 lib/weekly.ts 가 스냅샷에서 즉석 계산 — 크론·저장 없음, 수집이 끝나면 자동 갱신.
 
 import type { Metadata } from "next";
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -11,36 +12,61 @@ import {
   guideByKey,
   altLanguages,
 } from "@/lib/consumer";
-import { resolveWeekly } from "@/lib/weekly";
+import { resolveWeekly, WEEK_MS } from "@/lib/weekly";
 import { ConsumerPostCard, ConsumerPromoCard } from "./ConsumerCards";
+import { BreadcrumbJsonLd } from "./ConsumerFaq";
 import { GimpoBanner } from "./ConsumerPages";
+
+const BASE = "https://www.dermaradar.kr";
+
+// generateMetadata 와 페이지 본문이 같은 요청 안에서 데이터·주차 판정을 공유한다.
+// 따로 계산하면 두 호출 사이에 자정(주 전환)·수집 완료가 끼었을 때 메타데이터와
+// 본문이 서로 다른 주차를 가리키는 불일치가 난다 (+ 파이프라인 2회 실행 낭비).
+const weeklyContext = cache(async (locale: ConsumerLocale, week?: string) => {
+  const data = await loadConsumerData(locale);
+  return resolveWeekly(data, week);
+});
+
+/** 옵셔널 캐치올 파라미터 검증 — 세그먼트 2개 이상은 없는 경로 */
+function weekParamOf(weekParam?: string[]): string | undefined {
+  if (weekParam && weekParam.length > 1) notFound();
+  return weekParam?.[0];
+}
 
 function weekLabelOf(locale: ConsumerLocale, id: string): string {
   const [, m, d] = id.split("-").map(Number);
   return CONSUMER_UI[locale].weekly.weekLabel(m, d);
 }
 
-export function weeklyMetadata(locale: ConsumerLocale, week: string | null): Metadata {
-  const w = CONSUMER_UI[locale].weekly;
-  const label = week ? weekLabelOf(locale, week) : w.navTitle;
-  const sub = week ? `/weekly/${week}` : "/weekly";
-  return {
-    title: w.metaTitle(label),
-    description: w.metaDesc(label),
-    alternates: { canonical: `/${locale}${sub}`, languages: altLanguages(sub) },
-  };
-}
-
-/** 라우트 generateMetadata 용 — 스트리밍 시작 전에 잘못된 주차를 걸러 진짜 404 상태코드를 준다.
- *  (본문 렌더 중 notFound() 는 loading.tsx 스트리밍 때문에 200 + 404 UI 가 되는 소프트 404) */
+/** 라우트 generateMetadata 용 — 주차 검증 포함.
+ *  잘못된 주차는 notFound() 로 (스트리밍 메타데이터라 브라우저 상태코드는 200 으로
+ *  남지만, 잘못된 canonical/hreflang 생성을 막고 검색엔진에는 noindex 가 전달된다) */
 export async function weeklyMetadataChecked(
   locale: ConsumerLocale,
   weekParam?: string[]
 ): Promise<Metadata> {
-  if (weekParam && weekParam.length > 1) notFound();
-  const week = weekParam?.[0] ?? null;
-  if (week && !resolveWeekly(await loadConsumerData(locale), week)) notFound();
-  return weeklyMetadata(locale, week);
+  const week = weekParamOf(weekParam);
+  const w = CONSUMER_UI[locale].weekly;
+  let latestDated = false;
+  if (week) {
+    const resolved = await weeklyContext(locale, week);
+    if (!resolved) notFound();
+    // 최신 주의 일자 URL 은 /weekly 와 같은 내용 — canonical 을 /weekly 로 돌려 중복 방지
+    latestDated = resolved.weeks[0] === week;
+  }
+  const label = week ? weekLabelOf(locale, week) : w.navTitle;
+  const sub = week && !latestDated ? `/weekly/${week}` : "/weekly";
+  return {
+    // 레이아웃 title.template(브랜드 문구 포함)와 결합하면 핵심 키워드가 중복되므로 absolute
+    title: { absolute: `${w.metaTitle(label)} | DermaRadar` },
+    description: w.metaDesc(label),
+    alternates: {
+      canonical: `/${locale}${sub}`,
+      // 주차 존재 여부가 로케일(언어 버킷)마다 달라 아카이브 URL 의 hreflang 은
+      // 404 를 가리킬 수 있다 — 항상 존재하는 /weekly 허브에만 hreflang 을 건다.
+      ...(week ? {} : { languages: altLanguages("/weekly") }),
+    },
+  };
 }
 
 /** 증감 표기 — ▲ 증가 / ▼ 감소 / – 유지 */
@@ -52,28 +78,51 @@ function Delta({ delta }: { delta: number }) {
 
 export async function ConsumerWeeklyPage({
   locale,
-  week,
+  week: weekParam,
 }: {
   locale: ConsumerLocale;
-  week?: string;
+  week?: string[];
 }) {
+  const week = weekParamOf(weekParam);
   const ui = CONSUMER_UI[locale];
   const w = ui.weekly;
-  const data = await loadConsumerData(locale);
-  const resolved = resolveWeekly(data, week);
+  const resolved = await weeklyContext(locale, week);
   if (!resolved) notFound();
   const { report, weeks } = resolved;
-  const idx = weeks.indexOf(report.id);
-  const newer = idx > 0 ? weeks[idx - 1] : null;
-  const older = idx >= 0 && idx < weeks.length - 1 ? weeks[idx + 1] : null;
   // 최신 주는 /weekly(무일자) 를 대표 URL 로 쓴다
   const hrefFor = (id: string) =>
     id === weeks[0] ? `/${locale}/weekly` : `/${locale}/weekly/${id}`;
+  const idx = weeks.indexOf(report.id);
+  const newer = idx > 0 ? weeks[idx - 1] : null;
+  const older = idx >= 0 && idx < weeks.length - 1 ? weeks[idx + 1] : null;
   const navCls =
     "rounded-full border border-border bg-surface px-3 py-1.5 text-[12px] font-bold text-muted transition hover:text-foreground";
+  const pageUrl = `${BASE}${hrefFor(report.id)}`;
+  // 리포트 발행 시점 = 그 주가 끝난 월요일 (진행 중이면 주 시작일)
+  const publishedMs = report.isCurrent ? report.startMs : report.startMs + WEEK_MS;
+  const articleLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: w.metaTitle(weekLabelOf(locale, report.id)),
+    datePublished: new Date(publishedMs).toISOString(),
+    inLanguage: ui.htmlLang,
+    mainEntityOfPage: pageUrl,
+    author: { "@type": "Organization", name: "DermaRadar" },
+  };
 
   return (
     <div className="space-y-10">
+      <BreadcrumbJsonLd
+        items={[
+          { name: ui.breadcrumbRoot, url: `${BASE}/${locale}` },
+          { name: w.title(weekLabelOf(locale, report.id)), url: pageUrl },
+        ]}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
+      />
+
       {/* 헤더 */}
       <section className="pt-2 sm:pt-4">
         <div className="flex flex-wrap items-center gap-2">

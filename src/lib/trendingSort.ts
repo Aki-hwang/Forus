@@ -7,6 +7,18 @@
 import { Ad, Lang } from "./ads";
 import { dayNumber, dailyJitter, DAILY_QUALITY_WEIGHT } from "./dailyOrder";
 
+/** 계정당 1건만 남기는 필터 — Meta 광고는 계정 중앙값 조회수를 공유 스탬프하므로,
+ *  제한이 없으면 다광고 계정이 같은 숫자로 TOP 목록을 독식한다 (TrendPanel·주간 리포트 공용) */
+export function onePerAccount(list: Ad[]): Ad[] {
+  const seen = new Set<string>();
+  return list.filter((a) => {
+    const k = (a.igUsername ?? a.clinic).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 /** 광고 + 오가닉 병합 (id 중복 제거) + 레거시 EN 재분류 */
 export function mergeForGallery(ads: Ad[], organic: Ad[]): Ad[] {
   const seen = new Set(ads.map((a) => a.id));

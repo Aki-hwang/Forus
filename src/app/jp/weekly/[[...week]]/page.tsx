@@ -1,7 +1,6 @@
-// /jp/weekly — 週間レーダーレポート (본체: ConsumerWeeklyPage)
+// /jp/weekly — 週間レーダーレポート (본체: ConsumerWeeklyPage, 파라미터 검증 포함)
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { ConsumerWeeklyPage, weeklyMetadataChecked } from "@/components/consumer/WeeklyPage";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +18,5 @@ export async function generateMetadata({
 
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { week } = await params;
-  if (week && week.length > 1) notFound();
-  return <ConsumerWeeklyPage locale="jp" week={week?.[0]} />;
+  return <ConsumerWeeklyPage locale="jp" week={week} />;
 }

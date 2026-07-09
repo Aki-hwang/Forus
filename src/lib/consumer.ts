@@ -1218,11 +1218,11 @@ export function statsFor(
   return { postCount: posts.length, clinicCount: handles.size, adCount: ads.length };
 }
 
-/** 시술별 게시물 수 (랜딩 카드용) — 확신 분류만 집계(미분류의 물광 쏠림 방지) */
-export function treatmentCounts(data: ConsumerData): Map<TreatmentKey, number> {
+/** 시술별 게시물 수 (랜딩 카드·주간 리포트 공용) — 확신 분류만 집계(미분류의 물광 쏠림 방지) */
+export function treatmentCounts(posts: Ad[]): Map<TreatmentKey, number> {
   const m = new Map<TreatmentKey, number>();
   for (const t of TREATMENTS) m.set(t, 0);
-  for (const p of data.posts) {
+  for (const p of posts) {
     const t = confidentTreatment(p);
     if (t) m.set(t, (m.get(t) ?? 0) + 1);
   }
