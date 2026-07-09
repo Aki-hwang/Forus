@@ -156,6 +156,15 @@ export function HomeClient({
     [allAds, organicAds, nowMs]
   );
 
+  // 광고 집행 계정 집합 — 오가닉 카드에 '광고 집행 중' 투명성 배지용
+  const adRunners = useMemo(() => {
+    const s = new Set<string>();
+    for (const a of allAds) {
+      if ((a.kind ?? "ad") !== "organic" && a.igUsername) s.add(a.igUsername.toLowerCase());
+    }
+    return s;
+  }, [allAds]);
+
   // 상단 요약 지표(수집·신규·최다조회·지역분포)용 — 언어 탭만 반영, 병원/시술후기 탭은
   // 무시한다. 요약은 '전체 현황판'이라 탭을 바꿔도 숫자가 흔들리지 않는 게 자연스럽다.
   const overview = useMemo(
@@ -328,6 +337,11 @@ export function HomeClient({
                     onExclude={manageKey ? excludeAd : undefined}
                     onBlock={manageKey ? blockAccount : undefined}
                     onToggleType={manageKey ? toggleAdvType : undefined}
+                    runsAds={
+                      ad.kind === "organic" &&
+                      !!ad.igUsername &&
+                      adRunners.has(ad.igUsername.toLowerCase())
+                    }
                   />
                 ))}
               </div>

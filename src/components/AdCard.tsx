@@ -3,6 +3,7 @@
 import { Ad } from "@/lib/ads";
 import { CreativeCard } from "./CreativeCard";
 import { confidentTreatment, displayHashtags } from "@/lib/treatments";
+import { hasSponsorSignal } from "@/lib/clinics";
 import { useUiLang } from "@/lib/i18n";
 
 function fmt(n: number): string {
@@ -15,6 +16,7 @@ export function AdCard({
   onExclude,
   onBlock,
   onToggleType,
+  runsAds,
 }: {
   ad: Ad;
   onSelect: (ad: Ad) => void;
@@ -22,12 +24,18 @@ export function AdCard({
   onBlock?: (ad: Ad) => void;
   /** 관리 모드: 광고주 유형(병원↔시술후기) 전환 — 계정 단위로 영구 저장 */
   onToggleType?: (ad: Ad) => void;
+  /** 이 오가닉 게시물의 계정이 Meta 광고도 집행 중 — 투명성 배지 */
+  runsAds?: boolean;
 }) {
   const { t, tArea, tTreatment, tClinic } = useUiLang();
   const isLive = ad.live === true;
   const isOrganic = ad.kind === "organic";
   // 배지는 재판정된 시술을 표시 — 레거시 데이터는 저장값(기본값 폴백)과 다를 수 있다
   const sureTreatment = confidentTreatment(ad);
+  // 협찬 자기표기 감지 — '광고를 광고라고 말해주는' 투명성 배지 (시술후기 카드 한정)
+  const isSponsored =
+    ad.advertiserType === "influencer" &&
+    hasSponsorSignal(`${ad.caption ?? ""} ${(ad.hashtags ?? []).join(" ")}`);
 
   return (
     <div className="group block w-full overflow-hidden rounded-2xl border border-border bg-surface text-left transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5">
@@ -80,7 +88,13 @@ export function AdCard({
             clinicName={tClinic(ad.clinic, ad.igUsername)}
             treatmentLabel={sureTreatment ? tTreatment(sureTreatment) : ""}
             lang={ad.lang}
-            badge={ad.advertiserType === "influencer" ? t("influencer") : undefined}
+            badge={
+              ad.advertiserType === "influencer"
+                ? isSponsored
+                  ? `${t("influencer")} · ${t("sponsored")}`
+                  : t("influencer")
+                : undefined
+            }
             imageUrl={ad.imageUrl}
             kind={ad.kind}
           />
@@ -106,6 +120,14 @@ export function AdCard({
               className="whitespace-nowrap rounded-md bg-primary/10 px-1.5 py-0.5 font-bold leading-none text-primary-ink"
             >
               {t("registered")}
+            </span>
+          ) : null}
+          {runsAds ? (
+            <span
+              title={t("runsAdsTip")}
+              className="whitespace-nowrap rounded-md bg-amber-100 px-1.5 py-0.5 font-bold leading-none text-amber-700"
+            >
+              {t("runsAds")}
             </span>
           ) : null}
           <span className="ml-auto flex items-center gap-2 whitespace-nowrap">

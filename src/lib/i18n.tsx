@@ -46,6 +46,12 @@ const STRINGS: Record<string, Str> = {
   // 광고주 유형 필터·배지 (구 유료/무료 필터 대체 — 유료/무료는 카드 칩으로만 표시)
   clinicTab: S("병원", "クリニック", "医院", "Clinics"),
   influencer: S("시술후기", "施術レビュー", "体验分享", "Reviews"),
+  sponsored: S("협찬", "PR·提供", "赞助", "Sponsored"),
+  runsAds: S("광고 집행 중", "広告配信中", "投放广告中", "Runs ads"),
+  runsAdsTip: S("이 계정은 현재 Meta 광고도 집행하고 있어요", "このアカウントはMeta広告も配信中です", "该账号目前也在投放Meta广告", "This account is also running Meta ads"),
+  adLibVerify: S("Meta 광고 라이브러리에서 확인 →", "Meta広告ライブラリで確認 →", "在Meta广告资料库查看 →", "Verify in Meta Ad Library →"),
+  leaderTitle: S("광고 집행 TOP", "広告出稿TOP", "广告投放TOP", "Top advertisers"),
+  leaderTip: S("누적 집행일수 — 오래 돌릴수록 검증된 이벤트", "累計配信日数 — 長いほど定番", "累计投放天数 — 越久越可靠", "Cumulative days running — longer means proven"),
   sortTrending: S("인기", "人気", "热门", "Trending"),
   sortRecent: S("최신순", "新着順", "最新", "Latest"),
   sortViews: S("조회수순", "再生数順", "播放量", "Views"),

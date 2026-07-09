@@ -202,6 +202,23 @@ export function TrendPanel({
     return [...pool].sort((a, b) => b.likes - a.likes)[0] ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overview, now]);
+  // 광고 집행 리더보드 — 병원별 누적 집행일수 (탭 무관 전체 광고 기준).
+  // '오래 돌리는 광고 = 돈이 되는 검증된 이벤트' 라는 이 사이트만의 데이터 각도.
+  const leaderboard = useMemo(() => {
+    const m = new Map<
+      string,
+      { clinic: string; igUsername?: string; ads: number; days: number }
+    >();
+    for (const a of overview) {
+      if ((a.kind ?? "ad") === "organic" || a.advertiserType === "influencer") continue;
+      const k = (a.igUsername ?? a.clinic).toLowerCase();
+      const e = m.get(k) ?? { clinic: a.clinic, igUsername: a.igUsername, ads: 0, days: 0 };
+      e.ads += 1;
+      e.days += a.activeDays ?? 0;
+      m.set(k, e);
+    }
+    return [...m.values()].sort((x, y) => y.days - x.days || y.ads - x.ads).slice(0, 5);
+  }, [overview]);
   // 조회수 TOP 게시물 — 최근 7일, 계정당 1건 (onePerAccount 주석 참고)
   const topPosts = useMemo(
     () =>
@@ -471,7 +488,60 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
+        <div
+          title={tt("leaderTip")}
+          className="rounded-2xl border border-border bg-surface p-4 md:col-span-2"
+        >
+          <p className="mb-3 text-center text-[13px] font-bold text-foreground">
+            {tt("leaderTitle")}
+          </p>
+          <div className="space-y-2.5">
+            {leaderboard.length === 0 ? (
+              <p className="py-3 text-[12px] text-muted">{tt("emptyPeriodAds")}</p>
+            ) : null}
+            {leaderboard.map((c, i) => {
+              const href = c.igUsername
+                ? `https://www.instagram.com/${c.igUsername}/`
+                : undefined;
+              const name = tClinic(c.clinic, c.igUsername);
+              const shortName = name.length > 15 ? name.slice(0, 15) + "…" : name;
+              const inner = (
+                <>
+                  <span className="w-3.5 shrink-0 text-center text-[12px] font-black text-muted">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-foreground">
+                    {shortName}
+                  </span>
+                  <span className="shrink-0 text-[12px] font-bold text-primary-ink">
+                    📅 {c.days}
+                    {tt("dayUnit")}
+                  </span>
+                </>
+              );
+              const rowClass =
+                "flex items-center gap-1.5 rounded-lg px-1.5 transition hover:bg-background";
+              return href ? (
+                <a
+                  key={c.clinic + i}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-oc="trend_leaderboard"
+                  className={rowClass}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={c.clinic + i} className={rowClass}>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("popTreatments")}</p>
           <div className="space-y-2.5">
             {topTreatments.length === 0 ? (
@@ -499,7 +569,7 @@ export function TrendPanel({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-4">
+        <div className="rounded-2xl border border-border bg-surface p-4 md:col-span-3">
           <p className="mb-3 text-center text-[13px] font-bold text-foreground">{tt("contentTypes")}</p>
           <div className="space-y-2.5">
             {topStyles.length === 0 ? (

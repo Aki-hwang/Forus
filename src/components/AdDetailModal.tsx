@@ -145,6 +145,18 @@ export function AdDetailModal({ ad, onClose }: { ad: Ad; onClose: () => void }) 
                     {t("viewAccount", { h: ad.igUsername ?? "" })}
                   </a>
                 ) : null}
+                {ad.adLibraryUrl ? (
+                  // 검증 가능한 데이터 — 광고 원본을 Meta 공식 라이브러리에서 직접 확인
+                  <a
+                    href={ad.adLibraryUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-oc="modal_adlib"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-muted hover:underline"
+                  >
+                    {t("adLibVerify")}
+                  </a>
+                ) : null}
               </div>
             );
           })()}
