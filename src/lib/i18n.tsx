@@ -46,6 +46,9 @@ const STRINGS: Record<string, Str> = {
   // 광고주 유형 필터·배지 (구 유료/무료 필터 대체 — 유료/무료는 카드 칩으로만 표시)
   clinicTab: S("병원", "クリニック", "医院", "Clinics"),
   influencer: S("시술후기", "施術レビュー", "体验分享", "Reviews"),
+  sponsoredReview: S("후기·협찬", "レビュー·PR", "分享·赞助", "Sponsored"),
+  runsAds: S("광고 집행 중", "広告配信中", "投放广告中", "Runs ads"),
+  runsAdsTip: S("이 계정은 현재 Meta 광고도 집행하고 있어요 (최근 수집 기준)", "このアカウントはMeta広告も配信中です（直近の収集基準）", "该账号目前也在投放Meta广告（以最近收集为准）", "This account is also running Meta ads (as of latest collection)"),
   sortTrending: S("인기", "人気", "热门", "Trending"),
   sortRecent: S("최신순", "新着順", "最新", "Latest"),
   sortViews: S("조회수순", "再生数順", "播放量", "Views"),
@@ -63,6 +66,8 @@ const STRINGS: Record<string, Str> = {
   topClinics: S("조회수 TOP 클리닉 (7일)", "再生数TOPクリニック(7日)", "播放量TOP诊所(7天)", "Top clinics (7d)"),
   topReviewers: S("조회수 TOP 후기계정 (7일)", "再生数TOPレビュー(7日)", "播放量TOP分享(7天)", "Top reviewers (7d)"),
   topPosts: S("조회수 TOP 게시물 (7일)", "再生数TOP投稿(7日)", "播放量TOP帖子(7天)", "Top posts (7d)"),
+  topAdvertisers: S("광고 집행 TOP", "広告出稿TOP", "广告投放TOP", "Top advertisers"),
+  topAdvertisersTip: S("광고 수 × 집행일 누적 합계 — 많이·오래 집행할수록 상위", "広告数×配信日数の累計 — 多く長いほど上位", "广告数×投放天数累计 — 越多越久越靠前", "Sum of days across all ads — more & longer ranks higher"),
   popTreatments: S("인기 시술 (7일)", "人気施術(7日)", "热门项目(7天)", "Top treatments (7d)"),
   contentTypes: S("콘텐츠 유형 (7일)", "コンテンツ種類(7日)", "内容类型(7天)", "Content types (7d)"),
   statCollected: S("수집된 광고", "収集した広告", "已收集广告", "Ads collected"),
@@ -84,6 +89,7 @@ const STRINGS: Record<string, Str> = {
   viewAccount: S("인스타그램 (@{h}) 보기", "Instagram (@{h}) を見る", "查看 Instagram (@{h})", "View Instagram (@{h})"),
   viewsUnit: S("조회", "再生", "播放", "views"),
   activeDaysRan: S("{n}일 집행", "{n}日配信", "已投放 {n} 天", "running {n}d"),
+  adLibVerify: S("Meta 광고 라이브러리에서 확인 →", "Meta広告ライブラリで確認 →", "在Meta广告资料库查看 →", "Verify in Meta Ad Library →"),
   // 갤러리 빈 상태·무한스크롤
   emptyFiltered: S("조건에 맞는 게시물이 없어요.", "条件に合う投稿がありません。", "没有符合条件的帖子。", "No posts match the filters."),
   resetFilters: S("필터 초기화", "フィルターをリセット", "重置筛选", "Reset filters"),

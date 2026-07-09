@@ -19,7 +19,12 @@ import { InquiryButton } from "@/components/InquiryButton";
 import { gaEvent } from "@/lib/ga";
 import { AdCard } from "@/components/AdCard";
 import { AdDetailModal } from "@/components/AdDetailModal";
-import { mergeForGallery, trendingComparator, galleryFresh } from "@/lib/trendingSort";
+import {
+  mergeForGallery,
+  trendingComparator,
+  galleryFresh,
+  buildAdLeaderboard,
+} from "@/lib/trendingSort";
 
 export type Source = "sample" | "apify";
 
@@ -80,6 +85,9 @@ export function HomeClient({
 
   // 초기 데이터가 상위 슬라이스뿐이면(SSR 페이로드 절감) 전체 목록을 백그라운드로 받아 교체.
   // 같은 정렬(trendingSort 공용)이라 상위 카드는 그대로고, 필터 탭·트렌드 집계만 전체값으로 차오른다.
+  // 전체 데이터 도착 여부 — 초기 슬라이스(시술후기 기준 90장)에는 병원 유료 광고가 거의
+  // 없어서, 이 플래그 없이는 리더보드 같은 광고 기반 패널이 '없음'으로 떴다가 튄다.
+  const [fullLoaded, setFullLoaded] = useState(!initialPartial);
   useEffect(() => {
     if (!initialPartial) return;
     let alive = true;
@@ -90,6 +98,7 @@ export function HomeClient({
       if (!alive) return;
       if (a?.ads?.length) setAllAds(a.ads);
       if (o?.ads) setOrganicAds(o.ads);
+      setFullLoaded(true);
     });
     return () => {
       alive = false;
@@ -155,6 +164,23 @@ export function HomeClient({
     () => galleryFresh(mergeForGallery(allAds, organicAds), nowMs),
     [allAds, organicAds, nowMs]
   );
+
+  // 광고 집행 계정 집합 — 오가닉 카드에 '광고 집행 중' 투명성 배지용
+  const adRunners = useMemo(() => {
+    const s = new Set<string>();
+    for (const a of allAds) {
+      // live 만 — 스냅샷은 90일 보관이라 종료된 광고까지 넣으면 '집행 중'이라는
+      // 현재형 배지가 최대 3개월 전 광고를 근거로 붙는다
+      if ((a.kind ?? "ad") !== "organic" && a.live === true && a.igUsername) {
+        s.add(a.igUsername.toLowerCase());
+      }
+    }
+    return s;
+  }, [allAds]);
+
+  // 광고 집행 리더보드 — 탭·언어 무관 '전체 광고' 기준 (패널 제목과 일치).
+  // galleryFresh(죽은 이미지 제외)를 거치지 않은 원본에서 집계 — buildAdLeaderboard 주석 참고.
+  const adLeaderboard = useMemo(() => buildAdLeaderboard(allAds), [allAds]);
 
   // 상단 요약 지표(수집·신규·최다조회·지역분포)용 — 언어 탭만 반영, 병원/시술후기 탭은
   // 무시한다. 요약은 '전체 현황판'이라 탭을 바꿔도 숫자가 흔들리지 않는 게 자연스럽다.
@@ -286,6 +312,8 @@ export function HomeClient({
             ads={base}
             overviewAds={overview}
             keywordAds={merged}
+            leaderboard={adLeaderboard}
+            dataPending={!fullLoaded}
             onSelectAd={openAd}
             collectedAt={collectedAt}
             nowMs={nowMs}
@@ -328,6 +356,11 @@ export function HomeClient({
                     onExclude={manageKey ? excludeAd : undefined}
                     onBlock={manageKey ? blockAccount : undefined}
                     onToggleType={manageKey ? toggleAdvType : undefined}
+                    runsAds={
+                      ad.kind === "organic" &&
+                      !!ad.igUsername &&
+                      adRunners.has(ad.igUsername.toLowerCase())
+                    }
                   />
                 ))}
               </div>

@@ -324,7 +324,9 @@ export async function ConsumerTreatmentPage({
   const posts = dailyRotation(filterPosts(data.posts, g.key), { take: 8, freshSlots: 2 });
   const promos = dailyRotation(filterPosts(data.ads, g.key), { pool: 8, take: 4, freshSlots: 1 });
   const stats = statsFor(data, g.key);
-  const clinics = (await clinicsFor(locale, data.posts, undefined, g.key)).slice(0, 12);
+  const clinics = (
+    await clinicsFor(locale, data.posts, undefined, g.key, data.accountLangs)
+  ).slice(0, 12);
 
   return (
     <div className="space-y-10">
@@ -468,7 +470,9 @@ export async function ConsumerTreatmentAreaPage({
   const posts = dailyRotation(filterPosts(data.posts, g.key, a.key), { take: 8, freshSlots: 2 });
   const promos = dailyRotation(filterPosts(data.ads, g.key, a.key), { pool: 8, take: 4, freshSlots: 1 });
   const stats = statsFor(data, g.key, a.key);
-  const clinics = (await clinicsFor(locale, data.posts, a.key, g.key)).slice(0, 12);
+  const clinics = (
+    await clinicsFor(locale, data.posts, a.key, g.key, data.accountLangs)
+  ).slice(0, 12);
 
   return (
     <div className="space-y-10">

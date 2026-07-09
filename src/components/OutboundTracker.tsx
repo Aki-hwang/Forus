@@ -5,8 +5,8 @@
 // 클라이언트로 바꾸지 않고도 표면별(data-oc) 클릭 기여를 GA 로 보낸다.
 //
 // data-oc 표면 라벨 목록 — 새 라벨을 추가하면 여기에도 기록할 것 (GA 버킷 드리프트 방지):
-//   modal_post · modal_account · trend_account · guide_post · guide_promo
-//   guide_clinic · guide_clinic_line · gimpo_main · gimpo_line
+//   modal_post · modal_account · modal_adlib · trend_account · trend_leaderboard
+//   guide_post · guide_promo · guide_clinic · guide_clinic_line · gimpo_main · gimpo_line
 import { useEffect } from "react";
 import { gaEvent } from "@/lib/ga";
 

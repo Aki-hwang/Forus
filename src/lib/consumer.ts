@@ -1061,6 +1061,8 @@ export interface ConsumerData {
   /** 유료 광고 (진행 중 캠페인 → 이벤트/프로모션 정보) */
   ads: Ad[];
   collectedAt: string | null;
+  /** 계정별 언어 증거 (언어 필터 전 전체 스냅샷 기준) — 언어 대응 배지 자동 부여용 */
+  accountLangs: Map<string, Record<string, number>>;
 }
 
 export async function loadConsumerData(locale: ConsumerLocale): Promise<ConsumerData> {
@@ -1070,24 +1072,34 @@ export async function loadConsumerData(locale: ConsumerLocale): Promise<Consumer
     readSnapshot("organic"),
     readBlocklist(),
   ]);
+  // 차단 목록은 언어 필터보다 먼저 — 이후 모든 파생 집계(언어 증거 포함)가 차단을 존중한다
+  const organicAll = applyBlocklist(organicSnap?.ads ?? [], block);
+  const adsAll = applyBlocklist(adsSnap?.ads ?? [], block);
   // 이미지 생존 판정(imgCached) — 만료된 광고 이미지가 깨진 아이콘으로 렌더되지 않게.
   // 카드 컴포넌트가 imgCached:false 면 <img> 대신 그라데이션 폴백을 그린다.
-  const organic = await annotateImageHealth(
-    applyBlocklist(organicSnap?.ads ?? [], block).filter((a) => a.lang === lang)
-  );
+  const organic = await annotateImageHealth(organicAll.filter((a) => a.lang === lang));
   const paid = await annotateImageHealth(
-    applyBlocklist(adsSnap?.ads ?? [], block).filter(
-      (a) => a.lang === lang && a.kind !== "organic"
-    )
+    adsAll.filter((a) => a.lang === lang && a.kind !== "organic")
   );
   // 게시물 반응 순 정렬 (조회수 > 좋아요+저장)
   organic.sort((a, b) => engagement(b) - engagement(a));
   // 광고는 집행일수 순 (오래 도는 광고 = 검증된 프로모션)
   paid.sort((a, b) => (b.activeDays ?? 0) - (a.activeDays ?? 0));
+  // 계정별 언어 증거 — 로케일(언어) 필터 '전', 차단 적용 '후' 기준. 예: ko 페이지의
+  // 클리닉 카드에도 그 계정의 일본어 게시물 수를 근거로 '일본어 대응' 배지를 자동 부여.
+  const accountLangs = new Map<string, Record<string, number>>();
+  for (const a of [...adsAll, ...organicAll]) {
+    const h = a.igUsername?.toLowerCase();
+    if (!h || !a.lang) continue;
+    const rec = accountLangs.get(h) ?? {};
+    rec[a.lang] = (rec[a.lang] ?? 0) + 1;
+    accountLangs.set(h, rec);
+  }
   return {
     posts: organic,
     ads: paid,
     collectedAt: organicSnap?.collectedAt ?? adsSnap?.collectedAt ?? null,
+    accountLangs,
   };
 }
 
@@ -1123,14 +1135,25 @@ export interface ConsumerClinic {
   lineUrl?: string;
 }
 
-/** note/핸들에서 배지 키 파생 (내부 메모 원문을 노출하지 않기 위한 장치) */
-function deriveBadges(c: { handle: string; note?: string; lineUrl?: string }): ClinicBadge[] {
+/** 언어 배지 임계치 — 해당 언어 게시물·광고 3건 이상.
+ *  언어 판정(inferLang)이 가나 1글자에도 JP 를 주는 느슨한 휴리스틱이라, 2건이면
+ *  일본어 못 하는 병원에 '日本語対応' 배지가 붙을 수 있다 (실측: JP≥3 → 58곳, ≥2 → 85곳) */
+const LANG_BADGE_MIN = 3;
+
+/** note/핸들 + 실데이터 언어 증거에서 배지 키 파생 (내부 메모 원문은 노출하지 않는다) */
+function deriveBadges(
+  c: { handle: string; note?: string; lineUrl?: string },
+  ev?: Record<string, number>
+): ClinicBadge[] {
   const src = `${c.handle} ${c.note ?? ""}`.toLowerCase();
+  const hasEv = (l: string) => (ev?.[l] ?? 0) >= LANG_BADGE_MIN;
   const badges: ClinicBadge[] = [];
-  if (/jp|jpn|japan|일본어|일본인/.test(src)) badges.push("jp");
+  // 데이터 증거(그 언어로 실제 발신 중)가 수기 메모보다 강한 근거 — 커버리지도 수배 넓다
+  if (hasEv("JP") || /jp|jpn|japan|일본어|일본인/.test(src)) badges.push("jp");
   // lineUrl(실제 상담 링크 보유)이 가장 강한 근거 — 배지와 카드의 LINE 버튼이 어긋나지 않게
   if (c.lineUrl || /line/.test(src)) badges.push("line");
-  if (/글로벌|global|다국어|영어|영문|multilingual/.test(src)) badges.push("multi");
+  if (hasEv("EN") || hasEv("CN") || /글로벌|global|다국어|영어|영문|multilingual/.test(src))
+    badges.push("multi");
   return badges;
 }
 
@@ -1138,7 +1161,9 @@ export async function clinicsFor(
   locale: ConsumerLocale,
   posts: Ad[],
   area?: Area,
-  treatment?: TreatmentKey
+  treatment?: TreatmentKey,
+  /** 계정별 언어 증거 (loadConsumerData 의 accountLangs) — 언어 배지 자동 부여 */
+  langEvidence?: Map<string, Record<string, number>>
 ): Promise<ConsumerClinic[]> {
   const approved = await readApprovedClinics();
   // ko 로케일은 한국인 타깃 명단을 앞에 합친다 (수집 워치리스트와 무관, 표시 전용)
@@ -1187,7 +1212,7 @@ export async function clinicsFor(
         name: c.name,
         handle: c.handle,
         areas: c.areas,
-        badges: deriveBadges(c),
+        badges: deriveBadges(c, langEvidence?.get(c.handle.toLowerCase())),
         postCount: rel.length,
         reach: rel.reduce((s, p) => s + engagement(p), 0),
         instagramUrl: `https://www.instagram.com/${c.handle}/`,
