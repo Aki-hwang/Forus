@@ -119,6 +119,7 @@ const BLOCKED_HANDLES = new Set<string>([
   "sisterann_official",
   "sisterann",
   "ogeasai",
+  "modoo_best", // 네이버 상위노출 마케팅 대행 (2026-07-19 주간레이더 발견)
 ]);
 const BLOCKED_NAME_PARTS = [
   "beaund",
@@ -140,6 +141,7 @@ const BLOCKED_NAME_PARTS = [
   "시스터앤",
   "ogeasai",
   "ógeasaí",
+  "modoo", // 네이버 modoo 홈페이지 제작·상위노출 대행 계열
 ];
 
 export function isBlockedAdvertiser(igUsername?: string, pageName?: string): boolean {
